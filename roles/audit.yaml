@@ -1,0 +1,218 @@
+---
+# to save ansible output in a single log on the control node, set the log_path configuration file (ansible.cfg) setting
+# to save output in separate logs, one on each managed node, set the no_target_syslog and syslog_facility settings in ansible.cfg -- this is probably what we prefer
+- name: System audit
+  hosts: localhost
+  become: yes
+  tasks:
+
+##### BASIC #####
+
+    - name: Display Aliases
+      shell: alias
+      register: aliases
+      ignore_errors: yes
+    - name: Log result of Display Aliases
+      shell: "echo '{{ aliases.stdout }}' >> audit_log.txt"
+    
+    - name: Check for Shims
+      shell: |
+        echo -e "\n---------------------\n > Checking for Shims <\n---------------------" >> audit_log.txt
+        diff /bin/false /bin/sh >> audit_log.txt 2>&1
+        diff /bin/false /bin/bash >> audit_log.txt 2>&1
+        diff /usr/sbin/nologin /bin/sh >> audit_log.txt 2>&1
+        diff /usr/sbin/nologin /bin/bash >> audit_log.txt 2>&1
+        diff /usr/bin/passwd /bin/passwd >> audit_log.txt 2>&1
+        diff /usr/bin/ls /bin/ls >> audit_log.txt 2>&1
+        diff /usr/bin/sudo /bin/sudo >> audit_log.txt 2>&1
+      ignore_errors: yes
+
+
+    # SSH Keys
+    - name: Check SSH Keys Config
+      shell: cat /root/ssh/sshd_config | grep -i AuthorizedKeysFile
+      register: ssh1
+      ignore_errors: yes
+    - name: Log result of Check SSH Keys Config
+      shell: "echo '{{ ssh1.stdout }}' >> audit_log.txt"
+
+    - name: List User's Authorized SSH Keys
+      shell: head -n 20 /home/*/.ssh/authorized_keys*
+      register: ssh2
+      ignore_errors: yes
+    - name: Log result of List User's Authorized SSH Keys
+      shell: "echo '{{ ssh2.stdout }}' >> audit_log.txt"
+
+    - name: List Root's Authorized SSH Keys
+      shell: head -n 20 /root/.ssh/authorized_keys*
+      ignore_errors: yes
+    - name: Log result of List Root's Authorized SSH Keys
+      shell: "echo '{{ ssh3.stdout }}' >> audit_log.txt"
+
+
+    - name: Currently Logged In
+      shell: who
+      register: who
+      ignore_errors: yes
+    - name: Log result of Currently Logged In
+      shell: "echo '{{ who.stdout }}' >> audit_log.txt"
+    - name: Currently Active Sessions
+      shell: w
+      register: w
+      ignore_errors: yes
+    - name: Log result of Currently Active Sessions
+      shell: "echo '{{ w.stdout }}' >> audit_log.txt"
+    
+
+    - name: Login History
+      shell: last | grep -Ev 'system' | head -n 20
+      register: loginhistory
+      ignore_errors: yes
+    - name: Log result of Login History
+      shell: "echo '{{ loginhistory.stdout }}' >> audit_log.txt"
+
+
+    - name: Current Network Listening
+      shell: ss -tulpnw
+      register: networklistening
+      ignore_errors: yes
+    - name: Log result of Current Network Listening
+      shell: "echo '{{ networklistening.stdout }}' >> audit_log.txt"
+
+    - name: lsof Remote
+      shell: lsof -i
+      register: lsofremote
+      ignore_errors: yes
+    - name: Log result of lsof Remote
+      shell: "echo '{{ lsofremote.stdout }}' >> audit_log.txt"
+    
+    - name: Potential Rootkit Signs
+      shell: |
+        dmesg | grep taint
+        env | grep -i 'LD'
+      register: rootkit
+      ignore_errors: yes
+    - name: Log result of Potential Rootkit Signs
+      shell: "echo '{{ rootkit.stdout }}' >> audit_log.txt"
+    
+    - name: Mounted Processes
+      shell: mount | grep "proc"
+      reister: mountedprocs
+      ignore_errors: yes
+    - name: Log result of Mounted Processes
+      shell: "echo '{{ mountedprocs.stdout }}' >> audit_log.txt"
+
+
+
+##### VERBOSE #####
+
+    - name: Auto Runs
+      shell: |
+        cat /etc/crontab | grep -Ev '#|PATH|SHELL'
+        cat /etc/cron.d/* | grep -Ev '#|PATH|SHELL'
+        find /var/spool/cron/crontabs/ -printf '%p\n' -exec cat {} \;
+        systemctl list-timers
+      register: autoruns
+      ignore_errors: yes
+    - name: Log result of Auto Runs
+      shell: "echo '{{ autoruns.stdout }}' >> audit_log.txt"
+    
+    - name: lsof Raw
+      shell: |
+        lsof | grep -i -E 'raw|pcap'
+        lsof | grep /proc/sys/net/ipv4
+      register: lsofraw
+      ignore_errors: yes
+    - name: Log result of lsof Raw
+      shell: "echo '{{ lsofraw.stdout }}' >> audit_log.txt"
+
+    - name: Processes
+      shell: ps af
+      register: procs
+      ignore_errors: yes
+    - name: Log result of Processes
+      shell: "echo '{{ procs.stdout }}' >> audit_log.txt"
+
+    - name: Poisoned Networking
+      shell: |
+        cat /etc/nsswitch.conf
+        cat /etc/hosts
+        cat /etc/resolv.conf | grep -Ev '#|PATH|SHELL'
+        ip netns list
+        ip route
+      register: poisonednetworking
+      ignore_errors: yes
+    - name: Log result of Poisoned Networking
+      shell: "echo '{{ poisonednetworking.stdout }}' >> audit_log.txt"
+
+    - name: IPs and MACs
+      shell: |
+        echo -e "\n---------------\n > Ips and macs <\n--------------- " >> audit_log.txt
+        ip -c route | grep "default" >> audit_log.txt 2>&1
+        echo -e "" >> audit_log.txt
+        ip -br -c a >> audit_log.txt 2>&1
+        echo -e "\n[MAC]:" >> audit_log.txt
+        ip -br -c link >> audit_log.txt 2>&1
+      ignore_errors: yes
+
+    - name: Auth Backdoors
+      shell: |
+        cat /etc/sudoers | grep NOPASS
+        cat /etc/sudoers | grep !AUTH
+        find / -type f \( -name ".rhosts" -o -name ".shosts" -o -name "hosts.equiv" \) -exec ls -l {} \;
+        register: authbackdoors
+      ignore_errors: yes
+    - name: Log result of Auth Backdoors
+      shell: "echo '{{ authbackdoors.stdout }}' >> audit_log.txt"
+  
+    - name: Files Modified in Last 10Min
+      shell: |
+        find /etc -xdev -mmin -10 -ls 2> /dev/null
+        find /home -xdev -mmin -10 -ls 2> /dev/null
+        find /root -xdev -mmin -10 -ls 2> /dev/null
+        find /bin -xdev -mmin -10 -ls 2> /dev/null
+        find /sbin -xdev -mmin -10 -ls 2> /dev/null
+      register: filesmodified
+      ignore_errors: yes
+    - name: Log result of Files Modified in Last 10Min
+      shell: "echo '{{ filesmodified.stdout }}' >> audit_log.txt"
+    
+    - name: Repositories
+      shell: cat /etc/apt/sources.list | grep -Ev "##|#"
+      register: repos
+      ignore_errors: yes
+    - name: Log result of Repositories
+      shell: "echo '{{ repos.stdout }}' >> audit_log.txt"
+
+    - name: Malware?
+      shell: |
+        dpkg -l | grep "sniff"
+        dpkg -l | grep "packet" 
+        dpkg -l | grep "wireless" 
+        dpkg -l | grep "pen"
+        dpkg -l | grep "test" 
+        dpkg -l | grep "password" 
+        dpkg -l | grep "crack"
+        dpkg -l | grep "spoof" 
+        dpkg -l | grep "brute" 
+        dpkg -l | grep "log" 
+        dpkg -l | grep "key"
+        dpkg -l | grep "network" 
+        dpkg -l | grep "map" 
+        dpkg -l | grep "server"
+        dpkg -l | grep "CVE" 
+        dpkg -l | grep "exploit" 
+      when: ansible_os_family == "Debian"
+      register: malware
+      ignore_errors: yes
+    - name: Malware?
+      shell: "echo '{{ malware.stdout }}' >> audit_log.txt"
+
+    # External Audit Scripts
+    - name: Run Linpeas Audit
+      shell: curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > linpeas.txt
+      ignore_errors: yes
+
+    - name: Run Lynis Audit
+      shell: lynis audit system > lynis.txt
+      ignore_errors: yes
