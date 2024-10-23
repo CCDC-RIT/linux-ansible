@@ -1,8 +1,0 @@
----
-# # i stole this from irsec ansible so i need to fact check how this fits in
-# # SSH Args (Both of these should be in the ansible.cfg)
-# host_key_checking: False
-# ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-
-# ansible_sudo_pass: "{{ team_password }}"
-# ansible_become: yes

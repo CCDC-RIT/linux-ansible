@@ -1,0 +1,9 @@
+---
+- task: Create blueteam user
+  user:
+    name: blueteam
+    state: present
+    groups: blueteam wheel sudo adm
+    append: yes
+    shell: /bin/bash
+    password: "{{ blueteam_password | password_hash('sha512') }}"

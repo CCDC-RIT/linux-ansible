@@ -1,0 +1,3 @@
+---
+blueteam_password: "justin"
+scoring_ip: "NONE" #if it's none, just skip it (we will come back, don't you worry)
