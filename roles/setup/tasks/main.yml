@@ -1,0 +1,21 @@
+---
+- task: Install Common Packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "vim"
+    - "curl"
+    - "iptables"
+    - "git"
+    - "python3-pip"
+  
+- task: Make backup directory
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+    
