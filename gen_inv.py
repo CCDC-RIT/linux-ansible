@@ -24,11 +24,12 @@ class Credentials:
         return self.username
     
 class Host:
-    def __init__(self, hostname, ip, creds, os):
+    def __init__(self, hostname, ip, creds, os, ports):
         self.hostname = hostname
         self.ip = ip
         self.creds = creds
         self.os = os
+        self.ports = ports
 
     def get_hostname(self):
         return self.hostname
@@ -51,10 +52,10 @@ class Host:
             f.write(f"[{self.hostname}]\n")
             if self.os == 'linux':
                 OS_GROUPS['linux'].append(self.hostname)
-                f.write(f"{self.hostname} ansible_host={self.ip} ansible_user={self.creds.get_username()} ansible_password={self.creds.get_password()} ansible_become_method=sudo ansible_become_pass={self.creds.get_password()}\n")
+                f.write(f"{self.hostname} ansible_host={self.ip} ansible_user={self.creds.get_username()} ansible_password={self.creds.get_password()} ansible_become_method=sudo ansible_become_pass={self.creds.get_password()} ports={self.ports}\n")
             elif self.os == 'windows':
                 OS_GROUPS['windows'].append(self.hostname)
-                f.write(f"{self.hostname} ansible_host={self.ip} ansible_user={self.creds.get_username()} ansible_password={self.creds.get_password()} ansible_connection=psrp ansible_winrm_server_cert_validation=ignore ansible_port=5985\n")
+                f.write(f"{self.hostname} ansible_host={self.ip} ansible_user={self.creds.get_username()} ansible_password={self.creds.get_password()} ansible_connection=psrp ansible_winrm_server_cert_validation=ignore ansible_port=5985 ports={self.ports}\n")
 
 def create_credentials():
     username = input('Enter username: ')
@@ -66,13 +67,14 @@ def create_credentials():
 def create_host():
     hostname = input('Enter hostname: ').lower()
     ip = input('Enter IP: ')
+    ports = input('Enter ports to allow (comma separated): ')
     print('Select credentials')
     for i,creds in enumerate(CREDENTIALS):
         print(f"{i+1}. {creds.get_username()}")
     choice = int(input('Enter choice: '))
     creds = CREDENTIALS[choice-1]
     os = input('Enter os group (windows or linux): ')
-    host = Host(hostname, ip, creds, os)
+    host = Host(hostname, ip, creds, os, ports)
     HOSTS.append(host)
     return host
 
