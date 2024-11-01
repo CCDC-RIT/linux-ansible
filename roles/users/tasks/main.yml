@@ -1,31 +1,30 @@
----
-- task: Create blueteam user
-  user:
-    name: blueteam
-    state: present
-    groups: blueteam wheel sudo adm
-    append: yes
-    shell: /bin/bash
-    password: "{{ blueteam_password | password_hash('sha512') }}"
-
-- name: Change passwords for a list of users
+- name: Manage blueteam user and set passwords for other users
   hosts: all
   become: yes
   vars:
     user_file: "./users.txt"
   
   tasks:
-  - name: Read user list from file
-    slurp:
-      src: "{{ user_file }}"
-    register: user_list_file
+    - name: Create blueteam user
+      user:
+        name: blueteam
+        state: present
+        groups: blueteam, wheel, sudo, adm
+        append: yes
+        shell: /bin/bash
+        password: "{{ blueteam_password | password_hash('sha512') }}"
   
-  - name: Parse user lsit
-    set_fact:
-      users: "{{ user_list_file['content'] | b64decode | splitlines }}"
+    - name: Read user list from file
+      slurp:
+        src: "{{ user_file }}"
+      register: user_list_file
+  
+    - name: Parse user list
+      set_fact:
+        users: "{{ user_list_file['content'] | b64decode | splitlines }}"
     
-  - name: Generate and set passwords for each user
-    user:
-      name: "{{ item }}"
-      password: "{{ lookup('password', '/dev/null lenght=20 chars=ascii_letters') | password_hash('sha512' ) }}"
-    loop: "{{ users }}"
+    - name: Generate and set passwords for each user
+      user:
+        name: "{{ item }}"
+        password: "{{ lookup('password', '/dev/null', length=20, chars=ascii_letters) | password_hash('sha512') }}"
+      loop: "{{ users }}"
