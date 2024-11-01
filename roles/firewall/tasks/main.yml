@@ -1,12 +1,41 @@
 ---
-- task: Backup Current IPTables Configuration
+- task: Backup Startup IPTables Configuration
   command: iptables-save > /etc/iptables/rules.v4
 
-- include: ubuntu.yml
-  when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
+# - include: ubuntu.yml
+#   when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
 
 - task: Block everything except scoring
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     source: "{{ scoring_ip }}"
     jump: ACCEPT
+
+- name: Allow all out of scope IPs
+  hosts: all
+  become: true
+  vars:
+    management:
+      - "172.16.1.0/24"
+      - "172.29.2.0/23"
+    datadog: "{{ lookup('file', 'datadog_ipv4.txt').splitlines() }}"
+  tasks:
+    - name: Allow all Management IPs
+      ansible.builtin.iptables:
+        chain: INPUT
+        source: "{{ item }}"
+        protocol: tcp
+        destination_port: any
+        jump: ACCEPT
+      loop: "{{ management }}"
+    - name: Allow all DataDog IPs
+      ansible.builtin.iptables:
+        chain: INPUT
+        source: "{{ item }}"
+        protocol: tcp
+        destination_port: any
+        jump: ACCEPT
+      loop: "{{ datadog }}"
+
+- task: Backup IPTables Configuration After Ansible
+  command: iptables-save > /etc/iptables/new_rules.v4
