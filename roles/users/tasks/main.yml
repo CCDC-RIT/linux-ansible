@@ -1,13 +1,36 @@
 - name: Create blueteam user
   hosts: all
   become: yes
+  vars:
+    groups_to_check:
+      - blueteam
+      - wheel
+      - sudo
+      - adm
   
   tasks:
+    - name: Create blueteam group
+      group:
+        name: blueteam
+        state: present
+
+    - name: Check which groups exist
+      command: getent group {{ item }}
+      register: group_check
+      ignore_errors: yes
+      loop: "{{ groups_to_check }}"
+
+    - name: Set the list of existing groups
+      set_fact:
+        existing_groups: "{{ existing_groups | default([]) + [item.item] }}"
+      when: item.rc == 0
+      loop: "{{ group_check.results }}"
+
     - name: Create blueteam user
       user:
         name: blueteam
         state: present
-        groups: blueteam, wheel, sudo, adm
+        groups: "{{ existing_groups | join(',') }}"
         append: yes
         shell: /bin/bash
         password: "{{ blueteam_password | password_hash('sha512') }}"
