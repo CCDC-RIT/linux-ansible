@@ -35,15 +35,23 @@
         shell: /bin/bash
         password: "{{ blueteam_password | password_hash('sha512') }}"
 
-- name: Load user list from file
+- name: Load user list and set passwords
   hosts: all
   become: yes
-  vars:
-    users: "{{ lookup('file', 'users.txt').splitlines() }}"
-  
+
   tasks:
+    - name: Load user list from file
+      slurp:
+        src: users.txt
+      register: user_list_file
+
+    - name: Parse user list and set passwords
+      set_fact:
+        users: "{{ user_list_file['content'] | b64decode | splitlines | map('split', ' ') | map('first') | list }}"
+        passwords: "{{ user_list_file['content'] | b64decode | splitlines | map('split', ' ') | map('last') | list }}"
+
     - name: Generate and set passwords for each user
       user:
-        name: "{{ item }}"
-        password: "{{ lookup('password', '/dev/null', length=20, chars=ascii_letters) | password_hash('sha512') }}"
-      loop: "{{ users }}"
+        name: "{{ item.0 }}"
+        password: "{{ item.1 | password_hash('sha512') }}"
+      loop: "{{ users | zip(passwords) | list }}"

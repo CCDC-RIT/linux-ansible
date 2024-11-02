@@ -1,10 +1,10 @@
-president
-vicepresident
-defenseminister
-secretary
-general
-admiral
-judge
-bodyguard
-cabinetofficial
-treasurer
+president password123
+vicepresident password123
+defenseminister password123
+secretary password123
+general password123
+admiral password123
+judge password123
+bodyguard password123
+cabinetofficial password123
+treasurer password123
