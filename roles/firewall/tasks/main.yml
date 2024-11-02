@@ -55,17 +55,19 @@
         destination_port: 21
         jump: ACCEPT
         comment: "Allow FTP to vault"
+      when: inventory_hostname == "vault"
     - name: Allow IMAP and SMTP to wiretap
       iptables:
         chain: INPUT
         source: "0.0.0.0/0"
-        protcol: tcp
+        protocol: tcp
         destination_port: "{{ item }}"
         jump: ACCEPT
         comment: "Allow IMAP/SMTP to wiretap"
       loop: "{{ imap_smtp }}"
       loopcontrol:
         label: "{{ item }}"
+      when: inventory_hostname == "wiretap"
     - name: Allow HTTP to propaganda
       iptables:
         chain: INPUT
@@ -77,6 +79,7 @@
       loop: "{{ web }}"
       loop_control:
         label: "{{ item }}"
+      when: inventory_hostname == "propaganda"
 
 - name: Allow Wazuh between all machines
   hosts: all
@@ -85,7 +88,7 @@
     - name: Allow Wazuh
       iptables:
         chain: INPUT
-        sources: "0.0.0.0/0"
+        source: "0.0.0.0/0"
         protocol: tcp
         destination_port: 1514
         jump: ACCEPT
