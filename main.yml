@@ -8,15 +8,6 @@
     - initial
     - setup
 
-- name: Setup Firewall
-  hosts: linux
-  become: yes
-  roles:
-    - firewall
-  tags:
-    - initial
-    - firewall
-
 - name: Modify Users
   hosts: linux
   become: yes
@@ -25,6 +16,24 @@
   tags:
     - initial
     - users
+
+- name: Setup Firewall
+  hosts: linux
+  become: yes
+  roles:
+    - firewall
+  tags:
+    - initial
+    - firewall
+    
+- name: run audit 
+  hosts: linux
+  become: yes
+  roles: 
+    - audit
+  tags:
+    - initial
+    - audit
 
 - name: Install Wazuh Manager
   hosts: manager
@@ -44,12 +53,3 @@
     - initial
     - logging
   when: inventory_hostname != 'satellite'
-
-- name: run audit 
-  hosts: linux
-  become: yes
-  roles: 
-    - audit
-  tags:
-    - initial
-    - audit
