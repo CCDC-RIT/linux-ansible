@@ -1,6 +1,6 @@
 ---
 - name: Backup Startup IPTables Configuration
-  hsots: ironcurtain
+  hosts: ironcurtain
   become: true
   tasks:
     - name: Backup Startup IPTables Configuration
@@ -69,8 +69,6 @@
         jump: ACCEPT
         comment: "Allow IMAP/SMTP to wiretap"
       loop: "{{ imap_smtp }}"
-      loopcontrol:
-        label: "{{ item }}"
       when: inventory_hostname == "wiretap"
     - name: Allow HTTP to propaganda
       iptables:
@@ -81,8 +79,6 @@
         jump: ACCEPT
         comment: "Allow HTTP/S to propaganda"
       loop: "{{ web }}"
-      loop_control:
-        label: "{{ item }}"
       when: inventory_hostname == "propaganda"
 
 - name: Allow Wazuh between all machines
@@ -145,12 +141,13 @@
   hosts: ironcurtain
   become: true
   tasks:
-    iptables:
-      chain: INPUT
-      source: "0.0.0.0/0"
-      protocol: tcp
-      jump: DROP
-      comment: "Implicit deny all"
+    - name: Block everything else
+      iptables:
+        chain: INPUT
+        source: "0.0.0.0/0"
+        protocol: tcp
+        jump: DROP
+        comment: "Implicit deny all"
 
 - name: Backup IPTables Configuration After Ansible
   hosts: ironcurtain
