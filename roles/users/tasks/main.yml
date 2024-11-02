@@ -1,9 +1,26 @@
----
-- task: Create blueteam user
-  user:
-    name: blueteam
-    state: present
-    groups: blueteam wheel sudo adm
-    append: yes
-    shell: /bin/bash
-    password: "{{ blueteam_password | password_hash('sha512') }}"
+- name: Create blueteam user
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Create blueteam user
+      user:
+        name: blueteam
+        state: present
+        groups: blueteam, wheel, sudo, adm
+        append: yes
+        shell: /bin/bash
+        password: "{{ blueteam_password | password_hash('sha512') }}"
+
+- name: Load user list from file
+  hosts: all
+  become: yes
+  vars:
+    users: "{{ lookup('file', 'users.txt').splitlines() }}"
+  
+  tasks:
+    - name: Generate and set passwords for each user
+      user:
+        name: "{{ item }}"
+        password: "{{ lookup('password', '/dev/null', length=20, chars=ascii_letters) | password_hash('sha512') }}"
+      loop: "{{ users }}"
