@@ -11,7 +11,30 @@
     source: "{{ scoring_ip }}"
     jump: ACCEPT
 
-- name: Allow traffic according to topology
+- name: Allow WAN traffic according to topology
+  hosts: all
+  become: true
+  tasks:
+    - name: Allow MySQL to spy
+      iptables:
+        chain: INPUT
+        source: "0.0.0.0/0"
+        protocol: tcp
+        destination_port: 3306
+        jump: ACCEPT
+        comment: "Allow MySQL to spy"
+      when: inventory_hostname == "spy"
+    - name: Allow Grafana to satellite
+      iptables:
+        chain: INPUT
+        source: "0.0.0.0/0"
+        protocol: tcp
+        destination_port: 3000
+        jump: ACCEPT
+        comment: "Allow Grafana to satellite"
+      when: inventory_hostname == "satellite"
+
+- name: Allow LAN traffic according to topology
   hosts: all
   become: true
   vars:
