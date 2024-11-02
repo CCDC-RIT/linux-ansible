@@ -15,7 +15,7 @@
     - 25
     - 587
   when: inventory_hostname == "wiretap"
-    become: true
+  become: true
 
 - name: Allow FTP on vault
   ansible.builtin.command: iptables -A INPUT -p tcp --dport 21 -j ACCEPT
@@ -25,4 +25,8 @@
 - name: Allow MySQL on spy
   ansible.builtin.command: iptables -A INPUT -p tcp --dport 3306 -j ACCEPT
   when: inventory_hostname == "spy"
+  become: true
+
+- name: Set default policy to DROP for incoming traffic
+  ansible.builtin.command: iptables -P INPUT DROP
   become: true
