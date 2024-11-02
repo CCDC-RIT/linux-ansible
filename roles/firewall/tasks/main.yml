@@ -4,12 +4,12 @@
 
 # - include: ubuntu.yml
 #   when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
-
-- task: Block everything except scoring
-  iptables:
-    chain: INPUT
-    source: "{{ scoring_ip }}"
-    jump: ACCEPT
+# 
+# - task: Block everything except scoring
+  # iptables:
+  #   chain: INPUT
+  #   source: "{{ scoring_ip }}"
+  #   jump: ACCEPT
 
 - name: Allow WAN traffic according to topology
   hosts: all
@@ -78,6 +78,18 @@
       loop_control:
         label: "{{ item }}"
 
+- name: Allow Wazuh between all machines
+  hosts: all
+  become: true
+  tasks:
+    - name: Allow Wazuh
+      iptables:
+        chain: INPUT
+        sources: "0.0.0.0/0"
+        protocol: tcp
+        destination_port: 1514
+        jump: ACCEPT
+        comment: "Allow Wazuh between all machines"
 
 - name: Allow SSH between all machines
   hosts: all
@@ -121,6 +133,17 @@
       loop: "{{ datadog }}"
       loop_control:
         label: "{{ item }}"
+
+- name: Block everything else
+  hosts: all
+  become: true
+  tasks:
+    iptables:
+      chain: INPUT
+      source: "0.0.0.0/0"
+      protocol: tcp
+      jump: DROP
+      comment: "Implicit deny all"
 
 - task: Backup IPTables Configuration After Ansible
   command: iptables-save > /etc/iptables/secure_rules.v4
