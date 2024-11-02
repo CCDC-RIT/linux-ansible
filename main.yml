@@ -8,14 +8,14 @@
     - initial
     - setup
 
-- name: Setup PFSense Firewall
-  hosts: router
+- name: Setup Firewall
+  hosts: linux
   become: yes
   roles:
-    - pfsense
+    - firewall
   tags:
     - initial
-    - pfsense
+    - firewall
 
 - name: Modify Users
   hosts: linux
