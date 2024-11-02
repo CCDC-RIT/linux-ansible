@@ -1,6 +1,6 @@
 ---
 - task: Backup Startup IPTables Configuration
-  command: iptables-save > /etc/iptables/prebake_rules.v4
+  command: iptables-save > /etc/iptables/prebaked_rules.v4
 
 # - include: ubuntu.yml
 #   when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
@@ -12,7 +12,7 @@
   #   jump: ACCEPT
 
 - name: Allow WAN traffic according to topology
-  hosts: all
+  hosts: ironcurtain
   become: true
   tasks:
     - name: Allow MySQL to spy
@@ -35,7 +35,7 @@
       when: inventory_hostname == "satellite"
 
 - name: Allow LAN traffic according to topology
-  hosts: all
+  hosts: ironcurtain
   become: true
   vars:
     imap_smtp:
@@ -82,7 +82,7 @@
       when: inventory_hostname == "propaganda"
 
 - name: Allow Wazuh between all machines
-  hosts: all
+  hosts: ironcurtain
   become: true
   tasks:
     - name: Allow Wazuh
@@ -95,7 +95,7 @@
         comment: "Allow Wazuh between all machines"
 
 - name: Allow SSH between all machines
-  hosts: all
+  hosts: ironcurtain
   become: true
   tasks:
     - name: Allow SSH
@@ -108,7 +108,7 @@
         comment: "Allow SSH between all machines"
 
 - name: Allow all out of scope IPs
-  hosts: all
+  hosts: ironcurtain
   become: true
   vars:
     management:
@@ -138,7 +138,7 @@
         label: "{{ item }}"
 
 - name: Block everything else
-  hosts: all
+  hosts: ironcurtain
   become: true
   tasks:
     iptables:
