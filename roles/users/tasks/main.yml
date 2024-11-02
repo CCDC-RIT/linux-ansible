@@ -1,6 +1,6 @@
 ---
 - name: Create blueteam user
-  hosts: all
+  hosts: linux
   become: yes
   vars:
     groups_to_check:
@@ -37,7 +37,7 @@
         password: "{{ blueteam_password | password_hash('sha512') }}"
 
 - name: Load user list and set passwords
-  hosts: all
+  hosts: linux
   become: yes
   vars:
     user_data: "{{ lookup('file', 'users.txt').splitlines() }}"
