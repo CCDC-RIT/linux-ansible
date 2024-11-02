@@ -9,6 +9,12 @@
     - "iptables"
     - "git"
     - "python3-pip"
+
+- task: Remove pam
+  apt: name=pam state=absent
+
+- task: Reinstall pam
+  apt: name=pam state=present update_cache=yes
   
 - task: Make backup directory
   file:
@@ -53,10 +59,6 @@
       pause:
         seconds: 2
 
-- name: Check open ports and services with netstat
-  hosts: all
-  become: true
-  tasks:
     - name: List all open ports and associated services using netstat
       ansible.builtin.command:
         cmd: netstat -tuln

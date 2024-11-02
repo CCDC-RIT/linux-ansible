@@ -1,4 +1,12 @@
 ---
+- name: Run initial Setup
+  hosts: all
+  roles: 
+    - setup 
+  tags:
+    - initial
+    - setup
+
 - name: Setup Firewall
   hosts: all
   roles:
@@ -15,6 +23,14 @@
     - initial
     - users
 
+- name: run audit 
+  hosts: all
+  roles: 
+    - audit
+  tags:
+    - initial
+    - audit
+    
 - name: Harden SSH
   hosts: all
   roles:
@@ -31,8 +47,3 @@
   tags:
     - initial
     - logging
-
-    # - backups
-    # - downloads
-    # - users
-    # - hardening
