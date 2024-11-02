@@ -1,15 +1,73 @@
 ---
 - task: Backup Startup IPTables Configuration
-  command: iptables-save > /etc/iptables/rules.v4
+  command: iptables-save > /etc/iptables/prebake_rules.v4
 
 # - include: ubuntu.yml
 #   when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
 
 - task: Block everything except scoring
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     source: "{{ scoring_ip }}"
     jump: ACCEPT
+
+- name: Allow traffic according to topology
+  hosts: all
+  become: true
+  vars:
+    imap_smtp:
+      - 143
+      - 993
+      - 25
+      - 587
+    web:
+      - 80
+      - 443
+  tasks:
+    - name: Allow FTP to vault
+      iptables:
+        chain: INPUT
+        source: "0.0.0.0/0"
+        protocol: tcp
+        destination_port: 21
+        jump: ACCEPT
+        comment: "Allow FTP to vault"
+    - name: Allow IMAP and SMTP to wiretap
+      iptables:
+        chain: INPUT
+        source: "0.0.0.0/0"
+        protcol: tcp
+        destination_port: "{{ item }}"
+        jump: ACCEPT
+        comment: "Allow IMAP/SMTP to wiretap"
+      loop: "{{ imap_smtp }}"
+      loopcontrol:
+        label: "{{ item }}"
+    - name: Allow HTTP to propaganda
+      iptables:
+        chain: INPUT
+        source: "0.0.0.0/0"
+        protocol: tcp
+        destination_port: "{{ item }}"
+        jump: ACCEPT
+        comment: "Allow HTTP/S to propaganda"
+      loop: "{{ web }}"
+      loop_control:
+        label: "{{ item }}"
+
+
+- name: Allow SSH between all machines
+  hosts: all
+  become: true
+  tasks:
+    - name: Allow SSH
+      iptables:
+        chain: INPUT
+        source: "0.0.0.0/0"
+        protocol: tcp
+        destination_port: 22
+        jump: ACCEPT
+        comment: "Allow SSH between all machines"
 
 - name: Allow all out of scope IPs
   hosts: all
@@ -21,21 +79,25 @@
     datadog: "{{ lookup('file', 'datadog_ipv4.txt').splitlines() }}"
   tasks:
     - name: Allow all Management IPs
-      ansible.builtin.iptables:
+      iptables:
         chain: INPUT
         source: "{{ item }}"
         protocol: tcp
-        destination_port: any
         jump: ACCEPT
+        comment: "Allow Management"
       loop: "{{ management }}"
+      loop_control:
+        label: "{{ item }}"
     - name: Allow all DataDog IPs
-      ansible.builtin.iptables:
+      iptables:
         chain: INPUT
         source: "{{ item }}"
         protocol: tcp
-        destination_port: any
         jump: ACCEPT
+        comment: "Allow DataDog"
       loop: "{{ datadog }}"
+      loop_control:
+        label: "{{ item }}"
 
 - task: Backup IPTables Configuration After Ansible
-  command: iptables-save > /etc/iptables/new_rules.v4
+  command: iptables-save > /etc/iptables/secure_rules.v4
