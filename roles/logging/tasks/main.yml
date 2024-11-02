@@ -1,0 +1,86 @@
+
+---
+- name: copy over wazuh binary
+  ansible.builtin.copy:
+    src: binaries/wazuh-agent_4.7.2-1_amd64_debian.deb
+    dest: /tmp/wazuh-agent_4.7.2-1_amd64_debian.deb
+
+- name: Install Wazuh agent from binary
+  ansible.builtin.apt:
+    deb: /tmp/wazuh-agent_4.7.2-1_amd64_debian.deb
+    state: present
+
+- name: Enroll agent using manager IP address
+  replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: 'MANAGER_IP'
+    replace: "{{ manager_ip }}"
+
+# - name: Install curl
+#   ansible.builtin.package:
+#     name: curl
+#     state: present
+    
+# - name: Download and import Wazuh GPG key
+#   ansible.builtin.command: 
+#     cmd: "curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import"
+
+# - name: Set permissions for the Wazuh GPG key
+#   ansible.builtin.file:
+#     path: /usr/share/keyrings/wazuh.gpg
+#     mode: '0644'
+
+# - name: Add Wazuh repository to sources list
+#   ansible.builtin.command: 
+#     cmd: echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
+
+# - name: Update apt package index
+#   ansible.builtin.apt:
+#     update_cache: yes
+
+# - name: Install Wazuh agent using environment variable
+#   ansible.builtin.shell: 
+#     cmd: WAZUH_MANAGER="{{ manager_ip }}" apt-get install -y wazuh-agent 
+
+- name: Install YARA and git
+  ansible.builtin.package:
+    name: 
+      - yara
+      - git
+    state: present
+
+- name: Create /opt/yara/rules directory
+  ansible.builtin.file:
+    path: /opt/yara/rules
+    state: directory
+    mode: '0755'
+
+- name: Copy over compiled YARA rules
+  ansible.builtin.copy:
+    src: rules/compiled.linux
+    dest: /opt/yara/rules/compiled.linux
+    owner: root
+    group: wazuh
+    mode: '0660'
+
+- name: Copy over YARA active response script
+  ansible.builtin.copy: 
+    src: configs/yara.sh
+    dest: /var/ossec/active-response/bin/yara.sh
+    owner: root
+    group: wazuh 
+    mode: '0750'
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable Wazuh agent service
+  ansible.builtin.systemd:
+    name: wazuh-agent
+    enabled: yes
+
+- name: Start Wazuh agent service
+  ansible.builtin.systemd:
+    name: wazuh-agent
+    state: started
