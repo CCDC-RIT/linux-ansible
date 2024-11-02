@@ -1,0 +1,108 @@
+---
+- name: Download the Wazuh install script
+  ansible.builtin.get_url:
+    url: https://packages.wazuh.com/4.9/wazuh-install.sh
+    dest: /tmp/wazuh-install.sh
+    mode: '0755'
+
+- name: Run the Wazuh install script
+  ansible.builtin.command:
+    cmd: bash /tmp/wazuh-install.sh -a -i -o
+  args:
+    creates: /var/ossec
+
+- name: Download the Wazuh password changing utility
+  ansible.builtin.get_url:
+    url: https://packages.wazuh.com/4.9/wazuh-passwords-tool.sh
+    dest: /tmp/wazuh-passwords-tool.sh
+    mode: '0755'
+
+- name: Run the Wazuh password changing script
+  ansible.builtin.shell:
+    cmd: bash /tmp/wazuh-passwords-tool.sh -a > /var/ossec/etc/wazuh-passwords.txt
+  args:
+    creates: /var/ossec/etc/wazuh-passwords.txt
+
+
+- name: Set ownership for ossec.log
+  ansible.builtin.file:
+    path: /var/ossec/logs/ossec.log
+    owner: root
+    group: wazuh
+    mode: '0660'
+
+- name: Add linux agent group
+  ansible.builtin.command: /var/ossec/bin/agent_groups -a -g linux -q
+
+- name: Add windows agent group
+  ansible.builtin.command: /var/ossec/bin/agent_groups -a -g windows -q
+
+- name: Configure kernel control commands
+  ansible.builtin.copy:
+    content: |
+      insmod:
+      rmmod:
+      modprobe:
+    dest: /var/ossec/etc/lists/kernel_control_commands
+
+- name: Copy centralized_agent.conf
+  ansible.builtin.copy:
+    src: configs/centralized_agent.conf
+    dest: /var/ossec/etc/shared/linux/agent.conf
+    owner: wazuh
+    group: wazuh
+    mode: '0660'
+
+- name: Copy internal_options.conf
+  ansible.builtin.copy:
+    src: configs/internal_options.conf
+    dest: /var/ossec/etc/internal_options.conf
+    owner: root
+    group: wazuh
+    mode: '0640'
+
+- name: Copy ossec.conf
+  ansible.builtin.copy:
+    src: configs/ossec.conf
+    dest: /var/ossec/etc/ossec.conf
+    owner: root
+    group: wazuh
+    mode: '0660'
+
+- name: Copy linux_rules.xml
+  ansible.builtin.copy:
+    src: rules/linux_rules.xml
+    dest: /var/ossec/ruleset/rules/linux_rules.xml
+    owner: root
+    group: wazuh
+    mode: '0660'
+
+- name: Copy windows_rules.xml
+  ansible.builtin.copy:
+    src: rules/windows_rules.xml
+    dest: /var/ossec/ruleset/rules/windows_rules.xml
+    owner: root
+    group: wazuh
+    mode: '0660'
+
+- name: Copy over decoders
+  ansible.builtin.copy:
+    src: decoders/
+    dest: /var/ossec/etc/decoders/
+    owner: wazuh
+    group: wazuh
+    mode: '0660'
+
+- name: Find all files in the decoders directory
+  ansible.builtin.find:
+    paths: /var/ossec/etc/decoders/
+    recurse: yes
+  register: decoders_files
+
+- name: Set correct permissions for all decoder files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: wazuh
+    group: wazuh
+    mode: '0660'
+  loop: "{{ decoders_files.files }}"

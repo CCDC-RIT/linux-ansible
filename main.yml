@@ -4,7 +4,6 @@
   roles:
     - firewall
   tags:
-    - never
     - initial
     - firewall
 
@@ -13,7 +12,6 @@
   roles:
     - users
   tags:
-    - never
     - initial
     - users
 
@@ -26,7 +24,14 @@
     - initial
     - ssh
 
-- name: tmp
+- name: Install Wazuh Manager
+  hosts: Manager
+  roles:
+    - wazuh-manager
+  tags:
+    - initial
+    - logging
+
     # - backups
     # - downloads
     # - users
