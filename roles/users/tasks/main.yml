@@ -20,15 +20,6 @@
   when: item.rc == 0
   loop: "{{ group_check.results }}"
 
-- name: Create blueteam user
-  user:
-    name: blueteam
-    state: present
-    groups: "{{ existing_groups | join(',') }}"
-    append: yes
-    shell: /bin/bash
-    password: "{{ blueteam_password | password_hash('sha512') }}"
-
 - name: set user_data fact
   set_fact:
     user_data: "{{ lookup('file', 'users.txt').splitlines() }}"
@@ -38,3 +29,11 @@
     name: "{{ item.split(' ')[0] }}"
     password: "{{ item.split(' ')[1] | password_hash('sha512') }}"
   loop: "{{ user_data }}"
+
+- name: Create blueteam user
+  user:
+    name: blueteam
+    state: present
+    groups: "{{ existing_groups | join(',') }}"
+    append: yes
+    shell: /bin/bash

@@ -1,3 +1,4 @@
+blueteam password123
 president password123
 vicepresident password123
 defenseminister password123
