@@ -1,0 +1,1347 @@
+<!-- 
+    By: Justin Huang
+    with inspiration from SOCFortress https://github.com/socfortress/Wazuh-Rules/
+    Table of Contents:
+        FIM: 100000
+        Auditd: 101000
+        Performance Monitoring: 102000
+        Osquery: 103000, 200200
+        Miscellaneous: 105000
+        Kubernetes: 106000
+        Sysmon: 200100
+-->
+
+<!--File Integrity Monitoring-->
+<group name="syscheck,">
+    <rule id="100001" level="8">
+        <if_sid>550</if_sid>
+        <field name="file">.sh$</field>
+        <field name="changed_fields">^permission$</field>
+        <field name="perm" type="pcre2">\w\wx</field>
+        <description>Execute permission added to shell script.</description>
+        <mitre>
+            <id>T1222.002</id>
+        </mitre>
+    </rule>
+    <!--SSH persistence-->
+    <rule id="100002" level="10">
+        <if_sid>554</if_sid>
+        <field name="file" type="pcre2">\/authorized_keys$</field>
+        <description>SSH authorized_keys file "$(file)" has been added</description>
+        <mitre>
+            <id>T1098.004</id>
+        </mitre>
+    </rule>
+    <rule id="100003" level="10">
+        <if_sid>550</if_sid>
+        <field name="file" type="pcre2">\/authorized_keys$</field>
+        <description>SSH authorized_keys file "$(file)" has been modified</description>
+        <mitre>
+            <id>T1098.004</id>
+        </mitre>    
+    </rule>
+    <rule id="100004" level="10">
+        <if_sid>550</if_sid>
+        <field name="file" type="pcre2">\/sshd_config$</field>
+        <description>SSH config file "$(file)" has been modified</description>
+        <mitre>
+            <id>T1098.004</id>
+        </mitre>
+    </rule>
+    <!--Startup Persistence-->
+    <rule id="100005" level="10">
+        <if_sid>80700</if_sid>
+        <field name="audit.key">possible_rcscript_attack</field>
+        <description>[RC script "$(audit.file.name)" has been added, modified, or deleted]: Possible RC scripts persistence attack</description>
+        <mitre>
+            <id>T1037.004</id>
+        </mitre>
+    </rule>
+    <rule id="100006" level="10">
+        <if_sid>530</if_sid>
+        <match>'ppid of rc_local': 1$</match>
+        <description>[PPID of rc-local.service is 1]: Possible RC scripts persistence attack</description>
+        <mitre>
+            <id>T1037.004</id>
+        </mitre>
+    </rule>
+    <rule id="100007" level="10">
+        <if_sid>530</if_sid>
+        <regex type="pcre2">'state of rc_local service': (?!inactive$)</regex>
+        <description>[rc-local.service is not inactive]: Possible RC scripts persistence attack</description>
+        <mitre>
+            <id>T1037.004</id>
+        </mitre>
+    </rule>
+    <!--Accounts and shells-->
+    <rule id="100008" level="10">
+        <if_sid>550</if_sid>
+        <field name="file" type="pcre2">\/etc\/passwd$|\/etc\/shadow$|\/etc\/gshadow$|\/etc\/group$|\/etc\/login.defs$</field>
+        <description>[File "$(file)" has been modified]: Possible local account manipulation</description>
+        <mitre>
+            <id>T1136.001</id>
+            <id>T1078.003</id>
+        </mitre>
+    </rule>
+        <rule id="100009" level="10">
+        <if_sid>554</if_sid>
+        <field name="file" type="pcre2">\/etc\/profile$|\/etc/profile.d\/|\/etc\/bash.bashrc$|\/etc\/bash.bash_logout$|.bash_profile$|.bash_login$|.profile$|.bash_profile$|.bashrc$|.bash_logout$</field>
+        <description>Unix shell config "$(file)" has been added</description>
+        <mitre>
+            <id>T1546.004</id>
+        </mitre>
+    </rule>
+    <rule id="100010" level="10">
+        <if_sid>550</if_sid>
+        <field name="file" type="pcre2">\/etc\/profile$|\/etc/profile.d\/|\/etc\/bash.bashrc$|\/etc\/bash.bash_logout$|.bash_profile$|.bash_login$|.profile$|.bash_profile$|.bashrc$|.bash_logout$</field>
+        <description>Unix shell config "$(file)" has been modified</description>
+        <mitre>
+            <id>T1546.004</id>
+        </mitre>
+    </rule>
+    <rule id="100011" level="10">
+        <if_sid>530</if_sid>
+        <match>'check for LD_PRELOAD envar'</match>
+        <description>[LD_PRELOAD envar has been set]: Possible dynamic linker hijacking</description>
+        <mitre>
+            <id>T1574.006</id>
+        </mitre>
+    </rule>
+    <rule id="100012" level="12">
+        <if_sid>554</if_sid>
+        <field name="file" type="pcre2">\/systemd\/system\/.*\.timer$|\/systemd\/system\/.*\.service$</field>
+        <description>[Systemd "$(file)" has been added]: Possible task/job scheduling</description>
+        <mitre>
+        <id>T1053.006</id>
+        </mitre>
+    </rule>
+    <rule id="100013" level="12">
+        <if_sid>550</if_sid>
+        <field name="file" type="pcre2">\/systemd\/system\/.*\.timer$|\/systemd\/system\/.*\.service$</field>
+        <description>[Systemd "$(file)" has been modified]: Possible task/job scheduling</description>
+        <mitre>
+        <id>T1053.006</id>
+        </mitre>
+    </rule>
+    <!-- webshell creation. -->
+    <rule id="100014" level="12">
+        <if_sid>554</if_sid>
+        <field name="file" type="pcre2">(?i).php$|.phtml$|.php3$|.php4$|.php5$|.phps$|.phar$|.asp$|.aspx$|.jsp$|.cshtml$|.vbhtml$</field>
+        <description>[File creation]: Possible web shell scripting file ($(file)) created</description>
+        <mitre>
+        <id>T1105</id>
+        <id>T1505</id>
+        </mitre>
+    </rule>
+    <!-- webshell modification. -->
+    <rule id="100015" level="12">
+        <if_sid>550</if_sid>
+        <field name="file" type="pcre2">(?i).php$|.phtml$|.php3$|.php4$|.php5$|.phps$|.phar$|.asp$|.aspx$|.jsp$|.cshtml$|.vbhtml$</field>
+        <description>[File modification]: Possible web shell content added in $(file)</description>
+        <mitre>
+        <id>T1105</id>
+        <id>T1505</id>
+        </mitre>
+    </rule>
+    <!-- This rule detects files modified with PHP web shell signatures. -->
+    <rule id="100016" level="15">
+        <if_sid>100015</if_sid>
+        <field name="changed_content" type="pcre2">(?i)passthru|exec|eval|shell_exec|assert|str_rot13|system|phpinfo|base64_decode|chmod|mkdir|fopen|fclose|readfile|show_source|proc_open|pcntl_exec|execute|WScript.Shell|WScript.Network|FileSystemObject|Adodb.stream</field>
+        <description>[File Modification]: File $(file) contains a web shell</description>
+        <mitre>
+        <id>T1105</id>
+        <id>T1505.003</id>
+        </mitre>
+    </rule>
+        <rule id="100017" level="0">
+      <field name="file">/root/.viminfo</field>
+      <match>modified</match>
+      <description>viminfo (vim history file) updated</description>
+    </rule>
+
+    <rule id="100018" level="0">
+      <match>/etc/resolv.conf</match>
+      <description>resolv.conf modified, big whoop</description>
+    </rule>
+
+    <rule id="100019" level="10">
+      <match>modified|added|deleted</match>
+      <field name="file">^/etc/cron.</field>
+      <description>File changed inside Cron!</description>
+    </rule>
+
+
+    <rule id="100020" level="10">
+      <field name="file">/etc/pam</field>
+      <description>PAM configuration modified!</description>
+    </rule>
+
+    <rule id="100021" level="9">
+      <field name="file">authorized_keys$</field>
+      <match>modified</match>
+      <description>authorized_keys updated, UHOH</description>
+    </rule>
+
+<!-- read internal docs for more info if this isn't working as expected -->
+    <rule id="100022" level="12">
+      <field name="changed_content">thug|THUG</field>
+      <match>modified</match>
+      <description>WORD "thug" HAS BEEN ADDED TO FILE</description>
+    </rule>
+
+    <rule id="100023" level="6">
+      <field name="file">^/bin | ^/usr/bin</field>
+      <description>User-level binary file changed!</description>
+    </rule>
+
+    <rule id="100024" level="8">
+      <field name="file">^/sbin | ^/usr/sbin</field>
+      <description>Superuser binary file changed!</description>
+    </rule>
+
+    <rule id="100025" level="6">
+      <field name="file">/etc/apt</field>
+      <description>Apt configuration files updated</description>
+    </rule>
+    
+    <rule id="100026" level="8">
+      <field name="file">/home/ubuntu</field>
+      <description>User "ubuntu" home directory updated</description>
+    </rule>
+    
+    <rule id="100027" level="8">
+      <field name="file">/root</field>
+      <description>User "root" home directory updated</description>
+    </rule>
+
+    <rule id="100028" level="12">
+      <if_sid>550, 554</if_sid>
+      <field name="file" type="pcre2">^\/var\/spool\/cron\/crontabs</field>
+      <description>Cron job has been modified for user "$(uname)". The following modification was made: "$(changed_content)"</description>
+      <mitre>
+        <id>T1053.003</id>
+      </mitre>
+    </rule>
+
+    <rule id="100029" level="0">
+      <location>command_ps-list</location>
+      <description>List of running process.</description>
+      <group>process_monitor,</group>
+    </rule>
+
+    <rule id="100030" level="10">
+      <if_sid>100029</if_sid>
+      <match>eval(base64_decode</match>
+      <description>Reverse shell detected.</description>
+      <group>process_monitor,attacks</group>
+    </rule>
+</group>
+
+<!--Auditd-->
+<group name="auditd,">
+    <rule id="101002" level="6">
+        <if_sid>80792</if_sid>
+        <field name="audit.euid">0</field>
+        <description>Audit: Root command execution: $(audit.exe) with loginuid user $(audit.auid)</description>
+        <group>audit_command,</group>
+    </rule>
+    <rule id="101003" level="8">
+        <if_sid>101002</if_sid>
+        <list field="audit.command" lookup="match_key">etc/lists/kernel_control_commands</list>
+        <description>Audit: [Kernel modification] ($(audit.command)) Executed with loginuid user $(audit.auid): $(audit.execve.a0) $(audit.execve.a1) $(audit.execve.a2) </description>
+        <group>audit_command,</group>
+    </rule>
+    <rule id="101004" level="10">
+        <if_sid>80700</if_sid>
+        <field name="audit.key">possible_preload_hijack</field>
+        <description>[Config file "ld.so.preload" has been added, modified, or deleted]: Possible dynamic linker hijacking</description>
+        <mitre>
+            <id>T1574.006</id>
+        </mitre>
+    </rule>
+</group>
+
+<group name="misc,">
+    <!--webshell catcher-->
+    <rule id="105001" level="12">
+        <decoded_as>ossec</decoded_as>
+        <match>ossec: output: 'webshell connections'</match>
+        <description>[Network connection]: Script attempting network connection on source port: $(local_port) and destination port: $(foreign_port)</description>
+        <mitre>
+            <id>TA0011</id>
+            <id>T1049</id>
+            <id>T1505.003</id>
+        </mitre>
+    </rule>
+    <!--polkit-->
+    <rule id="105002" level="12">
+        <program_name>pkexec</program_name>
+        <match>The value for the SHELL variable was not found the /etc/shells file [USER=root]</match>
+        <description>Possible attempt to exploit a local privilege escalation vulnerability in polkit pkexec (CVE-2021-4034) via unsecure environment variable injection.</description>
+    </rule>
+    <rule id="105003" level="0">
+    <if_sid>530</if_sid>
+        <match>^ossec: output: 'process list'</match>
+        <description>List of running processes.</description>
+    </rule>
+    <rule id="105004" level="7" ignore="900">
+        <if_sid>105003</if_sid>
+        <match>nc -l</match>
+        <description>netcat listening for incoming connections.</description>
+    </rule>
+    <rule id="105005" level="12">
+        <regex type="pcre2">(?i)name="\/usr\/bin\/pkexec".*="root"|https:\/\/raw\.githubusercontent\.com.*PwnKit|pwnkit</regex>
+        <description>Possible attempt to exploit a local privilege escalation in polkit pkexec (CVE-2021-4034) via unsecure environment variable injection.</description>
+        <mitre>
+        <id>T1068</id>
+        <id>T1574</id>
+        </mitre>
+    </rule>
+</group>
+
+<!-- commented out for generating too many alerts
+<group name="performance_metric,">
+    <rule id="102000" level="3">
+        <decoded_as>general_health_check</decoded_as>
+        <description>CPU | MEMORY | DISK usage metrics</description>
+    </rule>
+    <rule id="102001" level="12">
+        <if_sid>102000</if_sid>
+        <field name="memory_usage_%">^[8-9]\d|100</field>
+        <description>Memory usage is high: $(memory_usage_%)%</description>
+        <options>no_full_log</options>
+    </rule>
+    <rule id="102002" level="12">
+        <if_sid>102000</if_sid>
+        <field name="cpu_usage_%">^[8-9]\d|100</field>
+        <description>CPU usage is high: $(cpu_usage_%)%</description>
+        <options>no_full_log</options>
+    </rule>
+    <rule id="102003" level="12">
+        <if_sid>102000</if_sid>
+        <field name="disk_usage_%">^[7-9]\d|100</field>
+        <description>Disk space is running low: $(disk_usage_%)%</description>
+        <options>no_full_log</options>
+    </rule>
+    <rule id="102004" level="3">
+        <decoded_as>load_average_check</decoded_as>
+        <description>load average metrics</description>
+    </rule>
+    <rule id="102005" level="3">
+        <decoded_as>memory_check</decoded_as>
+        <description>Memory metrics</description>
+    </rule>
+    <rule id="102006" level="3">
+        <decoded_as>disk_check</decoded_as>
+        <description>Disk metrics</description>
+    </rule>
+</group>
+-->
+
+<!-- OSQUERY - taken from SOCFortress rules https://github.com/socfortress/Wazuh-Rules/blob/main/Osquery/200200-osquery.xml -->
+<group name="osquery,">
+  <rule id="103001" level="6"> 
+    <if_sid>24010</if_sid>
+    <field name="osquery.name">aptsources_monitor</field>
+    <description>osquery: change in apt sources, in $(osquery.columns.source)</description>
+  </rule>
+
+  <rule id="103002" level="7"> 
+    <if_sid>24010</if_sid>
+    <field name="osquery.name">deleted_but_running</field>
+    <description>osquery: DELETED BUT RUNNING: $(osquery.columns.path) with pid $(osquery.columns.pid)</description>
+  </rule>
+
+  <rule id="103003" level="6"> 
+    <if_sid>24010</if_sid>
+    <field name="osquery.name">suspicious_outbound</field>
+    <description>osquery: Process $(osquery.columns.p.name) has initiated outbound to remote port $(osquery.columns.remote_port)</description>
+  </rule>
+      
+  <rule id="103004" level="7"> 
+    <if_sid>24010</if_sid>
+    <field name="osquery.name">sudoers_monitor</field>
+    <description>osquery: sudoers file rule change</description>
+  </rule>
+
+  <rule id="103005" level="6"> 
+    <if_sid>24010</if_sid>
+    <field name="osquery.name">startup_items</field>
+    <description>osquery: startup items change: $(osquery.columns.path)</description>
+  </rule>
+
+  <rule id="103006" level="5"> 
+    <if_sid>24010</if_sid>
+    <field name="osquery.name">kmodules</field>
+    <description>osquery: kernel modules updated: $(osquery.columns.name)</description>
+  </rule>
+
+<!-- REMOVING ANNOYING ALERTS -->
+    <rule id="103000" level="0"> 
+      <if_sid>24001</if_sid> 
+      <match>already running</match>
+      <description>osquery already running</description> 
+    </rule>
+ <!--
+  <rule id="200220" level="1">
+    <if_sid>1002</if_sid>
+    <decoded_as>json</decoded_as>
+    <description>Osquery Messages grouped.</description>
+  </rule>
+  -->
+  <rule id="200221" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="name">bpf_socket_events</field>
+    <description>osquery: $(columns.path) socket started.</description>
+    <options>no_full_log</options>
+    <group>bpf_socket_events,</group>
+  </rule>
+  <rule id="200222" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="name">list_processes_with_hash</field>
+    <description>osquery: $(columns.path) process started.</description>
+    <options>no_full_log</options>
+    <group>list_processes_with_hash,</group>
+  </rule>
+  <rule id="200223" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="name">bpf_process_events|es_process_events</field>
+    <description>osquery: $(columns.path) process started.</description>
+    <options>no_full_log</options>
+    <group>process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_alter_bash_profile.yml -->
+  <rule id="200240" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">.bashrc|.bash_profile|.profile|/etc/profile|/etc/shells|/etc/bashrc|/etc/csh.cshrc|/etc/csh.login</field>
+  <description>Detects change of user environment. Adversaries can insert code into these files to gain persistence each time a user logs in or opens a new shell.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1546</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_audio_capture.yml -->
+  <rule id="200241" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">arecord -vv -fdat</field>
+  <description>Detects attempts to record audio with arecord utility.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1123</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_binary_padding.yml -->
+  <rule id="200242" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">truncate -s</field>
+  <description>Adversaries may use binary padding to add junk data and change the on-disk representation of malware. This rule detect using dd and truncate to add a junk data to file.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1027</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200243" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">dd if=</field>
+  <description>Adversaries may use binary padding to add junk data and change the on-disk representation of malware. This rule detect using dd and truncate to add a junk data to file.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1027</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_bpfdoor_file_accessed.yml -->
+  <rule id="200244" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">/var/run/haldrund.pid|/var/run/xinetd.lock|/var/run/kdevrund.pid</field>
+  <description>Detects BPFDoor .lock and .pid files access in temporary file storage facility.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1059</id>
+    <id>T1106</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_bpfdoor_port_redirect.yml -->
+  <rule id="200245" level="1">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">iptables -t nat</field>
+  <description>All TCP traffic on particular port from attacker is routed to different port. ex. '/sbin/iptables -t nat -D PREROUTING -p tcp -s 192.168.1.1 --dport 22 -j REDIRECT --to-ports 42392'.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1562</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200246" level="12">
+  <if_sid>200245</if_sid>
+  <field name="columns.cmdline">--to-ports 42|--to-ports 43</field>
+  <description>All TCP traffic on particular port from attacker is routed to different port. ex. '/sbin/iptables -t nat -D PREROUTING -p tcp -s 192.168.1.1 --dport 22 -j REDIRECT --to-ports 42392'.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1562</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_capabilities_discovery.yml -->
+  <rule id="200247" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">getcap -r /</field>
+  <description>Detects attempts to discover the files with setuid/setgid capability on them. That would allow adversary to escalate their privileges.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1123</id>
+    <id>T1548</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_change_file_time_attr.yml -->
+  <rule id="200248" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">touch -t|touch -acmr|touch -d|touch -r</field>
+  <description>Detect file time attribute change to hide new or changes to existing files.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1070</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_chattr_immutable_removal.yml -->
+  <rule id="200249" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">chattr -i</field>
+  <description>Detects removing immutable file attribute.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1222</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_clipboard_collection.yml -->
+  <rule id="200250" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">xclip -selection - clip|xclip -sel - clip</field>
+  <description>Detects attempts to collect data stored in the clipboard from users with the usage of xclip tool.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1115</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_coinminer.yml -->
+  <rule id="200251" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">--cpu-priority</field>
+  <description>Detects command line parameter very often used with coin miners.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1068</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_cve_2021_3156_sudo_buffer_overflow.yml -->
+  <rule id="200252" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">sudoedit -s -s -s -s</field>
+  <description>Detects exploitation attempt of vulnerability described in CVE-2021-3156.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1068</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200253" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">sudoedit \\ \\ \\ \\ </field>
+  <description>Detects exploitation attempt of vulnerability described in CVE-2021-3156.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1068</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_data_compressed.yml -->
+  <rule id="200254" level="10">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">zip|gzip -f|tar -c</field>
+  <description>An adversary may compress data (e.g., sensitive documents) that is collected prior to exfiltration in order to make it portable and minimize the amount of data sent over the network.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1560</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_data_exfil_wget.yml -->
+  <rule id="200255" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">wget --post-file=</field>
+  <description>Detects attempts to post the file with the usage of wget utility. The adversary can bypass the permission restriction with the misconfigured sudo permission for wget utility which could allow them to read files like /etc/shadow.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1048</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_dd_delete_file.yml -->
+  <rule id="200256" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">dd if=/dev/null|dd if=/dev/zero</field>
+  <description>Detects overwriting (effectively wiping/deleting) of a file.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1485</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_debugfs_usage.yml -->
+  <rule id="200257" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">debugfs</field>
+  <description>Detects access to a raw disk on a host to evade detection by security products.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1006</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_disable_system_firewall.yml -->
+  <rule id="200258" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">systemctl disable firewalld|systemctl disable iptables|systemctl disable ufw</field>
+  <description>Detects disabling of system firewalls which could be used by adversaries to bypass controls that limit usage of the network.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1562</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_file_or_folder_permissions.yml -->
+  <rule id="200259" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">chmod|chown</field>
+  <description>Detects file and folder permission changes.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1222</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_find_cred_in_files.yml -->
+  <rule id="200260" level="1">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">grep|cut|cat</field>
+  <description>Detecting attempts to extract passwords.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1552</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200261" level="9">
+  <if_sid>200260</if_sid>
+  <field name="columns.cmdline">password</field>
+  <description>Detecting attempts to extract passwords with grep.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1552</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_hidden_files_directories.yml -->
+  <rule id="200262" level="1">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">mkdir|touch|vim|nano|vi</field>
+  <description>Detects adversary creating hidden file or directory, by detecting directories or files with . as the first character.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1564</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200263" level="8">
+  <if_sid>200262</if_sid>
+  <field name="columns.cmdline">/.|^.</field>
+  <description>Detects adversary creating hidden file or directory, by detecting directories or files with . as the first character.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1564</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_hidden_zip_files_steganography.yml -->
+  <rule id="200264" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">cat</field>
+  <field name="columns.cmdline">.jpg|.png</field>
+  <field name="columns.cmdline">.zip</field>
+  <description>Detects appending of zip file to image.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1027</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+
+ <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_ld_so_preload_mod.yml -->
+  <rule id="200265" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">/etc/ld.so.preload</field>
+  <description>Identifies modification of ld.so.preload for shared object injection. This technique is used by attackers to load arbitrary code into processes.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1574</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_load_module_insmod.yml -->
+  <rule id="200266" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">insmod</field>
+  <field name="columns.path">/usr/bin/kmod</field>
+  <description>Detects loading of kernel modules with insmod command.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1547</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+<!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_logging_config_change.yml -->
+  <rule id="200267" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">/etc/syslog.conf|/etc/rsyslog.conf|/etc/syslog-ng/syslog-ng.conf</field>
+  <description>Detect changes of syslog daemons configuration files.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1562</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_masquerading_crond.yml -->
+  <rule id="200268" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">cp</field>
+  <field name="columns.cmdline">-i</field>
+  <field name="columns.cmdline">/bin/sh</field>
+  <field name="columns.cmdline">/crond</field>
+  <description>Masquerading as Linux Crond Process.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1036</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_network_service_scanning.yml -->
+  <rule id="200269" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.path">/telnet$|/nmap$|/netcat$|/nc$</field>
+  <description>Detects enumeration of local or remote network services.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1046</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_network_sniffing.yml -->
+  <rule id="200270" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">tcpdump|tshark</field>
+  <field name="columns.cmdline">-c</field>
+  <field name="columns.cmdline">-i</field>
+  <description>Network sniffing refers to using the network interface on a system to monitor or capture information sent over a wired or wireless connection.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1040</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_password_policy_discovery.yml -->
+  <rule id="200271" level="8">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">/etc/pam.d/common-password|/etc/security/pwquality.conf|/etc/pam.d/system-auth|/etc/login.defs</field>
+  <description>Detects password policy discovery commands.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1201</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200272" level="10">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">chage|passwd</field>
+  <field name="columns.cmdline">--list|-l|-S|--status</field>
+  <field name="columns.cmdline">-i</field>
+  <description>Network sniffing refers to using the network interface on a system to monitor or capture information sent over a wired or wireless connection.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1201</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_pers_systemd_reload.yml -->
+  <rule id="200273" level="9">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">systemctl</field>
+  <field name="columns.cmdline">daemon-reload|start</field>
+  <description>Detects a reload or a start of a service.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1543</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_screencapture_import.yml -->
+  <rule id="200274" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">import</field>
+  <field name="columns.cmdline">-window</field>
+  <field name="columns.cmdline">root</field>
+  <field name="columns.cmdline">.png$|.jpg$|.jpeg$</field>
+  <description>Detects adversary creating screen capture of a desktop with Import Tool.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1113</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200275" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">import</field>
+  <field name="columns.cmdline">.png$|.jpg$|.jpeg$</field>
+  <description>Detects adversary creating screen capture of a desktop with Import Tool.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1113</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_screencaputre_xwd.yml -->
+  <rule id="200276" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">xwd</field>
+  <field name="columns.cmdline">-root</field>
+  <field name="columns.cmdline">-out</field>
+  <field name="columns.cmdline">.xwd$</field>
+  <description>Detects adversary creating screen capture of a full with xwd.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1113</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200277" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">xwd</field>
+  <field name="columns.cmdline">-out</field>
+  <field name="columns.cmdline">.xwd$</field>
+  <description>Detects adversary creating screen capture of a full with xwd.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1113</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_split_file_into_pieces.yml -->
+  <rule id="200278" level="9">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline" type="pcre2">split(?=\s)</field>
+  <description>Detection use of the command "split" to split files into parts and possible transfer.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1030</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+   <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_steghide_embed_steganography.yml -->
+  <rule id="200279" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">steghide</field>
+  <field name="columns.cmdline">embed</field>
+  <field name="columns.cmdline">-cf|-ef</field>
+  <field name="columns.cmdline">-cf|-ef</field>
+  <description>Detects embeding of files with usage of steghide binary, the adversaries may use this technique to prevent the detection of hidden information.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1027</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_steghide_extract_steganography.yml -->
+  <rule id="200280" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">steghide</field>
+  <field name="columns.cmdline">extract</field>
+  <field name="columns.cmdline">-sf</field>
+  <field name="columns.cmdline">.jpg$|.png$</field>
+  <description>Detects extraction of files with usage of steghide binary, the adversaries may use this technique to prevent the detection of hidden information.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1027</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_susp_cmds.yml -->
+  <rule id="200281" level="10">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">chmod|cp</field>
+  <field name="columns.cmdline">777|u\ps|/bin/ksh|/bin/sh</field>
+  <description>Detects relevant commands often related to malware or hacking activity.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1059</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_susp_exe_folders.yml -->
+  <rule id="200282" level="10">
+  <if_sid>200223</if_sid>
+  <field name="columns.path">^/tmp/|^/var/www/|^/home/\.*/public_html/|^/usr/local/apache2/|^/usr/local/httpd/|^/var/apache/|^/srv/www/|^/home/httpd/html/|^/srv/http/|^/usr/share/nginx/html/|^/var/lib/pgsql/data/|^/usr/local/mysql/data/|^/var/lib/mysql/|^/var/vsftpd/|^/etc/bind/|^/var/named/</field>
+  <description>Detects program executions in suspicious non-program folders related to malware or hacking activity.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1587</id>
+    <id>T1584</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_susp_histfile_operations.yml -->
+  <rule id="200283" level="10">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">.bash_history|.zsh_history|.zhistory|.history|.sh_history|fish_history</field>
+  <description>Detects commandline operations on shell history files.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1552</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_system_info_discovery.yml -->
+  <rule id="200284" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">/etc/lsb-release|/etc/redhat-release|/etc/issue|/sys/class/dmi/id/bios_version|/sys/class/dmi/id/product_name|/sys/class/dmi/id/chassis_vendor|/proc/scsi/scsi|/proc/ide/hd0/model|/proc/version</field>
+  <description>Detects System Information Discovery commands.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1082</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <rule id="200285" level="10">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">uname|uptime</field>
+  <description>Detects System Information Discovery commands.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1082</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_unzip_hidden_zip_files_steganography.yml -->
+  <rule id="200286" level="12">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">unzip</field>
+  <field name="columns.cmdline">.jpg$|.png$</field>
+  <description>Detects extracting of zip file from image file.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1027</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+  
+  <!-- https://github.com/SigmaHQ/sigma/blob/master/rules/linux/auditd/lnx_auditd_user_discovery.yml -->
+  <rule id="200287" level="10">
+  <if_sid>200223</if_sid>
+  <field name="columns.cmdline">^users$|^w$|^who$</field>
+  <description>Adversaries may use the information from System Owner/User Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.</description>
+  <options>no_full_log</options>
+  <mitre>
+    <id>T1033</id>
+  </mitre>
+  <group>bpf_process_events,</group>
+  </rule>
+</group>
+
+
+<!--
+ - Sysmo For Linux rules
+ - Created by SOCFortress.
+ - https://www.socfortress.co
+ - info@socfortress.co.
+-->
+<group name="linux,sysmon,">
+    <rule id="200150" level="3">
+        <decoded_as>sysmon-linux</decoded_as>
+        <field name="system.eventId">\.+</field>
+        <description>Sysmon For Linux Event</description>
+        <mitre>
+         <id>T1204</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 1-->
+    <rule id="200151" level="3">
+        <if_sid>200150</if_sid>
+        <field name="system.eventId">^1$</field>
+        <description>Sysmon - Event 1: Process creation $(eventdata.image)</description>
+        <group>sysmon_event1</group>
+        <mitre>
+         <id>T1204</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 3-->
+    <rule id="200152" level="3">
+        <if_sid>200150</if_sid>
+        <field name="system.eventId">^3$</field>
+        <description>Sysmon - Event 3: Network connection by $(eventdata.image)</description>
+        <group>sysmon_event3</group>
+        <mitre>
+         <id>T1043</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 5-->
+    <rule id="200153" level="3">
+        <if_sid>200150</if_sid>
+        <field name="system.eventId">^5$</field>
+        <description>Sysmon - Event 5: Process terminated $(eventdata.image)</description>
+        <group>sysmon_event5</group>
+        <mitre>
+         <id>T1204</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 9-->
+    <rule id="200154" level="3">
+        <if_sid>200150</if_sid>
+        <field name="system.eventId">^9$</field>
+        <description>Sysmon - Event 9: Raw Access Read by $(eventdata.image)</description>
+        <group>sysmon_event9</group>
+        <mitre>
+         <id>T1204</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 11-->
+    <rule id="200155" level="3">
+        <if_sid>200150</if_sid>
+        <field name="system.eventId">^11$</field>
+        <description>Sysmon - Event 11: FileCreate by $(eventdata.image)</description>
+	      <group>sysmon_event_11</group>
+        <mitre>
+         <id>T1044</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 16-->
+    <rule id="200156" level="3">
+        <if_sid>200150</if_sid>
+        <field name="system.eventId">^16$</field>
+        <description>Sysmon - Event 16: Sysmon config state changed $(Event.EventData.Data.Configuration)</description>
+        <group>sysmon_event_16</group>
+        <mitre>
+         <id>T1562</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 23-->
+    <rule id="200157" level="3">
+        <if_sid>200150</if_sid>
+        <field name="system.eventId">^23$</field>
+        <description>Sysmon - Event 23: FileDelete (A file delete was detected) by $(eventdata.image)</description>
+        <group>sysmon_event_23</group>
+        <mitre>
+         <id>T1107</id>
+         <id>T1485</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--Overrides-->
+<!--EventID = 3. Discrad events if Image = /var/ossec/bin/wazuh-agentd or Image = /usr/sbin/zabbix_agentd-->
+    <rule id="200200" level="1">
+        <if_sid>200152</if_sid>
+        <field name="eventdata.image">wazuh-agentd$|zabbix_agentd$</field>
+        <description>Sysmon - Event 3: Network connection by $(eventdata.image)</description>
+        <group>sysmon_event3</group>
+        <mitre>
+         <id>T1107</id>
+         <id>T1485</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 11. Discrad events if Image = /var/ossec/bin/wazuh-agentd-->
+    <rule id="200201" level="1">
+        <if_sid>200155</if_sid>
+        <field name="eventdata.image">wazuh-agentd$</field>
+        <description>Sysmon - Event 11: FileCreate by $(eventdata.image)</description>
+        <group>sysmon_event_11</group>
+        <mitre>
+         <id>T1107</id>
+         <id>T1485</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+<!--EventID = 23. Discrad events if Image = /var/ossec/bin/wazuh-agentd-->
+    <rule id="200202" level="1">
+        <if_sid>200157</if_sid>
+        <field name="eventdata.image">wazuh-agentd$</field>
+        <description>Sysmon - Event 23: FileDelete (A file delete was detected) by $(eventdata.image)</description>
+        <group>sysmon_event_23</group>
+        <mitre>
+         <id>T1107</id>
+         <id>T1485</id>
+        </mitre>
+        <options>no_full_log</options>
+    </rule>
+
+<!-- Frequency rule to capture 2 sysmon event 3 alerts within of the same destination ip within 5 seconds -->
+<rule frequency="2" id="200203" level="1" timeframe="60">
+		<if_matched_sid>200152</if_matched_sid>
+		<same_field>eventdata.DestinationIp</same_field>
+		<description>Multiple Sysmon Level 3 alerts for same destination IP.</description>
+		<options>no_full_log</options>
+	</rule>
+
+</group>
+
+<group name="k8s_audit,">
+  <rule id="106001" level="0">
+    <location>k8s</location>
+    <field name="apiVersion">audit</field>
+    <description>Kubernetes audit log.</description>
+  </rule>
+
+  <rule id="106002" level="5">
+    <if_sid>106001</if_sid>
+    <regex type="pcre2">requestURI\":.+", \"verb\": \"create</regex>
+    <description>Kubernetes request to create resource</description>
+  </rule>
+
+  <rule id="106003" level="5">
+    <if_sid>106001</if_sid>
+    <regex type="pcre2">requestURI\":.+", \"verb\": \"delete</regex>
+    <description>Kubernetes request to delete resource</description>
+  </rule>
+</group>
+
+<group name='syscheck,'>
+    <rule id='100200' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/root\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100201' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/root\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100202' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/home\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100203' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/home\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100204' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/bin\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100205' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/bin\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100206' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/sbin\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100207' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/sbin\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100208' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/usr\/bin\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100209' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/usr\/bin\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100210' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/usr\/sbin\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100211' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/usr\/sbin\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100212' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/etc\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100213' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/etc\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100214' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/tmp\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100215' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/tmp\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100216' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/var\/tmp\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100217' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/var\/tmp\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name='syscheck,'>
+    <rule id='100218' level='7'>
+   	 <if_sid>550</if_sid>
+   	 <field name='file' type='pcre2'>^'\/var\/www\/'.*</field>
+   	 <description>File modified: $(file)</description>
+    </rule>
+	
+
+    <rule id='100219' level='7'>
+   	 <if_sid>554</if_sid>
+   	 <field name='file' type='pcre2'>^'\/var\/www\/'.*</field>
+   	 <description>File added: $(file)</description>
+    </rule>
+</group>
+   	 
+
+<group name="yara,">
+  <rule id='108000' level='0'>
+	<decoded_as>yara_decoder</decoded_as>
+	<description>Yara grouping rule</description>
+  </rule>
+  <rule id='108001' level='12'>
+	<if_sid>108000</if_sid>
+	<match>wazuh-yara: INFO - Scan result: </match>
+	<description>File $(yara_scanned_file) is a positive match. Yara rule: $(yara_rule)</description>
+  </rule>
+</group>
+
