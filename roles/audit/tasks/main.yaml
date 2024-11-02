@@ -91,7 +91,7 @@
 
 - name: Mounted Processes
   shell: mount | grep "proc"
-  reister: mountedprocs
+  register: mountedprocs
   ignore_errors: true
 - name: Log result of Mounted Processes
   shell: "echo '{{ mountedprocs.stdout }}' >> audit_log.txt"

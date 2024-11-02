@@ -1,6 +1,7 @@
 ---
 - name: Run initial Setup
   hosts: linux
+  become: yes
   roles: 
     - setup 
   tags:
@@ -9,6 +10,7 @@
 
 - name: Setup PFSense Firewall
   hosts: router
+  become: yes
   roles:
     - pfsense
   tags:
@@ -17,6 +19,7 @@
 
 - name: Modify Users
   hosts: linux
+  become: yes
   roles:
     - users
   tags:
@@ -25,6 +28,7 @@
 
 - name: run audit 
   hosts: linux
+  become: yes
   roles: 
     - audit
   tags:
@@ -33,6 +37,7 @@
 
 - name: Install Wazuh Manager
   hosts: manager
+  become: yes
   roles:
     - wazuh-manager
   tags:
@@ -41,6 +46,7 @@
 
 - name: Setup logging 
   hosts: linux
+  become: yes
   roles:
     - logging
   tags: 
