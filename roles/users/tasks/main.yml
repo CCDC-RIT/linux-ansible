@@ -1,3 +1,4 @@
+---
 - name: Create blueteam user
   hosts: all
   become: yes
@@ -38,20 +39,12 @@
 - name: Load user list and set passwords
   hosts: all
   become: yes
+  vars:
+    user_data: "{{ lookup('file', 'users.txt').splitlines() }}"
 
   tasks:
-    - name: Load user list from file
-      slurp:
-        src: users.txt
-      register: user_list_file
-
-    - name: Parse user list and set passwords
-      set_fact:
-        users: "{{ user_list_file['content'] | b64decode | splitlines | map('split', ' ') | map('first') | list }}"
-        passwords: "{{ user_list_file['content'] | b64decode | splitlines | map('split', ' ') | map('last') | list }}"
-
     - name: Generate and set passwords for each user
       user:
-        name: "{{ item.0 }}"
-        password: "{{ item.1 | password_hash('sha512') }}"
-      loop: "{{ users | zip(passwords) | list }}"
+        name: "{{ item.split(' ')[0] }}"
+        password: "{{ item.split(' ')[1] | password_hash('sha512') }}"
+      loop: "{{ users_data }}"
