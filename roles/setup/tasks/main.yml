@@ -53,3 +53,15 @@
       pause:
         seconds: 2
 
+- name: Check open ports and services with netstat
+  hosts: all
+  become: true
+  tasks:
+    - name: List all open ports and associated services using netstat
+      ansible.builtin.command:
+        cmd: netstat -tuln
+      register: netstat_output
+
+    - name: Display netstat output
+      ansible.builtin.debug:
+        var: netstat_output.stdout_lines
