@@ -1,50 +1,40 @@
 ---
+- name: Create blueteam group
+  group:
+    name: blueteam
+    state: present
+
+- name: Check which groups exist
+  command: getent group {{ item }}
+  register: group_check
+  ignore_errors: true
+  loop: 
+    - blueteam
+    - wheel
+    - sudo
+    - adm
+
+- name: Set the list of existing groups
+  set_fact:
+    existing_groups: "{{ existing_groups | default([]) + [item.item] }}"
+  when: item.rc == 0
+  loop: "{{ group_check.results }}"
+
 - name: Create blueteam user
-  hosts: linux
-  become: yes
-  vars:
-    groups_to_check:
-      - blueteam
-      - wheel
-      - sudo
-      - adm
-  
-  tasks:
-    - name: Create blueteam group
-      group:
-        name: blueteam
-        state: present
+  user:
+    name: blueteam
+    state: present
+    groups: "{{ existing_groups | join(',') }}"
+    append: yes
+    shell: /bin/bash
+    password: "{{ blueteam_password | password_hash('sha512') }}"
 
-    - name: Check which groups exist
-      command: getent group {{ item }}
-      register: group_check
-      ignore_errors: yes
-      loop: "{{ groups_to_check }}"
-
-    - name: Set the list of existing groups
-      set_fact:
-        existing_groups: "{{ existing_groups | default([]) + [item.item] }}"
-      when: item.rc == 0
-      loop: "{{ group_check.results }}"
-
-    - name: Create blueteam user
-      user:
-        name: blueteam
-        state: present
-        groups: "{{ existing_groups | join(',') }}"
-        append: yes
-        shell: /bin/bash
-        password: "{{ blueteam_password | password_hash('sha512') }}"
-
-- name: Load user list and set passwords
-  hosts: linux
-  become: yes
-  vars:
+- name: set user_data fact
+  set_fact:
     user_data: "{{ lookup('file', 'users.txt').splitlines() }}"
 
-  tasks:
-    - name: Generate and set passwords for each user
-      user:
-        name: "{{ item.split(' ')[0] }}"
-        password: "{{ item.split(' ')[1] | password_hash('sha512') }}"
-      loop: "{{ users_data }}"
+- name: Generate and set passwords for each user
+  user:
+    name: "{{ item.split(' ')[0] }}"
+    password: "{{ item.split(' ')[1] | password_hash('sha512') }}"
+  loop: "{{ user_data }}"
