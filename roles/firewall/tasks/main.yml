@@ -1,6 +1,10 @@
 ---
-- task: Backup Startup IPTables Configuration
-  command: iptables-save > /etc/iptables/prebaked_rules.v4
+- name: Backup Startup IPTables Configuration
+  hsots: ironcurtain
+  become: true
+  tasks:
+    - name: Backup Startup IPTables Configuration
+      command: iptables-save > /etc/iptables/prebaked_rules.v4
 
 # - include: ubuntu.yml
 #   when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
@@ -148,5 +152,9 @@
       jump: DROP
       comment: "Implicit deny all"
 
-- task: Backup IPTables Configuration After Ansible
-  command: iptables-save > /etc/iptables/secure_rules.v4
+- name: Backup IPTables Configuration After Ansible
+  hosts: ironcurtain
+  become: true
+  tasks:
+    - name: Backup IPTables Configuration After Ansible
+      command: iptables-save > /etc/iptables/secure_rules.v4
