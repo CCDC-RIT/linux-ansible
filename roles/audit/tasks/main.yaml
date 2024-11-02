@@ -216,3 +216,10 @@
     - name: Run Lynis Audit
       shell: lynis audit system > lynis.txt
       ignore_errors: yes
+
+- name: Store Audit Script Output onto local Ansible Box
+  fetch:
+    src: audit_log.txt
+    dest: /opt/inventory/{{ ansible_hostname }}-audit.txt
+    flat: yes
+    fail_on_missing: no
