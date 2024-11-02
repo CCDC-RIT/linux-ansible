@@ -1,0 +1,28 @@
+- name: Allow SSH for all
+  ansible.builtin.command: iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+  become: true
+
+- name: Allow Docker(HTTP) on propaganda
+  ansible.builtin.command: iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
+  when: inventory_hostname == "propaganda"
+  become: true
+
+- name: Allow IMAP/SMTP on wiretap
+  ansible.builtin.command: iptables -A INPUT -p tcp --dport {{ item }} -j ACCEPT
+  loop:
+    - 143
+    - 993
+    - 25
+    - 587
+  when: inventory_hostname == "wiretap"
+    become: true
+
+- name: Allow FTP on vault
+  ansible.builtin.command: iptables -A INPUT -p tcp --dport 21 -j ACCEPT
+  when: inventory_hostname == "vault"
+  become: true
+
+- name: Allow MySQL on spy
+  ansible.builtin.command: iptables -A INPUT -p tcp --dport 3306 -j ACCEPT
+  when: inventory_hostname == "spy"
+  become: true
