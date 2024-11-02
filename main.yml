@@ -7,8 +7,8 @@
     - initial
     - setup
 
-- name: Setup Firewall
-  hosts: all
+- name: Setup PFSense Firewall
+  hosts: ironcurtain
   roles:
     - firewall
   tags:
@@ -30,7 +30,7 @@
   tags:
     - initial
     - audit
-    
+
 - name: Harden SSH
   hosts: all
   roles:
