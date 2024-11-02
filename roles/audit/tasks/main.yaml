@@ -39,6 +39,7 @@
 
 - name: List Root's Authorized SSH Keys
   shell: head -n 20 /root/.ssh/authorized_keys*
+  register: ssh3
   ignore_errors: true
 - name: Log result of List Root's Authorized SSH Keys
   shell: "echo '{{ ssh3.stdout }}' >> audit_log.txt"
@@ -50,12 +51,14 @@
   ignore_errors: true
 - name: Log result of Currently Logged In
   shell: "echo '{{ who.stdout }}' >> audit_log.txt"
+
 - name: Currently Active Sessions
   shell: w
   register: w
   ignore_errors: true
 - name: Log result of Currently Active Sessions
   shell: "echo '{{ w.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 
 - name: Login History
@@ -64,7 +67,7 @@
   ignore_errors: true
 - name: Log result of Login History
   shell: "echo '{{ loginhistory.stdout }}' >> audit_log.txt"
-
+  ignore_errors: true
 
 - name: Current Network Listening
   shell: ss -tulpnw
@@ -72,6 +75,7 @@
   ignore_errors: true
 - name: Log result of Current Network Listening
   shell: "echo '{{ networklistening.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: lsof Remote
   shell: lsof -i
@@ -79,6 +83,7 @@
   ignore_errors: true
 - name: Log result of lsof Remote
   shell: "echo '{{ lsofremote.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: Potential Rootkit Signs
   shell: |
@@ -88,6 +93,7 @@
   ignore_errors: true
 - name: Log result of Potential Rootkit Signs
   shell: "echo '{{ rootkit.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: Mounted Processes
   shell: mount | grep "proc"
@@ -95,6 +101,7 @@
   ignore_errors: true
 - name: Log result of Mounted Processes
   shell: "echo '{{ mountedprocs.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 
 
@@ -110,6 +117,7 @@
   ignore_errors: true
 - name: Log result of Auto Runs
   shell: "echo '{{ autoruns.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: lsof Raw
   shell: |
@@ -119,6 +127,7 @@
   ignore_errors: true
 - name: Log result of lsof Raw
   shell: "echo '{{ lsofraw.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: Processes
   shell: ps af
@@ -126,6 +135,7 @@
   ignore_errors: true
 - name: Log result of Processes
   shell: "echo '{{ procs.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: Poisoned Networking
   shell: |
@@ -138,6 +148,7 @@
   ignore_errors: true
 - name: Log result of Poisoned Networking
   shell: "echo '{{ poisonednetworking.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: IPs and MACs
   shell: |
@@ -158,6 +169,7 @@
   ignore_errors: true
 - name: Log result of Auth Backdoors
   shell: "echo '{{ authbackdoors.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: Files Modified in Last 10Min
   shell: |
@@ -170,6 +182,7 @@
   ignore_errors: true
 - name: Log result of Files Modified in Last 10Min
   shell: "echo '{{ filesmodified.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: Repositories
   shell: cat /etc/apt/sources.list | grep -Ev "##|#"
@@ -177,6 +190,7 @@
   ignore_errors: true
 - name: Log result of Repositories
   shell: "echo '{{ repos.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 - name: Malware?
   shell: |
@@ -201,6 +215,7 @@
   ignore_errors: true
 - name: Malware?
   shell: "echo '{{ malware.stdout }}' >> audit_log.txt"
+  ignore_errors: true
 
 # External Audit Scripts
 - name: Run Linpeas Audit

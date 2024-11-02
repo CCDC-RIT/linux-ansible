@@ -26,15 +26,6 @@
     - initial
     - users
 
-- name: run audit 
-  hosts: linux
-  become: yes
-  roles: 
-    - audit
-  tags:
-    - initial
-    - audit
-
 - name: Install Wazuh Manager
   hosts: manager
   become: yes
@@ -52,3 +43,13 @@
   tags: 
     - initial
     - logging
+  when: inventory_hostname != 'satellite'
+
+- name: run audit 
+  hosts: linux
+  become: yes
+  roles: 
+    - audit
+  tags:
+    - initial
+    - audit
