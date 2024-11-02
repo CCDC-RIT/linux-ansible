@@ -10,10 +10,10 @@
 - name: Setup PFSense Firewall
   hosts: router
   roles:
-    - firewall
+    - pfsense
   tags:
     - initial
-    - firewall
+    - pfsense
 
 - name: Modify Users
   hosts: linux
