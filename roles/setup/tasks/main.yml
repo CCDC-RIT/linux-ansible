@@ -1,22 +1,27 @@
 ---
-- task: Install Common Packages
+- name: Install common packages
   apt:
     name: "{{ item }}"
     state: present
-  with_items:
-    - "vim"
-    - "curl"
-    - "iptables"
-    - "git"
-    - "python3-pip"
+  loop:
+    - vim
+    - curl
+    - iptables
+    - git
+    - python3-pip
 
-- task: Remove pam
-  apt: name=pam state=absent
+- name: Remove pam
+  apt:
+    name: pam
+    state: absent
 
-- task: Reinstall pam
-  apt: name=pam state=present update_cache=yes
+- name: Reinstall pam
+  apt:
+    name: pam
+    state: present
+    update_cache: yes
   
-- task: Make backup directory
+- name: Make backup directory
   file:
     path: "{{ backup_dir }}"
     state: directory
@@ -24,46 +29,39 @@
     group: root
     mode: '0700'
 
-- name: Install and start Wireshark capture
-  hosts: all
-  become: yes
-  vars:
-    interface: "" # FILL THIS IN BEFORE RUNNING
-  tasks:
-    - name: Install Wireshark
-      package:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - wireshark
-        - tshark
+- name: Install Wireshark tools
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - wireshark
+    - tshark
 
-    - name: Add user to wireshark group
-      user:
-        name: "{{ ansible_user }}"
-        group: wireshark
-        append: yes
-      when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+- name: Add user to wireshark group
+  user:
+    name: "{{ ansible_user }}"
+    group: wireshark
+    append: yes
+  when: ansible_distribution in ["Ubuntu", "Debian"]
 
-    - name: Set capabilities on dumpcap
-      command: setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-      args:
-        warn: false
+- name: Set capabilities on dumpcap
+  command: setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+  args:
+    warn: false
 
-    - name: Start a Wireshark capture
-      command: tshark -i {{ interface }} -w /tmp/capture.pcap -f "tcp" &
-      async: 5
-      poll: 0
+- name: Start a Wireshark capture
+  command: tshark -i {{ interface }} -w /tmp/capture.pcap -f "tcp" &
+  async: 5
+  poll: 0
 
-    - name: Wait for tshark to start
-      pause:
-        seconds: 2
+- name: Wait for tshark to start
+  pause:
+    seconds: 2
 
-    - name: List all open ports and associated services using netstat
-      ansible.builtin.command:
-        cmd: netstat -tuln
-      register: netstat_output
+- name: List all open ports and associated services
+  command: netstat -tuln
+  register: netstat_output
 
-    - name: Display netstat output
-      ansible.builtin.debug:
-        var: netstat_output.stdout_lines
+- name: Display netstat output
+  debug:
+    var: netstat_output.stdout_lines
