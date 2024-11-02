@@ -8,7 +8,7 @@
     - setup
 
 - name: Setup PFSense Firewall
-  hosts: ironcurtain
+  hosts: router
   roles:
     - firewall
   tags:
@@ -41,7 +41,7 @@
     - ssh
 
 - name: Install Wazuh Manager
-  hosts: Manager
+  hosts: manager
   roles:
     - wazuh-manager
   tags:

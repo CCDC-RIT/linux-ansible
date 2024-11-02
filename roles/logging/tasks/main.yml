@@ -1,46 +1,72 @@
 
 ---
-- name: copy over wazuh binary
-  ansible.builtin.copy:
-    src: binaries/wazuh-agent_4.7.2-1_amd64_debian.deb
-    dest: /tmp/wazuh-agent_4.7.2-1_amd64_debian.deb
-
-- name: Install Wazuh agent from binary
-  ansible.builtin.apt:
-    deb: /tmp/wazuh-agent_4.7.2-1_amd64_debian.deb
+- name: Install curl
+  ansible.builtin.package:
+    name: curl
     state: present
+    
+- name: Download and import Wazuh GPG key
+  ansible.builtin.command: 
+    cmd: "curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import"
+  when: ansible_os_family == "Debian"
+
+- name: Set permissions for the Wazuh GPG key
+  ansible.builtin.file:
+    path: /usr/share/keyrings/wazuh.gpg
+    mode: '0644'
+  when: ansible_os_family == "Debian"
+
+- name: Add Wazuh repository to sources list
+  ansible.builtin.command: 
+    cmd: echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
+  when: ansible_os_family == "Debian"
+
+- name: Update apt package index
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install Wazuh agent 
+  ansible.builtin.shell: 
+    cmd: apt-get install -y wazuh-agent 
+  when: ansible_os_family == "Debian"
+
+- name: Import Wazuh GPG key
+  rpm_key:
+    state: present
+    key: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+  when: ansible_os_family == "RedHat" 
+
+- name: Create Wazuh repository file
+  copy:
+    dest: /etc/yum.repos.d/wazuh.repo
+    content: |
+      [wazuh]
+      gpgcheck=1
+      gpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH
+      enabled=1
+      name=EL-$releasever - Wazuh
+      baseurl=https://packages.wazuh.com/4.x/yum/
+      protect=1
+  notify: Refresh YUM cache
+  when: ansible_os_family == "RedHat" 
+
+- name: Refresh YUM cache
+  ansible.builtin.yum:
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+  
+- name: Install Wazuh Agent
+  yum:
+    name: wazuh-agent
+    state: present
+  when: ansible_os_family == "RedHat"
 
 - name: Enroll agent using manager IP address
   replace:
     path: /var/ossec/etc/ossec.conf
     regexp: 'MANAGER_IP'
     replace: "{{ manager_ip }}"
-
-# - name: Install curl
-#   ansible.builtin.package:
-#     name: curl
-#     state: present
-    
-# - name: Download and import Wazuh GPG key
-#   ansible.builtin.command: 
-#     cmd: "curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import"
-
-# - name: Set permissions for the Wazuh GPG key
-#   ansible.builtin.file:
-#     path: /usr/share/keyrings/wazuh.gpg
-#     mode: '0644'
-
-# - name: Add Wazuh repository to sources list
-#   ansible.builtin.command: 
-#     cmd: echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
-
-# - name: Update apt package index
-#   ansible.builtin.apt:
-#     update_cache: yes
-
-# - name: Install Wazuh agent using environment variable
-#   ansible.builtin.shell: 
-#     cmd: WAZUH_MANAGER="{{ manager_ip }}" apt-get install -y wazuh-agent 
 
 - name: Install YARA and git
   ansible.builtin.package:
@@ -57,7 +83,7 @@
 
 - name: Copy over compiled YARA rules
   ansible.builtin.copy:
-    src: rules/compiled.linux
+    src: compiled.linux
     dest: /opt/yara/rules/compiled.linux
     owner: root
     group: wazuh
@@ -65,7 +91,7 @@
 
 - name: Copy over YARA active response script
   ansible.builtin.copy: 
-    src: configs/yara.sh
+    src: yara.sh
     dest: /var/ossec/active-response/bin/yara.sh
     owner: root
     group: wazuh 
