@@ -10,3 +10,4 @@
     - git
     - python3-pip
     - lynis
+    - snoopy
