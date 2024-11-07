@@ -1,23 +1,39 @@
-- name: Create blueteam user
+---
+- name: Create blueteam group
+  group:
+    name: blueteam
+    state: present
+
+- name: Check which groups exist
+  command: getent group {{ item }}
+  register: group_check
+  ignore_errors: true
+  loop: 
+    - blueteam
+    - wheel
+    - sudo
+    - adm
+
+- name: Set the list of existing groups
+  set_fact:
+    existing_groups: "{{ existing_groups | default([]) + [item.item] }}"
+  when: item.rc == 0
+  loop: "{{ group_check.results }}"
+
+  - name: Create blueteam user
   user:
     name: blueteam
     state: present
-    groups: blueteam, wheel, sudo, adm
+    groups: "{{ existing_groups | join(',') }}"
     append: yes
     shell: /bin/bash
-    password: "{{ blueteam_password | password_hash('sha512') }}"
 
-- name: Read user list from file
-  slurp:
-    src: "{{ user_file }}"
-  register: user_list_file
-
-- name: Parse user list
-  set_fact:
-    users: "{{ user_list_file['content'] | b64decode | splitlines }}"
+- name: Read /etc/passwd and filter users with valid shells
+    ansible.builtin.shell: "awk -F: '$7 ~ /^\\/bin\\// {print $1}' /etc/passwd"
+    user_list: valid_users
 
 - name: Generate and set passwords for each user
   user:
     name: "{{ item }}"
-    password: "{{ lookup('password', '/dev/null', length=20, chars=ascii_letters) | password_hash('sha512') }}"
-  loop: "{{ users }}"
+    password: "{{ lookup('ansible.builtin.password', term1, term2, key1=value1, key2=value2) }}"
+  loop: "{{ user_list }}"
