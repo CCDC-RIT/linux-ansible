@@ -18,4 +18,34 @@
     group: root
     mode: '0700'
 
+- task: Get all valid users
+  shell: "getent passwd | cut -d: -f1 | grep -ve 'blackteam' -e 'black-team' -e 'black_team' -e 'whiteteam' -e 'white_team' -e 'white-team'"
+  register: valid_users
+
+- tasks: Move authorized_keys file somewhere else for every valid user
+  file:
+    remote_src: yes
+    src: "/home/{{ item }}/.ssh/authorized_keys"
+    dest: "{{ backup_dir }}/{{ item }}_old_authorized_keys"
+    owner: root
+    group: root
+    mode: '0600'
+  with_items: "{{ valid_users.stdout_lines }}"
+
+- task: Remove authorized_keys file for every valid user
+  file:
+    src: "/home/{{ item }}/.ssh/authorized_keys"
+    state: absent
+  with_items: "{{ valid_users.stdout_lines }}"
+
+- tasks: Copy ssh key to every valid user
+  authorized_key:
+    user: "{{ item }}"
+    key: "{{ lookup('file', '/opt/inventory/id_ed25519') }}"
+  with_items: "{{ valid_users.stdout_lines }}"
     
+- tasks: Immutable that shit
+  file:
+    path: "/home/{{ item }}/.ssh/authorized_keys"
+    attributes: +i
+  with_items: "{{ valid_users.stdout_lines }}"

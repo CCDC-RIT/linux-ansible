@@ -19,3 +19,4 @@ mkdir -p /opt/inventory
 
 # make ssh key
 ssh-keygen -t ed25519 -C "ansible@rit-ccdc" -f /opt/inventory/id_ed25519 -N ""
+cp /opt/inventory/id_ed25519 $HOME/.ssh/id_ed25519
