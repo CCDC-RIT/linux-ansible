@@ -18,21 +18,23 @@
     awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(whiteteam|grayteam|blackteam)$/ {print $1}' /etc/passwd
   register: user_list
 
-- name: Generate and set passwords for each user
+- name: Generate and set passwords/Display generated passwords
   ansible.builtin.block:
-    name: "{{ item }}"
-    password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
-  loop: "{{ user_list.stdout_lines }}"
-  register: user_password
-  loop_control: 
-    lable: "{{ item }}"
+  - name: Generate and set passwords
+    ansible.builtin.user:
+      name: "{{ item }}"
+      password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
+    loop: "{{ user_list.stdout_lines }}"
+    register: user_password
+    loop_control: 
+      lable: "{{ item }}"
 
--name: Display generated passwords
-  ansible.builtin.debug:
-    msg: "User: {{ item.item }}, Password: {{ item.password }}"
-  loop: "{{ user_password.results }}"
+  - name: Display generated passwords
+    ansible.builtin.debug:
+      sg: "User: {{ item.item }}, Password: {{ item.password }}"
+    loop: "{{ user_password.results }}"
 
-  - name: Find users with /bin shell except white/gray/black team and blueteam user
+- name: Find users with /bin shell except white/gray/black team and blueteam user
   ansible.builtin.shell: |
     awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(grayteam|blackteam|whiteteam|blueteam)$/ {print $1}' /etc/passwd
   register: deactivate_user_list
