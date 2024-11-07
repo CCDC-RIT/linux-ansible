@@ -4,33 +4,21 @@
     name: blueteam
     state: present
 
-- name: Check which groups exist
-  command: getent group {{ item }}
-  register: group_check
+- name: Create blueteam user
+  user:
+    name: blueteam
+    state: present
+    groups: "blueteam sudo wheel adm"
+    append: yes
+    shell: /bin/bash
   ignore_errors: true
-  loop: 
-    - blueteam
-    - wheel
-    - sudo
-    - adm
 
-- name: Set the list of existing groups
-  set_fact:
-    existing_groups: "{{ existing_groups | default([]) + [item.item] }}"
-  when: item.rc == 0
-  loop: "{{ group_check.results }}"
-
-  - name: Create blueteam user
-    user:
-      name: blueteam
-      state: present
-      groups: "{{ existing_groups | join(',') }}"
-      append: yes
-      shell: /bin/bash
-
+#todo dont change passwords or white black grey users
 - name: Read /etc/passwd and filter users with valid shells
-    ansible.builtin.shell: "awk -F: '$7 ~ /^\\/bin\\// {print $1}' /etc/passwd"
-    user_list: valid_users
+  ansible.builtin.shell: "awk -F: '$7 ~ /^\\/bin\\// {print $1}' /etc/passwd"
+  user_list: valid_users
+
+#todo remove users that arent legit
 
 - name: Generate and set passwords for each user
   user:
