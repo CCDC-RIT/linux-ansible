@@ -19,17 +19,25 @@
   register: user_list
 
 - name: Generate and set passwords for each user
-  user:
+  ansible.builtin.block:
     name: "{{ item }}"
     password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
   loop: "{{ user_list.stdout_lines }}"
+  register: user_password
+  loop_control: 
+    lable: "{{ item }}"
+
+-name: Display generated passwords
+  ansible.builtin.debug:
+    msg: "User: {{ item.item }}, Password: {{ item.password }}"
+  loop: "{{ user_password.results }}"
 
   - name: Find users with /bin shell except white/gray/black team and blueteam user
   ansible.builtin.shell: |
     awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(grayteam|blackteam|whiteteam|blueteam)$/ {print $1}' /etc/passwd
   register: deactivate_user_list
 
-#todo ensure that /sbin/nologin is not shimmed (should i do this here or somewhere else idk)
+#TODO once we install bin/redd well change /sbin/nologin to /bin/redd
 - name: Deactivate each user by setting their shell to /sbin/nologin
   ansible.builtin.user:
     name: "{{ item }}"
