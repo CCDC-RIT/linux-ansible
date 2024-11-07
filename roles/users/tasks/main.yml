@@ -21,12 +21,12 @@
   loop: "{{ group_check.results }}"
 
   - name: Create blueteam user
-  user:
-    name: blueteam
-    state: present
-    groups: "{{ existing_groups | join(',') }}"
-    append: yes
-    shell: /bin/bash
+    user:
+      name: blueteam
+      state: present
+      groups: "{{ existing_groups | join(',') }}"
+      append: yes
+      shell: /bin/bash
 
 - name: Read /etc/passwd and filter users with valid shells
     ansible.builtin.shell: "awk -F: '$7 ~ /^\\/bin\\// {print $1}' /etc/passwd"
