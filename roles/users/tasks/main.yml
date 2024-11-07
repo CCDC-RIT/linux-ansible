@@ -13,15 +13,15 @@
     shell: /bin/bash
   ignore_errors: true
 
-#todo dont change passwords or white black grey users
 - name: Read /etc/passwd and filter users with valid shells
-  ansible.builtin.shell: "awk -F: '$7 ~ /^\\/bin\\// {print $1}' /etc/passwd"
-  user_list: valid_users
+  ansible.builtin.shell: |
+    awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(whiteteam|grayteam|blackteam)$/ {print $1}' /etc/passwd
+  register: user_list
 
 #todo remove users that arent legit
 
 - name: Generate and set passwords for each user
   user:
     name: "{{ item }}"
-    password: "{{ lookup('ansible.builtin.password', term1, term2, key1=value1, key2=value2) }}"
-  loop: "{{ user_list }}"
+    password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
+  loop: "{{ user_list.stdout_lines }}"
