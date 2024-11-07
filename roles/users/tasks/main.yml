@@ -13,15 +13,26 @@
     shell: /bin/bash
   ignore_errors: true
 
-- name: Read /etc/passwd and filter users with valid shells
+- name: Find users with /bin shell except white/gray/black team
   ansible.builtin.shell: |
     awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(whiteteam|grayteam|blackteam)$/ {print $1}' /etc/passwd
   register: user_list
-
-#todo remove users that arent legit
 
 - name: Generate and set passwords for each user
   user:
     name: "{{ item }}"
     password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
   loop: "{{ user_list.stdout_lines }}"
+
+  - name: Find users with /bin shell except white/gray/black team and blueteam user
+  ansible.builtin.shell: |
+    awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(grayteam|blackteam|whiteteam|blueteam)$/ {print $1}' /etc/passwd
+  register: deactivate_user_list
+
+#todo ensure that /sbin/nologin is not shimmed (should i do this here or somewhere else idk)
+- name: Deactivate each user by setting their shell to /sbin/nologin
+  ansible.builtin.user:
+    name: "{{ item }}"
+    shell: /sbin/nologin
+  loop: "{{ deactivate_user_list.stdout_lines }}"
+
