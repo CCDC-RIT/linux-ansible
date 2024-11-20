@@ -1,3 +1,10 @@
+---
 # setup wazuh manager
 # deploy agents
 # win
+
+- name: Wazuh | RIT CCDC
+  hosts: all
+  roles: 
+    - wazuh_setup_server
+    - wazuh_deploy_agents
