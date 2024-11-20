@@ -1,0 +1,28 @@
+initial: [playbook] # run with ansible-playbook playbooks/initial.yml - runs on everything
+ - add blueteam user [task]
+ - drop blueteam ssh key [task]
+ - download tools [task]
+ - firewall (per host, use variables from inventory) [role]
+ - audit [role]
+
+wazuh: [playbook] # run with ansible-playbook playbooks/wazuh.yml
+ - install & configure wazuh [role]
+ - add wazuh agent [role]
+ - inventory
+
+backups: [playbook] # run with ansible-playbook playbooks/backups.yml
+ - run backups [role] on everything that we need, specify in group_vars
+
+audit: [role]
+ - audit users [tasks]
+ - audit system [tasks]
+
+harden: [playbook]
+  - harden ssh [role]
+  - lockdown ssh [role] # as needed - use variables from inventory (if SSH is being checked)
+  - harden system [role]
+  - harden services [role]
+  - backups [role]
+
+restore_from_backup: [playbook]
+  - restore from backup [role]
