@@ -1,0 +1,5 @@
+---
+- name: Inventory | RIT CCDC
+  hosts: all
+  roles:
+    - inventory
