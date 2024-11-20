@@ -8,7 +8,9 @@ initial: [playbook] # run with ansible-playbook playbooks/initial.yml - runs on 
 wazuh: [playbook] # run with ansible-playbook playbooks/wazuh.yml
  - install & configure wazuh [role]
  - add wazuh agent [role]
- - inventory
+ 
+inventory: [playbook] # run with ansible-playbook playbooks/inventory.yml
+ - inventory [role] # run on everything
 
 backups: [playbook] # run with ansible-playbook playbooks/backups.yml
  - run backups [role] on everything that we need, specify in group_vars
