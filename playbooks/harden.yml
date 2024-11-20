@@ -1,3 +1,17 @@
+---
 # harden each service in here
 # apply roles to each host
 # win
+
+- name: Harden | RIT CCDC
+  hosts: all
+  roles:
+    - harden_ssh
+    - harden_system
+    - harden_services
+    - backups
+
+- name: Lockdown SSH | RIT CCDC
+  hosts: lockdown # group in inventory file
+  roles:
+    - lockdown_ssh

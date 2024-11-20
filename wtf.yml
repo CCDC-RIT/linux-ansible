@@ -21,7 +21,7 @@ audit: [role]
 
 harden: [playbook]
   - harden ssh [role]
-  - lockdown ssh [role] # as needed - use variables from inventory (if SSH is being checked)
+  - lockdown ssh [role] # as needed - use group from inventory (if SSH is being checked)
   - harden system [role]
   - harden services [role]
   - backups [role]
