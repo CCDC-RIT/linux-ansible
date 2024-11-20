@@ -9,6 +9,7 @@
     - "iptables"
     - "git"
     - "python3-pip"
+    - "snoopy"
   
 - task: Make backup directory
   file:
