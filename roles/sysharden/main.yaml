@@ -1,0 +1,42 @@
+--
+- name: "1.1.1.x | Filesystem"
+  block:
+    - name: "1.1.1.1 | Mounting of cramfs filesystem is diabled"
+      block:
+        - name: "Edit modprobe config"
+          ansible.builtin.linefile:
+            dest: "{{ modprobe_path }}"
+            regexp: '^(#)?install cramfs(\\s|$)'
+            line: "install cramfs /bin/true"
+            create: true
+            ignore_erros: true
+
+        - name: "Ensure cramfs is blacklisted"
+          ansible.builtin.linefile:
+            path: "{{ blacklist_path }}"
+            regexp: "^(#)?blacklist cramfs(\\s|$)"
+            line: "blacklist cramfs"
+            create: true
+            mode: '0600'
+            ignore_erros: 
+            
+        - name: "Ensure mounting cramfs is diabled"
+          community.general.modprobe:
+              name: cramfs
+              state: absent
+          when: ansible_connection != 'docker'
+
+      vars:
+        modprobe_path: >
+          {{ '/etc/modprobe.d/cramfs.conf' if ansible_facts['os_family'] == 'Debian'
+              else '/usr/local/etc/mobprobe.d/cramfs.conf' if ansible_facts['os_family'] == 'BSD'
+              else '/etc/modprobe.d/cramfs.conf' }}
+        blacklist_path: >
+          {{ '/etc/modprobe.d/blacklist.conf' if ansible_facts['os_family'] == 'Debian'
+              else '/usr/local/etc/modprobe.d/cramfs.conf' if ansible_facts['os_family'] == 'BSD'
+              else '/etc/modprobe.d/blacklist.conf' }}
+        
+      when:
+        - ansible_facts['os_family'] in ['Debian', 'RedHat', 'BSD', 'Suse']
+
+    - name: "1.1.1.2"
