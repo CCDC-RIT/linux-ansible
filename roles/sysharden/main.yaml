@@ -1,5 +1,5 @@
 --
-- name: "1.1.1.x | Filesystem"
+- name: "1.1.1.x | Filesystem | cramfs, "
   block:
     - name: "1.1.1.1 | Mounting of cramfs filesystem is diabled"
       block:
