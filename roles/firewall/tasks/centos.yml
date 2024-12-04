@@ -1,0 +1,14 @@
+- name: Make Working Directory
+  file:
+    path: /var/ccdc
+    state: directory
+    mode: '0750'
+
+- name: Install Firewall Script
+  get_url:
+    url: "https://raw.githubusercontent.com/CCDC-RIT/Linux-Scripts/main/firewall_args.sh"
+    dest: "/var/ccdc/firewall_args.sh"
+    mode: 0755
+
+- name: Run Firewall
+  command: "/var/ccdc/firewall_args.sh 22,80 53,443"
