@@ -1,38 +1,57 @@
 ---
-- name: initial
+- name: Initial Run
   hosts: all
   roles: 
+    - initial # create blue user, adds key to user, creates backup directory, installs common packages
+  tags:
+    - never
     - initial
-  
-# - name: Setup Firewall
-#   hosts: all
-#   roles:
-#     - firewall
-#   tags:
-#     - never
-#     - initial
-#     - firewall
+    - setup
 
-# - name: Modify Users
-#   hosts: all
-#   roles:
-#     - users
-#   tags:
-#     - never
-#     - initial
-#     - users
+- name: Setup Firewall
+  hosts: all
+  roles:
+    - firewall # copy current firewall rules, run lite if no scoring ip, otherwise harden that shit
+  tags:
+    - never
+    - initial
+    - firewall
 
-# - name: Harden SSH
-#   hosts: all
-#   roles:
-#     - ssh
-#   tags:
-#     - never
-#     - initial
-#     - ssh
+- name: Modify Users
+  hosts: all
+  roles:
+    - users # finds all users with a shell (look for any shell in /etc/shells), creates passwords from them all, deactivate them all, remove their ssh authorized keys
+  tags:
+    - never
+    - initial
+    - users
 
-# - name: tmp
-#     # - backups
-#     # - downloads
-#     # - users
-#     # - hardening
+- name: Setup Honeypot
+  hosts: all
+  roles:
+    - honeypot
+  tags:
+    - never
+    - initial
+    - users
+    - honeypot
+
+- name: Harden OS
+  hosts: all
+  roles:
+    - harden
+  tags:
+    - never
+    - initial
+    - harden
+    - harden_os
+
+- name: Harden Services
+  hosts: all
+  roles:
+    - harden_services
+  tags:
+    - never
+    - initial
+    - harden
+    - harden_services

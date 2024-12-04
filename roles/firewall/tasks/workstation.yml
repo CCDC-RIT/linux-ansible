@@ -1,0 +1,8 @@
+---
+# workstations likely only need to allow ssh from us
+# TODO fill these out
+- name: Backup Rules
+
+- name: Allow us
+
+- name: Block everything else

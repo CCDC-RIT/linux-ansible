@@ -1,0 +1,15 @@
+---
+# allow ssh port
+# allow score check ports in (INPUT chain, dest port)
+# allow score check ports out (OUTPUT chain, src port)
+# allow dns 
+# allow https & http
+
+- name: Backup Rules
+  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.lite
+
+# - name: Allow SSH HTTP HTTTPS DNS
+#   iptables: 
+#     chain: INPUT
+#     jump: ACCEPT
+#     port: 

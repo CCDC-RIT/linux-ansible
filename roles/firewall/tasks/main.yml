@@ -2,11 +2,10 @@
 - task: Backup Current IPTables Configuration
   command: iptables-save > /etc/iptables/rules.v4
 
-- include: ubuntu.yml
-  when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
+- task: Secure that shit (lite)
+  include: iptables_lite.yml
+  when: scoring_ip is not defined
 
-- task: Block everything except scoring
-  iptables:
-    chain: INPUT
-    source: "{{ scoring_ip }}"
-    jump: ACCEPT
+- task: Secure that shit (heavy)
+  include: iptables_heavy.yml
+  when: scoring_ip is defined # or it's a workstation

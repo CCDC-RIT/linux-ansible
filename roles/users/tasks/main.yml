@@ -1,18 +1,5 @@
 ---
-- name: Create blueteam group
-  group:
-    name: blueteam
-    state: present
-
-- name: Create blueteam user
-  user:
-    name: blueteam
-    state: present
-    groups: "blueteam sudo wheel adm"
-    append: yes
-    shell: /bin/bash
-  ignore_errors: true
-
+# change this to find all users with a shell (look for any shell in /etc/shells) and exclude blueteam
 - name: Find users with /bin shell except white/gray/black team
   ansible.builtin.shell: |
     awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(whiteteam|grayteam|blackteam)$/ {print $1}' /etc/passwd
@@ -34,10 +21,7 @@
       sg: "User: {{ item.item }}, Password: {{ item.password }}"
     loop: "{{ user_password.results }}"
 
-- name: Find users with /bin shell except white/gray/black team and blueteam user
-  ansible.builtin.shell: |
-    awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(grayteam|blackteam|whiteteam|blueteam)$/ {print $1}' /etc/passwd
-  register: deactivate_user_list
+    # output every user and password combo to /tmp file, copy that file to ansible controller, then remove it
 
 #TODO once we install bin/redd well change /sbin/nologin to /bin/redd
 - name: Deactivate each user by setting their shell to /sbin/nologin
@@ -46,3 +30,8 @@
     shell: /sbin/nologin
   loop: "{{ deactivate_user_list.stdout_lines }}"
 
+- name: Move all ssh authorized keys to quarantine
+  ansible.builtin.shell: |
+    mv /home/{{ item }}/.ssh/authorized_keys {{ quarantine }}/authorized_keys_{{ item }}
+  loop: "{{ user_list.stdout_lines }}"
+  
