@@ -1,9 +1,28 @@
----
-- name: Backup directories
+- name: Set timestamp fact
+  set_fact:
+    timestamp: "{{ ansible_date_time.iso8601_basic }}"
+
+- name: Archive /etc with timestamp
+  ansible.builtin.archive:
+    path: /etc
+    dest: "{{ backup_dir }}/etc_{{ timestamp }}.tar.gz"
+    format: gz
+  register: archive_result
+
+- name: Generate SHA256 hash of the /etc backup
+  ansible.builtin.command:
+    cmd: "sha256 {{ backup_dir }}/etc_{{ timestamp }}.tar.gz"
+  register: hash_result
+  changed_when: false
+
+- name: Save hash to a file on the target
   ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "{{ backup_dir }}/{{ item | basename }}"
-  with_items:
-    - /etc
-    - /var/www
- 
+    content: "{{ hash_result.stdout }}"
+    dest: "{{ backup_dir }}/etc_{{ timestamp }}.hash"
+
+- name: Fetch hash to the controller
+  ansible.builtin.fetch:
+    src: "/tmp/etc_{{ timestamp }}.hash"
+    dest: "{{ backup_dir }}/{{ inventory_hostname }}_etc_{{ timestamp }}.hash"
+    flat: yes
+  
