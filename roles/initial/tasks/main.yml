@@ -13,6 +13,13 @@
     state: present
     key: "{{ lookup('file', '/opt/inventory/id_ed25519.pub') }}"
 
+- name: Create backup_dir
+  ansible.builtin.file:
+    path: "{{ backup_dir }}"
+    owner: blueteam
+    group: blueteam
+    state: directory
+
 - name: Install Common Packages
   apt:
     name: "{{ item }}"

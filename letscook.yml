@@ -1,0 +1,38 @@
+---
+- name: initial
+  hosts: all
+  roles: 
+    - initial
+  
+# - name: Setup Firewall
+#   hosts: all
+#   roles:
+#     - firewall
+#   tags:
+#     - never
+#     - initial
+#     - firewall
+
+# - name: Modify Users
+#   hosts: all
+#   roles:
+#     - users
+#   tags:
+#     - never
+#     - initial
+#     - users
+
+# - name: Harden SSH
+#   hosts: all
+#   roles:
+#     - ssh
+#   tags:
+#     - never
+#     - initial
+#     - ssh
+
+# - name: tmp
+#     # - backups
+#     # - downloads
+#     # - users
+#     # - hardening

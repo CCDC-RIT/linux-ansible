@@ -1,0 +1,9 @@
+---
+- name: Backup directories
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ backup_dir }}/{{ item | basename }}"
+  with_items:
+    - /etc
+    - /var/www
+ 
