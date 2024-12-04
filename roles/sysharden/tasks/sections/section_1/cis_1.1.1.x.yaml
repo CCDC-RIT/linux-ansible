@@ -2,7 +2,7 @@
 - name: "1.1.1.1 | Mounting of cramfs filesystem is diabled"
   block:
     - name: "Edit modprobe config"
-      ansible.builtin.linefile:
+      ansible.builtin.lineinfile:
         dest: "{{ modprobe_path }}"
         regexp: '^(#)?install cramfs(\\s|$)'
         line: "install cramfs /bin/true"
@@ -10,7 +10,7 @@
         ignore_erros: true
 
     - name: "Ensure cramfs is blacklisted"
-      ansible.builtin.linefile:
+      ansible.builtin.lineinfile:
         path: "{{ blacklist_path }}"
         regexp: "^(#)?blacklist cramfs(\\s|$)"
         line: "blacklist cramfs"
@@ -20,14 +20,14 @@
             
     - name: "Disable cramfs module"
       block:
-        - name: "Disable cramfs on Linux"
+        - name: "Disable cramfs module for Linux"
           community.general.modprobe:
             name: cramfs
             state: absent
           when: ansible_facts['os_family'] != 'BSD'
         
         - name: "Disable cramfs module for BSD"
-          ansible.builtin.linefile:
+          ansible.builtin.lineinfile:
             path: /boot/loader.conf
             regexpr: "^(#)?cramfs_load(\\s|$)"
             line: 'cramfs_load=NO'
@@ -51,14 +51,14 @@
 - name: "1.1.1.2 | Mounting of sqashfs filesystem is disabled"
   block:
     - name: "edit modprobe config"
-      ansible.builtin.linefile:
+      ansible.builtin.lineinfile:
         dest: "{{ modprobe_path }}"
         regexp: '^(#)?install squashfs(\\s|$)'
         line: "install squashfs /bin/true"
         create: true
 
     - name: "Ensure squashfs is blacklisted"
-      ansible.builtin.linefile:
+      ansible.builtin.lineinfile:
         path: "{{ blacklist_path }}"
         regexpr: "^(#)?blacklist squashfs(\\s|$)"
         line: "blacklist squashfs"
@@ -66,4 +66,27 @@
       
     - name: "Disable squashfs module"
       block: 
-        -
+        - name: "Disable squashfs module for Linux"
+          community.general.modprobe:
+            name: squashfs
+            state: absent
+          when: ansible_fact['os_family'] != 'BSD'
+
+        - name: "Disable squashfs module for BSD"
+          ansible.builtin.lineinfile:
+            path: /boot/loader.conf
+            regexp: "^(#)?squashfs_load(\\s|$)"
+            line: "squashfs_load=\"NO\""
+            create: true
+          when: ansible_fact['os_family'] == 'BSD'
+  vars:
+    modprobe_path: >
+      {{ '/etc/modprobe.d/squashfs.conf' if ansible_facts['os_family'] != 'BSD'
+         else '/usr/local/etc/modprobe.d/squashfs.conf' }}
+    blacklist_path: >
+      {{  '/etc/modprobe.d/blacklist.conf' if ansible_facts['os_family'] != 'BSD'
+         else '/usr/local/etc/modprobe.d/blacklist.conf' }}
+  
+  when:
+    - ansible_facts['os_family'] in ['Debian', 'RedHat', 'BSD', 'Suse']
+    - ansible_connection != 'docker'
