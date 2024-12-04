@@ -1,6 +1,0 @@
----
-- name: Audit | RIT CCDC
-  hosts: all
-  roles: 
-   - audit_users
-   - audit_system

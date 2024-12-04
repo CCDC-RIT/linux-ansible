@@ -39,7 +39,7 @@
 - name: Harden OS
   hosts: all
   roles:
-    - harden
+    - harden_os
   tags:
     - never
     - initial

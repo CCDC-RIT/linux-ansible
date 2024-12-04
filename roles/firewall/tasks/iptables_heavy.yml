@@ -3,6 +3,8 @@
 # TODO fill these out
 - name: Backup Rules
 
-- name: Allow us
+- name: Allow us + scoring
+
+- name: Allow SSH outbound
 
 - name: Block everything else
