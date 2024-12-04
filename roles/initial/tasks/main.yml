@@ -27,6 +27,8 @@
     group: blueteam
     state: directory
 
+- name: Append to /etc/hosts our new hosts #todo figure this out, use var "shortname" from inventory
+
 - name: Install Common Packages
   apt:
     name: "{{ item }}"
