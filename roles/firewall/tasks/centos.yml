@@ -1,0 +1,8 @@
+- name: Install Firewall Script
+  get_url:
+    url: "https://raw.githubusercontent.com/CCDC-RIT/Linux-Scripts/main/initial/firewall_args.sh"
+    dest: "/tmp/firewall_args.sh"
+    mode: 0755
+
+- name: Run Firewall Script
+  command: "/tmp/firewall_args.sh 22,80 53,443"
