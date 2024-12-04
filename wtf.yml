@@ -28,3 +28,9 @@ harden: [playbook]
 
 restore_from_backup: [playbook]
   - restore from backup [role]
+
+honeypot: [role]
+  - gouda.sa
+  - apply to all users
+  - new bash (log PID of parent and command)
+  - new sh
