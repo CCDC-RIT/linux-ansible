@@ -5,28 +5,24 @@
 - name: Archive /etc with timestamp
   ansible.builtin.archive:
     path: /etc
-    dest: "/tmp/etc_{{ timestamp }}.tar.gz"
+    dest: "{{ backup_dir }}/etc_{{ timestamp }}.tar.gz"
     format: gz
   register: archive_result
 
 - name: Generate SHA256 hash of the /etc backup
   ansible.builtin.command:
-    cmd: "sha256 /tmp/etc_{{ timestamp }}.tar.gz"
+    cmd: "sha256 {{ backup_dir }}/etc_{{ timestamp }}.tar.gz"
   register: hash_result
   changed_when: false
 
 - name: Save hash to a file on the target
   ansible.builtin.copy:
     content: "{{ hash_result.stdout }}"
-    dest: "/tmp/etc_{{ timestamp }}.hash"
+    dest: "{{ backup_dir }}/etc_{{ timestamp }}.hash"
 
 - name: Fetch hash to the controller
   ansible.builtin.fetch:
     src: "/tmp/etc_{{ timestamp }}.hash"
-    dest: "/tmp/{{ inventory_hostname }}_etc_{{ timestamp }}.hash"
+    dest: "{{ backup_dir }}/{{ inventory_hostname }}_etc_{{ timestamp }}.hash"
     flat: yes
   
-- name: remove hash file from target
-  ansible.builtin.file:
-    path: "/tmp/etc_{{ timestamp }}.hash"
-    state: absent

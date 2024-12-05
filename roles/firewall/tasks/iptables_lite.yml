@@ -1,0 +1,73 @@
+---
+# allow ssh port
+# allow score check ports in (INPUT chain, dest port)
+# allow score check ports out (OUTPUT chain, src port)
+# allow dns 
+# allow https & http
+
+- name: Backup Rules
+  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.lite
+
+- name: Allow SSH 
+  iptables: 
+    chain: INPUT
+    protocol: tcp
+    destination_ports: 
+      - "22"
+    jump: ACCEPT
+
+- name: Allow HTTP + HTTPS out
+  iptables:
+    chain: OUTPUT
+    source_ports: 
+      - "80"
+      - "443"
+    jump: ACCEPT
+
+- name: Allow DNS
+  iptables: 
+    chain: INPUT
+    protocol: udp
+    destination_port: 53
+    jump: ACCEPT
+    
+- name: Allow scored services ports in
+  iptables:
+    chain: INPUT
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ scored_ports }}"
+
+- name: Allow related and established connections
+  iptables:
+    chain: INPUT
+    match: state
+    state: RELATED,ESTABLISHED
+    jump: ACCEPT
+
+- name: Allow related and established connections
+  iptables:
+    chain: OUTPUT
+    match: state
+    state: RELATED,ESTABLISHED
+    jump: ACCEPT
+
+- name: Allow loopback
+  iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+
+- name: Allow loopback
+  iptables:
+    chain: OUTPUT
+    out_interface: lo
+    jump: ACCEPT
+
+- name: Block everything else
+  iptables:
+    chain: "{{ item.chain }}"
+    policy: DROP
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }

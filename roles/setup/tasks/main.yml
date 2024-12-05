@@ -1,5 +1,35 @@
 ---
-- task: Install Common Packages
+- name: Add blueteam user
+  ansible.builtin.user: 
+    name: blueteam
+    state: present
+    shell: /bin/bash
+    groups: "blueteam sudo wheel adm"
+  ignore_errors: yes
+
+- name: Add key to blueteam user
+  ansible.posix.authorized_key:
+    user: blueteam
+    state: present
+    key: "{{ lookup('file', '/opt/inventory/id_ed25519.pub') }}"
+
+- name: Create backup directory
+  ansible.builtin.file:
+    path: "{{ backup_dir }}"
+    owner: blueteam
+    group: blueteam
+    state: directory
+
+- name: Create quarantine directory
+  ansible.builtin.file:
+    path: "{{ quarantine }}"
+    owner: blueteam
+    group: blueteam
+    state: directory
+
+- name: Append to /etc/hosts our new hosts #todo figure this out, use var "shortname" from inventory
+
+- name: Install Common Packages
   apt:
     name: "{{ item }}"
     state: present
@@ -10,43 +40,3 @@
     - "git"
     - "python3-pip"
     - "snoopy"
-  
-- task: Make backup directory
-  file:
-    path: "{{ backup_dir }}"
-    state: directory
-    owner: root
-    group: root
-    mode: '0700'
-
-- task: Get all valid users
-  shell: "getent passwd | cut -d: -f1 | grep -ve 'blackteam' -e 'black-team' -e 'black_team' -e 'whiteteam' -e 'white_team' -e 'white-team'"
-  register: valid_users
-
-- tasks: Move authorized_keys file somewhere else for every valid user
-  file:
-    remote_src: yes
-    src: "/home/{{ item }}/.ssh/authorized_keys"
-    dest: "{{ backup_dir }}/{{ item }}_old_authorized_keys"
-    owner: root
-    group: root
-    mode: '0600'
-  with_items: "{{ valid_users.stdout_lines }}"
-
-- task: Remove authorized_keys file for every valid user
-  file:
-    src: "/home/{{ item }}/.ssh/authorized_keys"
-    state: absent
-  with_items: "{{ valid_users.stdout_lines }}"
-
-- tasks: Copy ssh key to every valid user
-  authorized_key:
-    user: "{{ item }}"
-    key: "{{ lookup('file', '/opt/inventory/id_ed25519') }}"
-  with_items: "{{ valid_users.stdout_lines }}"
-    
-- tasks: Immutable that shit
-  file:
-    path: "/home/{{ item }}/.ssh/authorized_keys"
-    attributes: +i
-  with_items: "{{ valid_users.stdout_lines }}"

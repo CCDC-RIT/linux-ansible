@@ -232,3 +232,17 @@
     dest: /opt/inventory/{{ ansible_hostname }}-audit.txt
     flat: yes
     fail_on_missing: no
+
+- name: Store Linpeas Output onto local Ansible Box
+  fetch:
+    src: linpeas.txt
+    dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
+    flat: yes
+    fail_on_missing: no
+    
+- name: Store Lynis Output onto local Ansible Box
+  fetch:
+    src: lynis.txt
+    dest: /opt/inventory/{{ ansible_hostname }}-lynis.txt
+    flat: yes
+    fail_on_missing: no

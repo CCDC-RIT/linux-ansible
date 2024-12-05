@@ -1,0 +1,60 @@
+---
+# workstations likely only need to allow ssh from us
+# TODO fill these out
+- name: Backup Rules
+  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.lite
+
+- name: Flush rules
+  iptables:
+    flush: yes
+
+- name: Allow scoring
+  iptables:
+    chain: "{{ item.chain }}"
+    source: "{{ scoring_ip }}"
+    jump: ACCEPT
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT } 
+  ignore_errors: true
+
+- name: Allow traffic for Internal subnet (e1/2)
+  iptables:
+    chain: "{{ item.chain }}"
+    source: 172.20.240.0/24
+    jump: ACCEPT
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }
+
+- name: Allow traffic for User subnet (e1/4)
+  iptables:
+    chain: "{{ item.chain }}"
+    source: 172.20.242.0/24
+    jump: ACCEPT
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }
+  
+- name: Allow traffic for Public subnet (e1/1)
+  iptables:
+    chain: "{{ item.chain }}"
+    source: 172.20.241.0/24
+    jump: ACCEPT
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }
+
+- name: Allow SSH outbound
+  iptables:
+    chain: OUTPUT
+    source_port: 22/tcp
+    jump: ACCEPT
+
+- name: Block everything else
+  iptables:
+    chain: "{{ item.chain }}"
+    policy: DROP
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }

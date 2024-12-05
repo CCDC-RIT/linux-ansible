@@ -1,2 +1,4 @@
 call each sections main here
 have this get executed by the main playbook
+
+reinstall core services (pam, ssh, etc.)
