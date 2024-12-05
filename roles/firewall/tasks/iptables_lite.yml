@@ -8,8 +8,41 @@
 - name: Backup Rules
   ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.lite
 
-# - name: Allow SSH HTTP HTTTPS DNS
-#   iptables: 
-#     chain: INPUT
-#     jump: ACCEPT
-#     port: 
+- name: Allow SSH HTTP HTTPS
+  iptables: 
+    chain: INPUT
+    protocol: tcp
+    destination_ports: 
+      - 22
+      - 80
+      - 443
+    jump: ACCEPT
+
+- name: Allow DNS
+  iptables: 
+    chain: INPUT
+    protocol: udp
+    destination_port: 53
+    jump: ACCEPT
+    
+- name: Allow scored services ports in
+  iptables:
+    chain: INPUT
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ scored_ports }}"
+
+- name: Allow scored services ports out
+  iptables:
+    chain: OUTPUT
+    source_port: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ scored_ports }}"
+
+- name: Block everything else
+  iptables:
+    chain: "{{ item.chain }}"
+    policy: DROP
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }
