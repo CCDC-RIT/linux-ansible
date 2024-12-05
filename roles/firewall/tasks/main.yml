@@ -1,11 +1,11 @@
 ---
-- task: Backup Current IPTables Configuration
+- name: Backup Current IPTables Configuration
   command: iptables-save > /etc/iptables/rules.v4
 
-- task: Secure that shit (lite)
-  include: iptables_lite.yml
+- name: Secure that shit (lite)
+  include_tasks: iptables_lite.yml
   when: scoring_ip is not defined
 
-- task: Secure that shit (heavy)
-  include: iptables_heavy.yml
-  when: scoring_ip is defined # or it's a workstation
+- name: Secure that shit (heavy)
+  include_tasks: iptables_heavy.yml
+  when: scoring_ip is defined or "'workstation' in group_names"
