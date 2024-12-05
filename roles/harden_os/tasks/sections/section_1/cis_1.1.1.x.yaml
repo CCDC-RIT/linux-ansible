@@ -90,3 +90,46 @@
   when:
     - ansible_facts['os_family'] in ['Debian', 'RedHat', 'BSD', 'Suse']
     - ansible_connection != 'docker'
+
+- name: "1.1.1.2 | Mounting of udf filesystem is disabled"
+  block:
+    - name: "edit modprobe config"
+      ansible.builtin.lineinfile:
+        dest: "{{ modprobe_path }}"
+        regexp: '^(#)?install udf(\\s|$)'
+        line: "install udf /bin/true"
+        create: true
+
+    - name: "Ensure udf is blacklisted"
+      ansible.builtin.lineinfile:
+        path: "{{ blacklist_path }}"
+        regexpr: "^(#)?blacklist udf(\\s|$)"
+        line: "blacklist udf"
+        create: true
+      
+    - name: "Disable udf module"
+      block: 
+        - name: "Disable udf module for Linux"
+          community.general.modprobe:
+            name: udf
+            state: absent
+          when: ansible_fact['os_family'] != 'BSD'
+
+        - name: "Disable udf module for BSD"
+          ansible.builtin.lineinfile:
+            path: /boot/loader.conf
+            regexp: "^(#)?udf_load(\\s|$)"
+            line: "udf_load=\"NO\""
+            create: true
+          when: ansible_fact['os_family'] == 'BSD'
+  vars:
+    modprobe_path: >
+      {{ '/etc/modprobe.d/udf.conf' if ansible_facts['os_family'] != 'BSD'
+         else '/usr/local/etc/modprobe.d/udf.conf' }}
+    blacklist_path: >
+      {{  '/etc/modprobe.d/blacklist.conf' if ansible_facts['os_family'] != 'BSD'
+         else '/usr/local/etc/modprobe.d/blacklist.conf' }}
+  
+  when:
+    - ansible_facts['os_family'] in ['Debian', 'RedHat', 'BSD', 'Suse']
+    - ansible_connection != 'docker'
