@@ -13,15 +13,15 @@
     chain: INPUT
     protocol: tcp
     destination_ports: 
-      - 22
+      - "22"
     jump: ACCEPT
 
 - name: Allow HTTP + HTTPS out
   iptables:
     chain: OUTPUT
-    source_port: 
-      - 80
-      - 443
+    source_ports: 
+      - "80"
+      - "443"
     jump: ACCEPT
 
 - name: Allow DNS
@@ -38,12 +38,31 @@
     jump: ACCEPT
   loop: "{{ scored_ports }}"
 
-- name: Allow scored services ports out
+- name: Allow related and established connections
+  iptables:
+    chain: INPUT
+    match: state
+    state: RELATED,ESTABLISHED
+    jump: ACCEPT
+
+- name: Allow related and established connections
   iptables:
     chain: OUTPUT
-    source_port: "{{ item }}"
+    match: state
+    state: RELATED,ESTABLISHED
     jump: ACCEPT
-  loop: "{{ scored_ports }}"
+
+- name: Allow loopback
+  iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+
+- name: Allow loopback
+  iptables:
+    chain: OUTPUT
+    out_interface: lo
+    jump: ACCEPT
 
 - name: Block everything else
   iptables:
