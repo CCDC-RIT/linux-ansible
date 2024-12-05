@@ -2,7 +2,7 @@
 - name: Initial Run
   hosts: all
   roles: 
-    - initial # create blue user, adds key to user, creates backup directory, installs common packages
+    - setup # create blue user, adds key to user, creates backup directory, installs common packages
   tags:
     - never
     - initial
@@ -55,3 +55,12 @@
     - initial
     - harden
     - harden_services
+
+- name: Audit System
+  hosts: all
+  roles: 
+    - audit 
+  tags:
+    - never
+    - initial
+    - audit
