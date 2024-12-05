@@ -1,4 +1,5 @@
---
+---
+
 - name: "1.1.1.1 | Mounting of cramfs filesystem is diabled"
   block:
     - name: "Edit modprobe config"
