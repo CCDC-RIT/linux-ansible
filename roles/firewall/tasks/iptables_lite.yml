@@ -8,12 +8,18 @@
 - name: Backup Rules
   ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.lite
 
-- name: Allow SSH HTTP HTTPS
+- name: Allow SSH 
   iptables: 
     chain: INPUT
     protocol: tcp
     destination_ports: 
       - 22
+    jump: ACCEPT
+
+- name: Allow HTTP + HTTPS out
+  iptables:
+    chain: OUTPUT
+    source_port: 
       - 80
       - 443
     jump: ACCEPT
