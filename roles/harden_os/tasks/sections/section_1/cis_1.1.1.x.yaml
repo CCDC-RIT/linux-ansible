@@ -91,7 +91,7 @@
     - ansible_facts['os_family'] in ['Debian', 'RedHat', 'BSD', 'Suse']
     - ansible_connection != 'docker'
 
-- name: "1.1.1.2 | Mounting of udf filesystem is disabled"
+- name: "1.1.1.3 | Mounting of udf filesystem is disabled"
   block:
     - name: "edit modprobe config"
       ansible.builtin.lineinfile:
