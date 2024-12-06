@@ -6,7 +6,15 @@
 # allow https & http
 
 - name: Backup Rules
-  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.pre_lite
+  ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4.pre_lite"
+
+- name: Accept policies
+  iptables:
+    chain: "{{ item }}"
+    policy: ACCEPT
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
 
 - name: Flush rules
   iptables:
@@ -27,37 +35,48 @@
 - name: Allow HTTP + HTTPS out
   iptables:
     chain: OUTPUT
-    source_ports: 
-      - "80"
-      - "443"
+    source_port: "{{ item }}"
+    protocol: tcp
     jump: ACCEPT
+  with_items:
+    - "80"
+    - "443"
 
 - name: Allow DNS
   iptables: 
-    chain: INPUT
+    chain: OUTPUT
     protocol: udp
     destination_port: 53
     jump: ACCEPT
-    
-- name: Allow scored services ports in
+
+- name: Allow scored services ports in (TCP)
   iptables:
     chain: INPUT
     destination_port: "{{ item }}"
     jump: ACCEPT
-  loop: "{{ scored_ports }}"
+    protocol: tcp
+  loop: "{{ scored_ports_tcp }}"
+  ignore_errors: yes
+
+- name: Allow scored services ports in (UDP)
+  iptables:
+    chain: INPUT
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+    protocol: udp
+  loop: "{{ scored_ports_udp }}"
+  ignore_errors: yes
 
 - name: Allow related and established connections
   iptables:
     chain: INPUT
-    match: state
-    state: RELATED,ESTABLISHED
+    ctstate: RELATED,ESTABLISHED
     jump: ACCEPT
 
 - name: Allow related and established connections
   iptables:
     chain: OUTPUT
-    match: state
-    state: RELATED,ESTABLISHED
+    ctstate: RELATED,ESTABLISHED
     jump: ACCEPT
 
 - name: Allow loopback

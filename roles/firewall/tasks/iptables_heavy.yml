@@ -2,7 +2,15 @@
 # workstations likely only need to allow ssh from us
 # TODO fill these out
 - name: Backup Rules
-  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.pre_heavy
+  ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4.pre_heavy"
+
+- name: Accept policies
+  iptables:
+    chain: "{{ item }}"
+    policy: ACCEPT
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
 
 - name: Flush rules
   iptables:

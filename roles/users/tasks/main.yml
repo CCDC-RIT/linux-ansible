@@ -1,54 +1,54 @@
 ---
 # change this to find all users with a shell (look for any shell in /etc/shells) and exclude blueteam
-- name: Get users
-  getent:
-    database: passwd
+- name: Get users with valid shells except for our big guys
+  ansible.builtin.shell: "awk -F: 'NR==FNR {shells[$1]; next} $NF in shells' /etc/shells /etc/passwd | grep -ve blueteam -e blackteam -e whiteteam -e black_team -e black-team -e white-team -e white_team | cut -d ':' -f 1"
   register: users
 
-- name: Get shells
-  ansible.builtin.shell: cat /etc/shells | tail -n +2 # skip the first line
-  register: shells
-
-- name: Find users with a shell (in /etc/shells) and exclude specific users
-  set_fact:
-    users_with_valid_shell: >
-      {{
-        users.passwd |
-        selectattr('shell', 'in', shells.stdout_lines) |
-        rejectattr('name', 'in', ['blueteam', 'blackteam', 'whiteteam', 'black_team', 'white_team']) |
-        map(attribute='name') |
-        list
-      }}
-
-- name: Debug users with valid shells
-  debug:
-    msg: "Users with valid shells (excluding specified users): {{ users_with_valid_shell }}"
-
-- name: Generate and set passwords for all users
-  ansible.builtin.user:
-    name: "{{ item }}"
-    password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
-  loop: "{{ users_with_valid_shell }}"
-  register: user_password
+- name: for each user, generate a new password using openssl and create a dict user -> password
+  become: true
+  shell: |
+    openssl rand -base64 20
+  changed_when: false
+  register: passwords
+  loop: "{{ users.stdout_lines }}"
   loop_control:
-    label: "{{ item }}"
+    loop_var: user
 
-- name: Display generated passwords
-  ansible.builtin.debug:
-    msg: "User: {{ item.item }}, Password: {{ item.invocation.module_args.password }}"
-  loop: "{{ user_password.results }}"
+- name: create a dict user -> password
+  set_fact:
+    user_passwords: "{{ user_passwords | default({}) | combine({item.user: item.stdout}) }}"
+  loop: "{{ passwords.results }}"
 
-    # output every user and password combo to /tmp file, copy that file to ansible controller, then remove it
+- name: for each user, set its password
+  become: true
+  user:
+    name: "{{ item[0] }}"
+    password: "{{ item[1] | password_hash }}"
+  loop: "{{ user_passwords.items() }}"
+  ignore_errors: yes
+
+- name: print passwords
+  debug:
+    var: user_passwords
 
 #TODO once we install bin/redd well change /sbin/nologin to /bin/redd
 - name: Deactivate each user by setting their shell to /sbin/nologin
   ansible.builtin.user:
     name: "{{ item }}"
     shell: /sbin/nologin
-  loop: "{{ deactivate_user_list.stdout_lines }}"
+  loop: "{{ users.stdout_lines }}"
 
 - name: Move all ssh authorized keys to quarantine
   ansible.builtin.shell: |
     mv /home/{{ item }}/.ssh/authorized_keys {{ quarantine }}/authorized_keys_{{ item }}
-  loop: "{{ user_list.stdout_lines }}"
+  loop: "{{ users.stdout_lines }}"
+  ignore_errors: yes
   
+- name: Honeypot those bitches
+  include_tasks: honeypot.yml
+
+- name: Honeypot each user by setting their shell to /bin/redd
+  ansible.builtin.user:
+    name: "{{ item }}"
+    shell: /bin/redd
+  loop: "{{ users.stdout_lines }}"

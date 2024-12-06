@@ -218,8 +218,13 @@
   ignore_errors: true
 
 # External Audit Scripts
+- name: Copy Linpeas
+  copy:
+    src: linpeas.sh
+    dest: /tmp/linpeas.sh
+
 - name: Run Linpeas Audit
-  shell: curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > linpeas.txt
+  shell: cat /tmp/linpeas.sh | sh > linpeas.txt
   ignore_errors: true
 
 - name: Run Lynis Audit
