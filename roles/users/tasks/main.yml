@@ -23,23 +23,20 @@
 - name: Debug users with valid shells
   debug:
     msg: "Users with valid shells (excluding specified users): {{ users_with_valid_shell }}"
-  register: user_list
 
-- name: Generate and set passwords/Display generated passwords
-  ansible.builtin.block:
-    - name: Generate and set passwords
-      ansible.builtin.user:
-        name: "{{ item }}"
-        password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
-      loop: "{{ user_list.stdout_lines }}"
-      register: user_password
-      loop_control:
-        label: "{{ item }}"
+- name: Generate and set passwords for all users
+  ansible.builtin.user:
+    name: "{{ item }}"
+    password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
+  loop: "{{ users_with_valid_shell }}"
+  register: user_password
+  loop_control:
+    label: "{{ item }}"
 
-    - name: Display generated passwords
-      ansible.builtin.debug:
-        msg: "User: {{ item.item }}, Password: {{ item.invocation.module_args.password }}"
-      loop: "{{ user_password.results }}"
+- name: Display generated passwords
+  ansible.builtin.debug:
+    msg: "User: {{ item.item }}, Password: {{ item.invocation.module_args.password }}"
+  loop: "{{ user_password.results }}"
 
     # output every user and password combo to /tmp file, copy that file to ansible controller, then remove it
 
