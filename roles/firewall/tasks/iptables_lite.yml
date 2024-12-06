@@ -28,8 +28,7 @@
   iptables: 
     chain: INPUT
     protocol: tcp
-    destination_ports: 
-      - "22"
+    destination_port: "22"
     jump: ACCEPT
 
 - name: Allow HTTP + HTTPS out

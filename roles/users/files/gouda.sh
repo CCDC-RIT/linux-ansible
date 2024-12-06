@@ -147,14 +147,17 @@ cp `which sh` /bin/newsh
 cp `which bash` /bin/newbash
 
 echo '#!/bin/newsh
-echo "/bin/bash $@" >> /var/log/gouda_bash
+echo "[$PPID `cat /proc/$PPID/comm`] /bin/bash $@" >> /var/log/gouda_bash
 /bin/newbash "$@"' > /bin/bash
 cp /bin/bash /usr/bin/bash
 
 echo '#!/bin/newsh
-echo "/bin/sh $@" >> /var/log/gouda_bash
+echo "[$PPID `cat /proc/$PPID/comm`] /bin/sh $@" >> /var/log/gouda_bash
 /bin/newsh "$@"' > /bin/sh
 cp /bin/sh /usr/bin/sh
+
+chattr +i /bin/bash
+chattr +i /bin/sh
 
 touch /var/log/gouda_bash
 chmod 622 /var/log/gouda_bash
