@@ -10,6 +10,13 @@
     name: "*"
     state: latest
 
+- name: Reinstall of package by uninstall and new install.
+  apt:
+    name: package
+    state: "{{ item }}"
+  with_items: ['absent', 'present']
+  loop: ['pam','openssh-server','coreutils', 'passwd', 'git', 'vim']
+
 - name: Apt - Ensure debsums is installed
   ansible.builtin.apt:
     name: "{{ packages }}"
