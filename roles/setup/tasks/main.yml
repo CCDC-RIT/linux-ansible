@@ -27,21 +27,21 @@
     group: blueteam
     state: directory
 
-- name: Create hosts list
-  set_fact:
-    build_hosts: |
-      {% for host in groups['all'] %}
-      {{ hostvars[host]['ansible_fqdn'] }} {{ hostvars[host]['ansible_hostname'] }}
-      {% endfor %}
+# - name: Create hosts list
+#   set_fact:
+#     build_hosts: |
+#       {% for host in groups['all'] %}
+#       {{ hostvars[host]['ansible_fqdn'] }} {{ hostvars[host]['ansible_hostname'] }}
+#       {% endfor %}
 
-- name: Append to /etc/hosts our new hosts
-  lineinfile:
-    path: /etc/hosts
-    state: present
-    insertafter: EOF
-    line: "{{ item }}"
-  with_items: "{{ build_hosts.split('\n') }}"
-  when: build_hosts is defined
+# - name: Append to /etc/hosts our new hosts
+#   lineinfile:
+#     path: /etc/hosts
+#     state: present
+#     insertafter: EOF
+#     line: "{{ item }}"
+#   with_items: "{{ build_hosts.split('\n') }}"
+#   when: build_hosts is defined
 
 - name: Install Common Packages
   apt:
