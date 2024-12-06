@@ -3,6 +3,8 @@
 Author: Guac0
 
 Provides a SOAR-analogue for service uptime.
+If a basic break is detected (network interface problems, service stopped), script will fix it and exit before checking service config/firewall.
+Firewall and service config/content fixes do not stop the script; all fixes will be attempted.
 
 Supported breaks:
 * Stopped service
@@ -14,7 +16,6 @@ Supported breaks:
 touch -amt 202312312359 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
 
 Requirements:
-* Valid route to 8.8.8.8 (for network connectivity testing)
 * ran with root access
 * only iptables is active, no other firewall
 * fill out the variables listed directly below this line
@@ -22,10 +23,12 @@ Requirements:
 
 declare -a ports=(80 443) #array
 servicename="apache2"
-configdir="/var/apache2"
+configdir="/etc/apache2"
 contentdir="/var/www/html"
 backupdir="/usr/share/fonts/roboto-mono/$servicename"
 timestomp=202312312359
+
+
 
 # check for root and exit if not found
 if  [ "$EUID" -ne 0 ];
@@ -48,7 +51,33 @@ iface=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
 
 if [ -z "$iface" ]; then
     echo "No primary network interface found, skipping network connectivity tests."
-else 
+else
+    # Check if the interface is up
+    if ip link show "$INTERFACE" | grep -q "state UP"; then
+        echo "Interface $INTERFACE is up."
+    else
+        echo "Interface $INTERFACE is down, setting it to up."
+        ip link set "$iface" up
+        exit 0
+    fi
+
+    # Check if the interface has an IP address assigned
+    if ip addr show "$INTERFACE" | grep -q "inet "; then
+        echo "Interface $INTERFACE has an IP address assigned."
+    else
+        echo "Interface $INTERFACE does not have an IP address."
+        exit 1
+    fi
+
+    # Check if the interface is part of the correct routing table (default gateway exists)
+    if ip route show | grep -q "$INTERFACE"; then
+        echo "Interface $INTERFACE is part of the routing table."
+    else
+        echo "Interface $INTERFACE is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured?"
+        exit 1
+    fi
+
+    : '
     if ping -w 2 -c 1 8.8.8.8 &> /dev/null; then
         echo "Network appears to be online (8.8.8.8 is reachable). Perhaps a firewall rule is blocking connection to the scoring IP?"
     else
@@ -62,6 +91,7 @@ else
             exit 0
         fi
     fi
+    '
 fi
 
 #####################################
