@@ -1,9 +1,12 @@
 ---
-- include: debian/defaults/main.yml
+- name: Run debian hardening
+  include: debian/defaults/main.yml
   when: ansible_os_family == 'Debian' 
 
-- include: ubuntu/defaults/main.yml
+- name: Run ubuntu hardening
+  include: ubuntu/defaults/main.yml
   when: ansible_os_family == 'Ubuntu' 
 
-- include: rhel/defaults/main.yml
+- name: Run RHEL hardening
+  include: rhel/defaults/main.yml
   when: ansible_os_family == 'RedHat' 
