@@ -65,4 +65,7 @@
     - "python3-pip"
     - "snoopy"
     - "lynis"
+    - "iptables-persistent"
+    - "nethogs"
+    - "rkhunter"
   ignore_errors: yes
