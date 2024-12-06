@@ -2,59 +2,52 @@
 # workstations likely only need to allow ssh from us
 # TODO fill these out
 - name: Backup Rules
-  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.lite
+  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.pre_heavy
 
 - name: Flush rules
   iptables:
     flush: yes
-
-- name: Allow scoring
-  iptables:
-    chain: "{{ item.chain }}"
-    source: "{{ scoring_ip }}"
-    jump: ACCEPT
+    chain: "{{ item }}"
   with_items:
-    - { chain: INPUT }
-    - { chain: OUTPUT } 
+    - "INPUT"
+    - "OUTPUT"
+
+- name: Allow scoring (INPUT, Source IP)
+  iptables:
+    chain: "INPUT"
+    source: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ scoring_ip }}"
   ignore_errors: true
 
-- name: Allow traffic for Internal subnet (e1/2)
+- name: Allow scoring (OUTPUT, Destination IP)
   iptables:
-    chain: "{{ item.chain }}"
-    source: 172.20.240.0/24
+    chain: "OUTPUT"
+    destination: "{{ item }}"
     jump: ACCEPT
-  with_items:
-    - { chain: INPUT }
-    - { chain: OUTPUT }
+  loop: "{{ scoring_ip }}"
+  ignore_errors: true
 
-- name: Allow traffic for User subnet (e1/4)
+- name: Allow SSH from Ansible Control
   iptables:
-    chain: "{{ item.chain }}"
-    source: 172.20.242.0/24
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    source: "{{ ansible_control_ip }}"
     jump: ACCEPT
-  with_items:
-    - { chain: INPUT }
-    - { chain: OUTPUT }
-  
-- name: Allow traffic for Public subnet (e1/1)
-  iptables:
-    chain: "{{ item.chain }}"
-    source: 172.20.241.0/24
-    jump: ACCEPT
-  with_items:
-    - { chain: INPUT }
-    - { chain: OUTPUT }
 
-- name: Allow SSH outbound
+- name: Allow SSH to Ansible Control
   iptables:
     chain: OUTPUT
-    source_port: 22/tcp
+    protocol: tcp
+    source_port: 22
+    destination: "{{ ansible_control_ip }}"
     jump: ACCEPT
 
 - name: Block everything else
   iptables:
-    chain: "{{ item.chain }}"
+    chain: "{{ item }}"
     policy: DROP
   with_items:
-    - { chain: INPUT }
-    - { chain: OUTPUT }
+    - "INPUT"
+    - "OUTPUT"

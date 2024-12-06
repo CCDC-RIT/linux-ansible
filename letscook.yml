@@ -1,4 +1,16 @@
 ---
+- name: Assert Variables
+  hosts: all
+  tasks:
+    - name: Assert Variables
+      fail:
+        msg: "You must define ansible_control_ip in group_vars/main.yaml"
+      when: ansible_control_ip is not defined
+  tags:
+    - never
+    - initial
+    - setup
+
 - name: Initial Run
   hosts: all
   roles: 

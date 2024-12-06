@@ -6,7 +6,15 @@
 # allow https & http
 
 - name: Backup Rules
-  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.lite
+  ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4.pre_lite
+
+- name: Flush rules
+  iptables:
+    flush: yes
+    chain: "{{ item.chain }}"
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }
 
 - name: Allow SSH 
   iptables: 
