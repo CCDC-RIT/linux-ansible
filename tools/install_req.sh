@@ -8,10 +8,12 @@ fi
 
 # install required packages
 apt-get update
-apt-get install -y python-pip python-dev libffi-dev libssl-dev git sshpass 
+apt-get install -y python3-pip libffi-dev libssl-dev git sshpass 
 
 # install required python modules
 pip3 install pywinrm pypsrp ansible
+
+echo "export PATH=$HOME/.local/bin:\$PATH" >> ~/.bashrc
 
 # make directories
 mkdir -p /opt/audit
