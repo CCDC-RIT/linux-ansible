@@ -1,8 +1,10 @@
 #!/bin/bash
-"""
+: '
 Author: Guac0
 
 Provides a SOAR-analogue for service uptime.
+If a basic break is detected (network interface problems, service stopped), script will fix it and exit before checking service config/firewall.
+Firewall and service config/content fixes do not stop the script; all fixes will be attempted.
 
 Supported breaks:
 * Stopped service
@@ -11,17 +13,22 @@ Supported breaks:
 * Bad content file
 * Interface down
 
+touch -amt 202312312359 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
+
 Requirements:
-* Valid route to 8.8.8.8 (for network connectivity testing)
 * ran with root access
 * only iptables is active, no other firewall
 * fill out the variables listed directly below this line
-"""
+'
+
+declare -a ports=(80 443) #array
 servicename="apache2"
-configdir="/var/apache2"
+configdir="/etc/apache2"
 contentdir="/var/www/html"
 backupdir="/usr/share/fonts/roboto-mono/$servicename"
-timestomp=
+timestomp=202312312359
+
+
 
 # check for root and exit if not found
 if  [ "$EUID" -ne 0 ];
@@ -30,9 +37,12 @@ then
     exit 1
 fi
 
+echo "   Starting Service Mitigations Script   "
+
 #####################################
 ############ Network ################
 #####################################
+echo ""
 echo "     Network     "
 # Check that machine has internet connectivity
 # Ping until timeout of 2 seconds or 1 successful packet
@@ -41,7 +51,33 @@ iface=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
 
 if [ -z "$iface" ]; then
     echo "No primary network interface found, skipping network connectivity tests."
-else 
+else
+    # Check if the interface is up
+    if ip link show "$INTERFACE" | grep -q "state UP"; then
+        echo "Interface $INTERFACE is up."
+    else
+        echo "Interface $INTERFACE is down, setting it to up."
+        ip link set "$iface" up
+        exit 0
+    fi
+
+    # Check if the interface has an IP address assigned
+    if ip addr show "$INTERFACE" | grep -q "inet "; then
+        echo "Interface $INTERFACE has an IP address assigned."
+    else
+        echo "Interface $INTERFACE does not have an IP address."
+        exit 1
+    fi
+
+    # Check if the interface is part of the correct routing table (default gateway exists)
+    if ip route show | grep -q "$INTERFACE"; then
+        echo "Interface $INTERFACE is part of the routing table."
+    else
+        echo "Interface $INTERFACE is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured?"
+        exit 1
+    fi
+
+    : '
     if ping -w 2 -c 1 8.8.8.8 &> /dev/null; then
         echo "Network appears to be online (8.8.8.8 is reachable). Perhaps a firewall rule is blocking connection to the scoring IP?"
     else
@@ -55,26 +91,28 @@ else
             exit 0
         fi
     fi
+    '
 fi
 
 #####################################
 ######### Service Status ############
 #####################################
+echo ""
 echo "     Service Status     "
 # Check if the service is running. If not running, start it.
-if systemctl is-active --quiet "$service_name"; then
-    echo "Service '$service_name' is already running."
+if systemctl is-active --quiet "$servicename"; then
+    echo "Service '$servicename' is already running."
 else
-    echo "Service '$service_name' is not running. Attempting to start it."
-    systemctl start "$service_name"
-    systemctl enable "$service_name"
+    echo "Service '$servicename' is not running. Attempting to start it."
+    systemctl start "$servicename"
+    systemctl enable "$servicename"
 
     # Verify if the service started successfully
-    if systemctl is-active --quiet "$service_name"; then
-        echo "Service '$service_name' started successfully."
+    if systemctl is-active --quiet "$servicename"; then
+        echo "Service '$servicename' started successfully."
         exit 0
     else
-        echo "Failed to start service '$service_name'."
+        echo "Failed to start service '$servicename'."
         exit 1
     fi
 fi
@@ -82,8 +120,11 @@ fi
 #####################################
 ############# Firewall ##############
 #####################################
+echo ""
 echo "     Firewall     "
 echo "Disabling unwanted firewall managers (ufw, firewalld)"
+# iptables tables to check
+declare -a tables=("filter" "nat" "mangle" "raw")
 
 ufw disable
 systemctl stop ufw
@@ -92,10 +133,48 @@ systemctl disable ufw
 systemctl stop firewalld
 systemctl disable firewalld
 
+echo ""
+echo "Backing up iptables rules..."
+# # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
+timestamp=$(date +%Y%m%d%H%M%S)
+iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
+touch -amt timestomp "$backupdir/iptables_rules_backup-$timestamp"
+#ip6tables-save >/etc/ip6_rules_old
+
+echo ""
+# Loop through all provided ports
+for port in "${ports[@]}"; do
+    echo "Scanning and removing deny rules for port $port..."
+
+    # Loop through all iptables tables
+    for table in "${tables[@]}"; do
+        echo "Scanning table: $table"
+
+        # Find all DENY rules in the specified table for both inbound and outbound chains (INPUT and OUTPUT)
+        deny_rules=$(iptables -t "$table" -L INPUT -v -n | grep -E "DPT:$port|SPT:$port")
+        deny_rules_output=$(iptables -t "$table" -L OUTPUT -v -n | grep -E "DPT:$port|SPT:$port")
+
+        # Combine both chains' results
+        deny_rules="$deny_rules"$'\n'"$deny_rules_output"
+
+        if [ -z "$deny_rules" ]; then
+            echo "No DENY rules found for port $port in table $table."
+        else
+            # Loop through all matching rules and remove them
+            while IFS= read -r rule; do
+                # Extract the rule number
+                rule_number=$(echo "$rule" | awk '{print $1}')
+                echo "Removing rule number $rule_number for port $port in table $table..."
+                iptables -t "$table" -D INPUT "$rule_number"
+            done <<< "$deny_rules"
+        fi
+    done
+done
 
 #####################################
 ######### Service Config ############
 #####################################
+echo ""
 echo "     Service Config     "
 # Create the backup directory if it doesn't exist
 if [ ! -d "$backupdir/config" ]; then
@@ -137,6 +216,7 @@ fi
 #####################################
 ######### Service Content ###########
 #####################################
+echo ""
 echo "     Service Content     "
 # Create the backup directory if it doesn't exist
 if [ ! -d "$backupdir/content" ]; then
