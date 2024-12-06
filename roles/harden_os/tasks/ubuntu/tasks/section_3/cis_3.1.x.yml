@@ -1,0 +1,56 @@
+---
+- name: "3.1.1 | PATCH | Disable IPv6"
+  ansible.builtin.lineinfile:
+      path: /etc/default/grub
+      regexp: '^(GRUB_CMDLINE_LINUX=.*(?!.*ipv6\.disable=1)\"[^\"]+)(\".*)'
+      line: '\1 ipv6.disable=1\2'
+      backrefs: true
+  notify: grub update
+  when:
+      - ubtu18cis_rule_3_1_1
+      - not ubtu18cis_ipv6_required
+  tags:
+      - level2-server
+      - level2-workstation
+      - manual
+      - patch
+      - rule_3.1.1
+      - ipv6
+
+- name: "3.1.2 | PATCH | Ensure wireless interfaces are disabled"
+  block:
+      - name: "3.1.2 | AUDIT | Ensure wireless interfaces are disabled | Check if wifi is enabled if wlan exists"
+        ansible.builtin.shell: nmcli radio wifi
+        register: ubtu18cis_wifi_enabled
+        check_mode: false
+        changed_when: ubtu18cis_wifi_enabled.stdout not in  [ 'disabled', 'missing' ]
+        when: "'network-manager' in ansible_facts.packages"
+
+      - name: "3.1.2 | PATCH | Ensure wireless interfaces are disabled | Disable wifi if enabled"
+        ansible.builtin.shell: nmcli radio wifi off
+        notify: Disable wireless adaptor
+        when:
+            - ubtu18cis_wifi_enabled.stdout is defined
+            - "[ 'disabled', 'missing' ] not in ubtu18cis_wifi_enabled.stdout"
+
+      - name: "3.1.2 | PATCH | Ensure wireless interfaces are disabled | Warning"
+        ansible.builtin.debug:
+            msg: "Warning!! network-manager package is not installed please check wireless connections manually"
+        when: "'network-manager' not in ansible_facts.packages"
+
+      - name: "3.1.2 | PATCH | Ensure wireless interfaces are disabled | warning count"
+        ansible.builtin.import_tasks:
+            file: warning_facts.yml
+        when: "'network-manager' not in ansible_facts.packages"
+        vars:
+            warn_control_id: '3.1.2'
+  when:
+      - ubtu18cis_rule_3_1_2
+      - "'wlan' in ansible_facts.interfaces"
+  tags:
+      - level1-server
+      - level2-workstation
+      - automated
+      - patch
+      - rule_3.1.2
+      - wireless

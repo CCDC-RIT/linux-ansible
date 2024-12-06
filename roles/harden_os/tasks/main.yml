@@ -1,0 +1,9 @@
+---
+- include: debian/defaults/main.yml
+  when: ansible_os_family == 'Debian' 
+
+- include: ubuntu/defaults/main.yml
+  when: ansible_os_family == 'Ubuntu' 
+
+- include: rhel/defaults/main.yml
+  when: ansible_os_family == 'RedHat' 

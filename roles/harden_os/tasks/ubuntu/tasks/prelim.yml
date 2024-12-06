@@ -1,0 +1,71 @@
+---
+
+- name: "PRELIM | Run apt update"
+  ansible.builtin.package:
+      update_cache: true
+  tags:
+      - always
+
+- name: Include audit specific variables
+  when:
+      - run_audit or audit_only
+      - setup_audit
+  tags:
+      - setup_audit
+      - run_audit
+  ansible.builtin.include_vars:
+      file: audit.yml
+
+- name: Include pre-remediation audit tasks
+  when:
+      - run_audit or audit_only
+      - setup_audit
+  tags:
+      - run_audit
+  ansible.builtin.import_tasks:
+      file: pre_remediation_audit.yml
+
+# List users in order to look files inside each home directory
+- name: "PRELIM | List users accounts"
+  ansible.builtin.shell: "awk -F: '{print $1}' /etc/passwd"
+  changed_when: false
+  register: ubtu18cis_users
+  tags:
+      - always
+
+- name: "PRELIM | Check for autofs service"
+  ansible.builtin.shell: "systemctl show autofs | grep LoadState | cut -d = -f 2"
+  changed_when: false
+  check_mode: false
+  register: ubtu18cis_autofs_service_status
+  when:
+      - ubtu18cis_rule_1_1_23
+
+- name: "PRELIM | Check for avahi-daemon service"
+  ansible.builtin.shell: "systemctl show avahi-daemon | grep LoadState | cut -d = -f 2"
+  changed_when: false
+  check_mode: false
+  register: avahi_service_status
+  tags:
+      - skip_ansible_lint
+
+- name: "PRELIM | Install gdm3"
+  ansible.builtin.package:
+      name: gdm3
+      state: present
+  when:
+      - ubtu18cis_desktop_required
+      - ubtu18cis_install_gdm3
+      - ubtu18cis_rule_1_8_2 or
+        ubtu18cis_rule_1_8_3
+
+- name: "PRELIM | Install nftables"
+  ansible.builtin.package:
+      name: nftables
+      state: present
+  when: ubtu18cis_firewall_package == "nftables"
+
+- name: "PRELIM | Install acl if not present"
+  ansible.builtin.package:
+      name: acl
+      state: present
