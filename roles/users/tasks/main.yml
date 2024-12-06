@@ -1,8 +1,28 @@
 ---
 # change this to find all users with a shell (look for any shell in /etc/shells) and exclude blueteam
-- name: Find users with /bin shell except white/gray/black team
-  ansible.builtin.shell: |
-    awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(whiteteam|grayteam|blackteam)$/ {print $1}' /etc/passwd
+- name: Get users
+  getent:
+    database: passwd
+  register: users
+
+- name: Get shells
+  ansible.builtin.shell: cat /etc/shells | tail -n +2 # skip the first line
+  register: shells
+
+- name: Find users with a shell (in /etc/shells) and exclude specific users
+  set_fact:
+    users_with_valid_shell: >
+      {{
+        users.passwd |
+        selectattr('shell', 'in', shells.stdout_lines) |
+        rejectattr('name', 'in', ['blueteam', 'blackteam', 'whiteteam', 'black_team', 'white_team']) |
+        map(attribute='name') |
+        list
+      }}
+
+- name: Debug users with valid shells
+  debug:
+    msg: "Users with valid shells (excluding specified users): {{ users_with_valid_shell }}"
   register: user_list
 
 - name: Generate and set passwords/Display generated passwords
