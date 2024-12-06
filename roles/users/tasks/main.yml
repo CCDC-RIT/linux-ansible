@@ -36,10 +36,10 @@
       loop_control:
         label: "{{ item }}"
 
-  - name: Display generated passwords
-    ansible.builtin.debug:
-      sg: "User: {{ item.item }}, Password: {{ item.password }}"
-    loop: "{{ user_password.results }}"
+- name: Display generated passwords
+  ansible.builtin.debug:
+    sg: "User: {{ item.item }}, Password: {{ item.password }}"
+  loop: "{{ user_password.results }}"
 
     # output every user and password combo to /tmp file, copy that file to ansible controller, then remove it
 
