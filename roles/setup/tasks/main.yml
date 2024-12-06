@@ -4,7 +4,17 @@
     name: blueteam
     state: present
     shell: /bin/bash
-    groups: "blueteam sudo wheel adm"
+
+- name: Add blueteam user to admin groups
+  ansible.builtin.user:
+    name: blueteam
+    groups: '{{ item }}'
+    append: yes
+  with_items:
+    - "sudo"
+    - "wheel"
+    - "adm"
+    - "blueteam"
   ignore_errors: yes
 
 - name: Add key to blueteam user
@@ -44,7 +54,7 @@
 #   when: build_hosts is defined
 
 - name: Install Common Packages
-  apt:
+  package:
     name: "{{ item }}"
     state: present
   with_items:
@@ -54,3 +64,4 @@
     - "git"
     - "python3-pip"
     - "snoopy"
+    - "lynis"
