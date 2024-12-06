@@ -70,7 +70,6 @@ create_rule "In-AD-UDP-445-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING
 create_rule "In-AD-UDP-464-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_WINDOWS" "application-default" "udp-464" "allow"
 create_rule "In-AD-UDP-636-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_WINDOWS" "application-default" "udp-636" "allow"
 create_rule "In-User-DNS-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_WINDOWS" "application-default" "udp-53" "allow"
-create_rule "In-DHCP-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_WINDOWS" "application-default" "tcp-???" "allow"
 create_rule "In-SSH-User-Ubuntu-Workstation" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_UBUNTU_WORKSTATION" "application-default" "tcp-22" "allow"
 create_rule "In-Web-80-User-Ubuntu-Workstation" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_UBUNTU_WORKSTATION" "application-default" "tcp-80" "allow"
 create_rule "In-Web-443-User-Ubuntu-Workstation" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_UBUNTU_WORKSTATION" "application-default" "tcp-443" "allow"
@@ -106,7 +105,6 @@ create_rule "In-AD-UDP-445-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING
 create_rule "In-AD-UDP-464-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_WINDOWS" "application-default" "udp-464" "allow"
 create_rule "In-AD-UDP-636-User-Windows" "$EXTERNAL_ZONE" "$USER_ZONE" "$SCORING" "$USER_WINDOWS" "application-default" "udp-636" "allow"
 create_rule "Out-DNS-User-Windows" "$USER_ZONE" "$EXTERNAL_ZONE" "$USER_WINDOWS" "$SCORING" "application-default" "udp-53" "allow"
-create_rule "Out-DHCP-Users-Windows" "$USER_ZONE" "$EXTERNAL_ZONE" "$USER_WINDOWS" "$SCORING" "application-default" "tcp-???" "allow"
 create_rule "Out-SSH-User-Ubuntu-Workstation" "$USER_ZONE" "$EXTERNAL_ZONE" "$USER_UBUNTU_WORKSTATION" "$SCORING" "application-default" "tcp-22" "allow"
 create_rule "Out-Web-User-80-Ubuntu-Workstation" "$USER_ZONE" "$EXTERNAL_ZONE" "$USER_UBUNTU_WORKSTATION" "$SCORING" "application-default" "tcp-80" "allow"
 create_rule "Out-Web-User-443-Ubuntu-Workstation" "$USER_ZONE" "$EXTERNAL_ZONE" "$USER_UBUNTU_WORKSTATION" "$SCORING" "application-default" "tcp-443" "allow"
@@ -167,3 +165,7 @@ create_rule "Between-AD-UDP-636-External-Windows" "$EXTERNAL_ZONE" "$INTERNAL_ZO
 # Default Deny Rules
 create_rule "Default-Deny-Inbound" "any" "any" "any" "any" "application-default" "any" "deny"
 create_rule "Default-Deny-Outbound" "any" "any" "any" "any" "application-default" "any" "deny"
+
+# Allow DHCP
+create_rule "Allow-DHCP-67-Any" "$SCORING" "$SCORING" "$SCORING" "$SCORING" "application-default" "udp-67" "allow"
+create_rule "Allow-DHCP-68-Any" "$SCORING" "$SCORING" "$SCORING" "$SCORING" "application-default" "udp-68" "allow"
