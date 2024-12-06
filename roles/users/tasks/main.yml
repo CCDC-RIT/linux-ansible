@@ -27,14 +27,14 @@
 
 - name: Generate and set passwords/Display generated passwords
   ansible.builtin.block:
-  - name: Generate and set passwords
-    ansible.builtin.user:
-      name: "{{ item }}"
-      password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
-    loop: "{{ user_list.stdout_lines }}"
-    register: user_password
-    loop_control: 
-      lable: "{{ item }}"
+    - name: Generate and set passwords
+      ansible.builtin.user:
+        name: "{{ item }}"
+        password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
+      loop: "{{ user_list.stdout_lines }}"
+      register: user_password
+      loop_control:
+        label: "{{ item }}"
 
   - name: Display generated passwords
     ansible.builtin.debug:
