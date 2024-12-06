@@ -1,0 +1,42 @@
+- name: Deploy Bash script with service
+  hosts: ubuntu_machine
+  become: yes
+  tasks:
+    - name: Copy the Bash script to the target machine
+      copy:
+        src: files/soar.sh
+        dest: /usr/local/bin/script.sh
+        mode: '0755'
+
+- name: Timestomp the Bash script
+  command: touch -t 202312312359 /usr/local/bin/script.sh
+
+- name: Create a systemd service file
+  copy:
+    dest: /etc/systemd/system/custom-script.service
+    content: |
+      [Unit]
+      Description=Run custom script every 30 seconds
+      After=network.target
+
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/script.sh
+      Restart=always
+      RestartSec=30
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  command: systemctl daemon-reload
+
+- name: Enable the service
+  systemd:
+    name: custom-script.service
+    enabled: yes
+
+- name: Start the service
+  systemd:
+    name: custom-script.service
+    state: started
