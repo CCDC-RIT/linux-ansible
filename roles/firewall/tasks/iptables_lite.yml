@@ -34,7 +34,7 @@
 - name: Allow HTTP + HTTPS out
   iptables:
     chain: OUTPUT
-    source_port: "{{ item }}"
+    destination_port: "{{ item }}"
     protocol: tcp
     jump: ACCEPT
   with_items:
