@@ -54,7 +54,7 @@
 #   when: build_hosts is defined
 
 - name: Install Common Packages
-  apt:
+  package:
     name: "{{ item }}"
     state: present
   with_items:
