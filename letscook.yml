@@ -61,6 +61,15 @@
     - users
     - honeypot
 
+- name: Install Braeden's Python scripts 
+  hosts: all
+  become: yes
+  roles:
+    - braeden-linux
+  tags:
+    - never
+    - initial
+
 - name: Audit System
   hosts: all
   become: yes
