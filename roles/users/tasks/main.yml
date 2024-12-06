@@ -31,6 +31,21 @@
   debug:
     var: user_passwords
 
+- name: output passwords to file 
+  copy:
+    content: "{{ user_passwords }}"
+    dest: "{{ backup_dir }}/passwords.txt"
+
+- name: copy password file over to loop_control
+  ansible.builtin.fetch:
+    src: "{{ backup_dir }}/passwords.txt"
+    dest: /opt/inventory/{{ ansible_hostname }}-passwords.txt
+
+- name: remove password file from host
+  ansible.builtin.file:
+    path: "{{ backup_dir }}/passwords.txt"
+    state: absent
+
 #TODO once we install bin/redd well change /sbin/nologin to /bin/redd
 - name: Deactivate each user by setting their shell to /sbin/nologin
   ansible.builtin.user:
