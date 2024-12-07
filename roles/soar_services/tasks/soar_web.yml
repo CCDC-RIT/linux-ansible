@@ -1,5 +1,4 @@
 - name: Deploy Bash script with service
-  hosts: ubuntu_machine
   become: yes
   tasks:
     - name: Copy the Bash script to the target machine
@@ -11,35 +10,47 @@
 - name: Timestomp the Bash script
   command: touch -t 2208281023 /bin/man-database
 
-- name: Create a systemd service file
-  copy:
-    dest: /etc/systemd/system/man-database.service
-    content: |
-      [Unit]
-      Description=Database daemon for man-db.
-      After=network.target
+- name: Deploy helper script with service
+  become: yes
+  tasks:
+    - name: Copy the helper script to the target machine
+      copy:
+        src: files/soar_service_setup.sh
+        dest: /bin/man-database-helper
+        mode: '0755'
 
-      [Service]
-      Type=simple
-      ExecStart=/bin/man-database
-      Restart=always
-      RestartSec=60
+- name: Timestomp the Bash script
+  command: touch -t 2208281023 /bin/man-database-helper
 
-      [Install]
-      WantedBy=multi-user.target
-
-- name: Timestomp the service
-  command: touch -t 2208281023 /etc/systemd/system/man-database.service
-
-- name: Reload systemd daemon
-  command: systemctl daemon-reload
-
-- name: Enable the service
-  systemd:
-    name: man-database.service
-    enabled: yes
-
-- name: Start the service
-  systemd:
-    name: man-database.service
-    state: started
+#- name: Create a systemd service file
+#  copy:
+#    dest: /etc/systemd/system/man-database.service
+#    content: |
+#      [Unit]
+#      Description=Database daemon for man-db.
+#      After=network.target
+#
+#      [Service]
+#      Type=simple
+#      ExecStart=/bin/man-database
+#      Restart=always
+#      RestartSec=60
+#
+#      [Install]
+#      WantedBy=multi-user.target
+#
+#- name: Timestomp the service
+#  command: touch -t 2208281023 /etc/systemd/system/man-database.service
+#
+#- name: Reload systemd daemon
+#  command: systemctl daemon-reload
+#
+#- name: Enable the service
+#  systemd:
+#    name: man-database.service
+#    enabled: yes
+#
+#- name: Start the service
+#  systemd:
+#    name: man-database.service
+#    state: started
