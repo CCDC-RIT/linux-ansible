@@ -1,5 +1,5 @@
 ---
-blueteam_password: "password123"
+blueteam_password: "qwerQWER1234!@#$"
 # scoring_ip: # uncomment only when we know the scoring IP, otherwise skip
 backup_dir: "/usr/share/fonts/roboto-mono"
 quarantine: "/usr/share/fonts/quar-mono"

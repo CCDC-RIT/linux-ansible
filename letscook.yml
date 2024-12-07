@@ -87,4 +87,5 @@
     - harden_os
   tags:
     - never
+    - initial
     - harden
