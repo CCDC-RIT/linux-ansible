@@ -8,8 +8,22 @@
     dest: /root/append_to_audit_log.sh 
     mode: 0755
 
+- name: Copy Debian 10 Service Files
+  copy:
+    src: debian10.services
+    dest: /root/debian10
+    mode: 0755
+  when: ansible_os_family == "Debian" and ansible_distribution == "Debian" and ansible_distribution_version is version("10", "=")
+
+- name: Copy Ubuntu 18 Service Files
+  copy: 
+    src: ubuntu18.services
+    dest: /root/ubuntu18
+    mode: 0755
+  when: ansible_os_family == "Debian" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("18", "=")
+
 - name: Display Aliases
-  shell: alias | bash /root/append_to_audit_log.sh "Display Aliases" 
+  shell: alias
   register: task_output
 - name: LOG Display Aliases
   shell: bash /root/append_to_audit_log.sh "Display Aliases" "{{ task_output.stdout }}"
@@ -37,7 +51,7 @@
   shell: bash /root/append_to_audit_log.sh "Check SSH Keys Config" "{{ ssh1.stdout }}"
 
 - name: List User's Authorized SSH Keys
-  shell: head -n 20 /home/*/.ssh/authorized_keys*
+  shell: head -n 20 /home/*/.ssh/authorized_keys* && find /home -name "authorized_keys"
   register: ssh2
 - name: LOG List User's Authorized SSH Keys
   shell: bash /root/append_to_audit_log.sh "List User's Authorized SSH Keys" "{{ ssh2.stdout }}"
@@ -51,7 +65,7 @@
 - name: Currently Logged In
   shell: who
   register: who_output
-- name: LOG Currently Logged Iclearn
+- name: LOG Currently Logged In
   shell: bash /root/append_to_audit_log.sh "Currently Logged In" "{{ who_output.stdout }}"
 
 - name: Currently Active Sessions
@@ -93,6 +107,22 @@
 - name: LOG Mounted Processes
   shell: bash /root/append_to_audit_log.sh "Mounted Processes" "{{ mountedprocs.stdout }}"
 
+# - name: Get Services (Ubuntu 18)
+#   shell: systemctl list-units --type=service | awk '{ print $1 }' | grep "service"
+#   register: services
+#   when: ansible_os_family == "Debian" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("18", "=")
+# - name: Log Services Differences (Ubuntu 18)
+#   shell: bash /root/append_to_audit_log.sh "Check Services (Ubuntu 18)" "{{ services.stdout_lines | difference(ubuntu18.services) }}" # {{ list1 | difference(list2) }}
+
+# - name: Get Services (Debian 10)
+#   shell: systemctl list-units --type=service | awk '{ print $1 }' | grep "service"
+#   register: services
+#   ansible.builtin.difference:
+#     first: "{{ services.stdout_lines }}"
+#     second: debian10.services
+#     when: ansible_os_family == "Debian" and ansible_distribution == "Debian" and ansible_distribution_version is version("10", "=")
+#     # log the difference into audit_log.txt
+
 
 ##### VERBOSE #####
 
@@ -115,12 +145,14 @@
   shell: bash /root/append_to_audit_log.sh "lsof Raw" "{{ lsofraw.stdout }}"
 
 - name: Processes
-  shell: ps af
+  shell: ps af && /root/append_to_audit_log.sh "Processes" ""
   register: procs
 - name: LOG Processes
-  copy:
-    content: "{{ procs.stdout }}"
+  lineinfile:
+    state: present
+    insertafter: EOF
     dest: /opt/audit_log.txt
+    line: "{{ procs.stdout }}"
 
 - name: Poisoned Networking
   shell: |
@@ -129,12 +161,14 @@
     cat /etc/resolv.conf | grep -Ev '#|PATH|SHELL'
     ip netns list
     ip route
+    /root/append_to_audit_log.sh "Poisoned Networking" ""
   register: poisonednetworking
 - name: LOG Poisoned Networking
-  copy:
-    content: "{{ poisonednetworking.stdout }}"
+  lineinfile:
+    state: present
+    insertafter: EOF
     dest: /opt/audit_log.txt
-  # shell: bash /root/append_to_audit_log.sh "Poisoned Networking" "{{ poisonednetworking.stdout }}"
+    line: "{{ poisonednetworking.stdout }}"
 
 - name: IPs and MACs
   shell: |
@@ -196,7 +230,7 @@
 # - name: LOG Malware? (Debian)
 #   shell: bash /root/append_to_audit_log.sh "Malware? (Debian)" "{{ malware.stdout }}"
 
-# External Audit Scripts
+###### External Audit Scripts #######
 - name: Copy Linpeas
   copy:
     src: linpeas.sh
