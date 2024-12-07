@@ -16,7 +16,7 @@ USER_LOCAL_UBUNTU_WEB="172.20.242.10"
 USER_GLOBAL_UBUNTU_WEB="172.25.23.23"
 USER_LOCAL_WINDOWS="172.20.242.200"
 USER_GLOBAL_UBUNTU_WEB="172.25.23.27"
-USER_LOCAL_UBUNTU_WORKSTATION=""
+USER_LOCAL_UBUNTU_WORKSTATION="172.25.23.101"
 USER_GLOBAL_UBUNTU_WORKSTATION=""
 
 PUBLIC_LOCAL_SPLUNK="172.20.241.20"
@@ -29,10 +29,10 @@ PUBLIC_GLOBAL_FEDORA="172.25.23.39"
 EXTERNAL_WINDOWS="172.31.3.5"
 
 # Define zone names
-INTERNAL_ZONE=""
-USER_ZONE=""
-PUBLIC_ZONE=""
-EXTERNAL_ZONE=""
+INTERNAL_ZONE="Internal"
+USER_ZONE="User"
+PUBLIC_ZONE="Public"
+EXTERNAL_ZONE="External"
 SCORING="any"
 
 # Define Palo Alto variables
@@ -52,8 +52,18 @@ create_rule() {
 
   local xpath="/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules"
   local element="<entry name='$rule_name'><from><member>$from_zone</member></from><to><member>$to_zone</member></to><source><member>$source</member></source><destination><member>$destination</member></destination><application><member>$application</member></application><service><member>$service</member></service><action>$action</action></entry>"
-  
-  curl -k -X GET "$BASE_URL&xpath=$xpath&element=$element"
+
+  # URL encode the `xpath` and `element` strings
+  local encoded_xpath
+  local encoded_element
+  encoded_xpath=$(echo -n "$xpath" | jq -sRr @uri)
+  encoded_element=$(echo -n "$element" | jq -sRr @uri)
+
+  # Construct the final URL
+  local url="${BASE_URL}&xpath=${encoded_xpath}&element=${encoded_element}"
+
+  # Make the API call
+  curl -k -X POST "$url"
 }
 
 # Inbound Rules
