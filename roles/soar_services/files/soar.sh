@@ -25,6 +25,11 @@ Example for content:
 zip -r "/usr/share/fonts/roboto-mono/apache2/content/content.zip" "/var/www/html"
 touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
 
+TODO
+* fix firewall
+* timestomp dirs and/or recursive timestomp
+* install service if missing
+
 Requirements:
 * ran with root access
 * only iptables is active, no other firewall
