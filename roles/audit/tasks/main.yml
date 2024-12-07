@@ -2,88 +2,95 @@
 # to save ansible output in a single log on the control node, set the log_path configuration file (ansible.cfg) setting
 # to save output in separate logs, one on each managed node, set the no_target_syslog and syslog_facility settings in ansible.cfg -- this is probably what we prefer
 ##### BASIC #####
+- name: Copy append_to_audit_log.sh
+  copy:
+    src: append_to_audit_log.sh
+    dest: /root/append_to_audit_log.sh 
+    mode: 0755
+
+- name: Copy Debian 10 Service Files
+  copy:
+    src: debian10.services
+    dest: /root/debian10
+    mode: 0755
+  when: ansible_os_family == "Debian" and ansible_distribution == "Debian" and ansible_distribution_version is version("10", "=")
+
+- name: Copy Ubuntu 18 Service Files
+  copy: 
+    src: ubuntu18.services
+    dest: /root/ubuntu18
+    mode: 0755
+  when: ansible_os_family == "Debian" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("18", "=")
+
 - name: Display Aliases
   shell: alias
-  register: aliases
-  ignore_errors: true
-
-- name: Log result of Display Aliases
-  shell: "echo '{{ aliases.stdout }}' >> audit_log.txt"
+  register: task_output
+- name: LOG Display Aliases
+  shell: bash /root/append_to_audit_log.sh "Display Aliases" "{{ task_output.stdout }}"
 
 - name: Check for Shims
   shell: |
-    echo -e "\n---------------------\n > Checking for Shims <\n---------------------" >> audit_log.txt
-    diff /bin/false /bin/sh >> audit_log.txt 2>&1
-    diff /bin/false /bin/bash >> audit_log.txt 2>&1
-    diff /usr/sbin/nologin /bin/sh >> audit_log.txt 2>&1
-    diff /usr/sbin/nologin /bin/bash >> audit_log.txt 2>&1
-    diff /usr/bin/passwd /bin/passwd >> audit_log.txt 2>&1
-    diff /usr/bin/ls /bin/ls >> audit_log.txt 2>&1
-    diff /usr/bin/sudo /bin/sudo >> audit_log.txt 2>&1
+    diff /bin/false /bin/sh
+    diff /bin/false /bin/bashaud
+    diff /usr/sbin/nologin /bin/sh
+    diff /usr/sbin/nologin /bin/bash
+    diff /usr/bin/passwd /bin/passwd
+    diff /usr/bin/ls /bin/ls 
+    diff /usr/bin/sudo /bin/sudo
+  register: shims
   ignore_errors: true
+- name: LOG Check for Shims
+  shell: bash /root/append_to_audit_log.sh "Check for Shims" "{{ shims.stdout }}"
 
 # SSH Keys
 - name: Check SSH Keys Config
   shell: cat /root/ssh/sshd_config | grep -i AuthorizedKeysFile
   register: ssh1
   ignore_errors: true
-- name: Log result of Check SSH Keys Config
-  shell: "echo '{{ ssh1.stdout }}' >> audit_log.txt"
+- name: LOG Check SSH Keys Config
+  shell: bash /root/append_to_audit_log.sh "Check SSH Keys Config" "{{ ssh1.stdout }}"
 
 - name: List User's Authorized SSH Keys
-  shell: head -n 20 /home/*/.ssh/authorized_keys*
+  shell: head -n 20 /home/*/.ssh/authorized_keys* && find /home -name "authorized_keys"
   register: ssh2
-  ignore_errors: true
-- name: Log result of List User's Authorized SSH Keys
-  shell: "echo '{{ ssh2.stdout }}' >> audit_log.txt"
+- name: LOG List User's Authorized SSH Keys
+  shell: bash /root/append_to_audit_log.sh "List User's Authorized SSH Keys" "{{ ssh2.stdout }}"
 
 - name: List Root's Authorized SSH Keys
   shell: head -n 20 /root/.ssh/authorized_keys*
   register: ssh3
-  ignore_errors: true
-- name: Log result of List Root's Authorized SSH Keys
-  shell: "echo '{{ ssh3.stdout }}' >> audit_log.txt"
-
+- name: LOG List Root's Authorized SSH Keys
+  shell: bash /root/append_to_audit_log.sh "List Root's Authorized SSH Keys" "{{ ssh3.stdout }}"
 
 - name: Currently Logged In
   shell: who
-  register: who
-  ignore_errors: true
-- name: Log result of Currently Logged In
-  shell: "echo '{{ who.stdout }}' >> audit_log.txt"
+  register: who_output
+- name: LOG Currently Logged In
+  shell: bash /root/append_to_audit_log.sh "Currently Logged In" "{{ who_output.stdout }}"
 
 - name: Currently Active Sessions
   shell: w
-  register: w
-  ignore_errors: true
-- name: Log result of Currently Active Sessions
-  shell: "echo '{{ w.stdout }}' >> audit_log.txt"
-  ignore_errors: true
-
+  register: w_output
+- name: LOG Currently Active Sessions # this just like fails but only sometimes????
+  shell: bash /root/append_to_audit_log.sh "Currently Active Sessions" "{{ w_output.stdout }}"
 
 - name: Login History
   shell: last | grep -Ev 'system' | head -n 20
   register: loginhistory
-  ignore_errors: true
-- name: Log result of Login History
-  shell: "echo '{{ loginhistory.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Login History
+  shell: bash /root/append_to_audit_log.sh "Login History" "{{ loginhistory.stdout }}"
 
 - name: Current Network Listening
   shell: ss -tulpnw
   register: networklistening
-  ignore_errors: true
-- name: Log result of Current Network Listening
-  shell: "echo '{{ networklistening.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Current Network Listening
+  shell: bash /root/append_to_audit_log.sh "Current Network Listening" "{{ networklistening.stdout }}"
 
 - name: lsof Remote
   shell: lsof -i
   register: lsofremote
-  ignore_errors: true
-- name: Log result of lsof Remote
-  shell: "echo '{{ lsofremote.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG lsof Remote
+  shell: bash /root/append_to_audit_log.sh "lsof Remote" "{{ lsofremote.stdout }}"
 
 - name: Potential Rootkit Signs
   shell: |
@@ -91,18 +98,30 @@
     env | grep -i 'LD'
   register: rootkit
   ignore_errors: true
-- name: Log result of Potential Rootkit Signs
-  shell: "echo '{{ rootkit.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Potential Rootkit Signs
+  shell: bash /root/append_to_audit_log.sh "Potential Rootkit Signs" "{{ rootkit.stdout }}"
 
 - name: Mounted Processes
   shell: mount | grep "proc"
   register: mountedprocs
-  ignore_errors: true
-- name: Log result of Mounted Processes
-  shell: "echo '{{ mountedprocs.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Mounted Processes
+  shell: bash /root/append_to_audit_log.sh "Mounted Processes" "{{ mountedprocs.stdout }}"
 
+# - name: Get Services (Ubuntu 18)
+#   shell: systemctl list-units --type=service | awk '{ print $1 }' | grep "service"
+#   register: services
+#   when: ansible_os_family == "Debian" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("18", "=")
+# - name: Log Services Differences (Ubuntu 18)
+#   shell: bash /root/append_to_audit_log.sh "Check Services (Ubuntu 18)" "{{ services.stdout_lines | difference(ubuntu18.services) }}" # {{ list1 | difference(list2) }}
+
+# - name: Get Services (Debian 10)
+#   shell: systemctl list-units --type=service | awk '{ print $1 }' | grep "service"
+#   register: services
+#   ansible.builtin.difference:
+#     first: "{{ services.stdout_lines }}"
+#     second: debian10.services
+#     when: ansible_os_family == "Debian" and ansible_distribution == "Debian" and ansible_distribution_version is version("10", "=")
+#     # log the difference into audit_log.txt
 
 
 ##### VERBOSE #####
@@ -114,28 +133,26 @@
     find /var/spool/cron/crontabs/ -printf '%p\n' -exec cat {} \;
     systemctl list-timers
   register: autoruns
-  ignore_errors: true
-- name: Log result of Auto Runs
-  shell: "echo '{{ autoruns.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Auto Runs
+  shell: bash /root/append_to_audit_log.sh "Auto Runs" "{{ autoruns.stdout }}"
 
 - name: lsof Raw
   shell: |
-    lsof | grep -i -E 'raw|pcap'
-    lsof | grep /proc/sys/net/ipv4
+    lsof | grep -i -E 'raw|pcap' || true
+    lsof | grep /proc/sys/net/ipv4 || true
   register: lsofraw
-  ignore_errors: true
-- name: Log result of lsof Raw
-  shell: "echo '{{ lsofraw.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG lsof Raw
+  shell: bash /root/append_to_audit_log.sh "lsof Raw" "{{ lsofraw.stdout }}"
 
 - name: Processes
-  shell: ps af
+  shell: ps af && /root/append_to_audit_log.sh "Processes" ""
   register: procs
-  ignore_errors: true
-- name: Log result of Processes
-  shell: "echo '{{ procs.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Processes
+  lineinfile:
+    state: present
+    insertafter: EOF
+    dest: /opt/audit_log.txt
+    line: "{{ procs.stdout }}"
 
 - name: Poisoned Networking
   shell: |
@@ -144,34 +161,36 @@
     cat /etc/resolv.conf | grep -Ev '#|PATH|SHELL'
     ip netns list
     ip route
+    /root/append_to_audit_log.sh "Poisoned Networking" ""
   register: poisonednetworking
-  ignore_errors: true
-- name: Log result of Poisoned Networking
-  shell: "echo '{{ poisonednetworking.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Poisoned Networking
+  lineinfile:
+    state: present
+    insertafter: EOF
+    dest: /opt/audit_log.txt
+    line: "{{ poisonednetworking.stdout }}"
 
 - name: IPs and MACs
   shell: |
-    echo -e "\n---------------\n > Ips and macs <\n--------------- " >> audit_log.txt
-    ip -c route | grep "default" >> audit_log.txt 2>&1
-    echo -e "" >> audit_log.txt
-    ip -br -c a >> audit_log.txt 2>&1
-    echo -e "\n[MAC]:" >> audit_log.txt
-    ip -br -c link >> audit_log.txt 2>&1
-  ignore_errors: true
+    ip -c route | grep "default"
+    echo -e ""
+    ip -br -c a
+    echo -e "\n[MAC]:"
+    ip -br -c link
+  register: ips_macs
+- name: LOG IPs and MACs
+  shell: bash /root/append_to_audit_log.sh "IPs and MACs" "{{ ips_macs.stdout }}"
 
 - name: Auth Backdoors
   shell: |
     cat /etc/sudoers | grep NOPASS
     cat /etc/sudoers | grep !AUTH
     find / -type f \( -name ".rhosts" -o -name ".shosts" -o -name "hosts.equiv" \) -exec ls -l {} \;
-    register: authbackdoors
-  ignore_errors: true
-- name: Log result of Auth Backdoors
-  shell: "echo '{{ authbackdoors.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+  register: authbackdoors
+- name: LOG Auth Backdoors
+  shell: bash /root/append_to_audit_log.sh "Auth Backdoors" "{{ authbackdoors.stdout }}"
 
-- name: Files Modified in Last 10Min
+- name: Files Modified in Last 10 Min
   shell: |
     find /etc -xdev -mmin -10 -ls 2> /dev/null
     find /home -xdev -mmin -10 -ls 2> /dev/null
@@ -179,57 +198,51 @@
     find /bin -xdev -mmin -10 -ls 2> /dev/null
     find /sbin -xdev -mmin -10 -ls 2> /dev/null
   register: filesmodified
-  ignore_errors: true
-- name: Log result of Files Modified in Last 10Min
-  shell: "echo '{{ filesmodified.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Files Modified in Last 10 Min
+  shell: bash /root/append_to_audit_log.sh "Files Modified in Last 10 Min" "{{ filesmodified.stdout }}"
 
 - name: Repositories
   shell: cat /etc/apt/sources.list | grep -Ev "##|#"
   register: repos
-  ignore_errors: true
-- name: Log result of Repositories
-  shell: "echo '{{ repos.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+- name: LOG Repositories
+  shell: bash /root/append_to_audit_log.sh "Repositories" "{{ repos.stdout }}"
 
-- name: Malware?
-  shell: |
-    dpkg -l | grep "sniff"
-    dpkg -l | grep "packet" 
-    dpkg -l | grep "wireless" 
-    dpkg -l | grep "pen"
-    dpkg -l | grep "test" 
-    dpkg -l | grep "password" 
-    dpkg -l | grep "crack"
-    dpkg -l | grep "spoof" 
-    dpkg -l | grep "brute" 
-    dpkg -l | grep "log" 
-    dpkg -l | grep "key"
-    dpkg -l | grep "network" 
-    dpkg -l | grep "map" 
-    dpkg -l | grep "server"
-    dpkg -l | grep "CVE" 
-    dpkg -l | grep "exploit" 
-  when: ansible_os_family == "Debian"
-  register: malware
-  ignore_errors: true
-- name: Malware?
-  shell: "echo '{{ malware.stdout }}' >> audit_log.txt"
-  ignore_errors: true
+# - name: Malware? (Debian)
+#   shell: |
+#     dpkg -l | grep "sniff"
+#     dpkg -l | grep "packet" 
+#     dpkg -l | grep "wireless" 
+#     dpkg -l | grep "pen"
+#     dpkg -l | grep "test" 
+#     dpkg -l | grep "password" 
+#     dpkg -l | grep "crack"
+#     dpkg -l | grep "spoof" 
+#     dpkg -l | grep "brute" 
+#     dpkg -l | grep "log" 
+#     dpkg -l | grep "key"
+#     dpkg -l | grep "network" 
+#     dpkg -l | grep "map" 
+#     dpkg -l | grep "server"
+#     dpkg -l | grep "CVE" 
+#     dpkg -l | grep "exploit" 
+#   when: ansible_os_family == "Debian"
+#   register: malware
+# - name: LOG Malware? (Debian)
+#   shell: bash /root/append_to_audit_log.sh "Malware? (Debian)" "{{ malware.stdout }}"
 
-# External Audit Scripts
+###### External Audit Scripts #######
 - name: Copy Linpeas
   copy:
     src: linpeas.sh
     dest: /tmp/linpeas.sh
 
 - name: Run Linpeas Audit
-  shell: cat /tmp/linpeas.sh | sh > linpeas.txt
-  ignore_errors: true
+  shell: curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > linpeas.txt
+  # ignore_errors: true
 
 - name: Run Lynis Audit
   shell: lynis audit system > lynis.txt
-  ignore_errors: true
+  # ignore_errors: true
 
 - name: Store Audit Script Output onto local Ansible Box
   fetch:

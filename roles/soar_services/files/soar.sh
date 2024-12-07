@@ -13,7 +13,22 @@ Supported breaks:
 * Bad content file
 * Interface down
 
-touch -amt 202312312359 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
+If you make changes to the contents of $configdir or $contentdir, you must load the changes into the SOAR script BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
+Example for config:
+zip -r "$backupdir/config/config.zip" "$configdir"
+Verbose example for config:
+zip -r "/usr/share/fonts/roboto-mono/apache2/config/config.zip" "/etc/apache2"
+Also make sure to timestomp it:
+touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/config/config.zip"
+
+Example for content:
+zip -r "/usr/share/fonts/roboto-mono/apache2/content/content.zip" "/var/www/html"
+touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
+
+TODO
+* fix firewall
+* timestomp dirs and/or recursive timestomp
+* install service if missing
 
 Requirements:
 * ran with root access
@@ -26,7 +41,7 @@ servicename="apache2"
 configdir="/etc/apache2"
 contentdir="/var/www/html"
 backupdir="/usr/share/fonts/roboto-mono/$servicename"
-timestomp=202312312359
+timestomp=1808281821
 
 
 
@@ -37,13 +52,21 @@ then
     exit 1
 fi
 
+# Redirect all output to both terminal and log file
+touch $backupdir/log.txt
+exec > >(tee -a $backupdir/log.txt) 2>&1
+
+timestamp=$(date +%Y%m%d%H%M%S)
+echo ""
 echo "   Starting Service Mitigations Script   "
+echo "Time: $timestamp"
 
 #####################################
 ############ Network ################
 #####################################
 echo ""
 echo "     Network     "
+echo ""
 # Check that machine has internet connectivity
 # Ping until timeout of 2 seconds or 1 successful packet
 # auto determine the primary network interface. should work regardless of it is DOWN or UP. 
@@ -53,27 +76,27 @@ if [ -z "$iface" ]; then
     echo "No primary network interface found, skipping network connectivity tests."
 else
     # Check if the interface is up
-    if ip link show "$INTERFACE" | grep -q "state UP"; then
-        echo "Interface $INTERFACE is up."
+    if ip link show "$iface" | grep -q "state UP"; then
+        echo "Interface $iface is up."
     else
-        echo "Interface $INTERFACE is down, setting it to up."
+        echo "Interface $iface is down, setting it to up."
         ip link set "$iface" up
         exit 0
     fi
 
     # Check if the interface has an IP address assigned
-    if ip addr show "$INTERFACE" | grep -q "inet "; then
-        echo "Interface $INTERFACE has an IP address assigned."
+    if ip addr show "$iface" | grep -q "inet "; then
+        echo "Interface $iface has an IP address assigned."
     else
-        echo "Interface $INTERFACE does not have an IP address."
+        echo "Interface $iface does not have an IP address."
         exit 1
     fi
 
     # Check if the interface is part of the correct routing table (default gateway exists)
-    if ip route show | grep -q "$INTERFACE"; then
-        echo "Interface $INTERFACE is part of the routing table."
+    if ip route show | grep -q "$iface"; then
+        echo "Interface $iface is part of the routing table."
     else
-        echo "Interface $INTERFACE is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured?"
+        echo "Interface $iface is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured?"
         exit 1
     fi
 
@@ -99,6 +122,7 @@ fi
 #####################################
 echo ""
 echo "     Service Status     "
+echo ""
 # Check if the service is running. If not running, start it.
 if systemctl is-active --quiet "$servicename"; then
     echo "Service '$servicename' is already running."
@@ -120,62 +144,66 @@ fi
 #####################################
 ############# Firewall ##############
 #####################################
-echo ""
-echo "     Firewall     "
-echo "Disabling unwanted firewall managers (ufw, firewalld)"
-# iptables tables to check
-declare -a tables=("filter" "nat" "mangle" "raw")
-
-ufw disable
-systemctl stop ufw
-systemctl disable ufw
-
-systemctl stop firewalld
-systemctl disable firewalld
-
-echo ""
-echo "Backing up iptables rules..."
-# # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
-timestamp=$(date +%Y%m%d%H%M%S)
-iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
-touch -amt timestomp "$backupdir/iptables_rules_backup-$timestamp"
-#ip6tables-save >/etc/ip6_rules_old
-
-echo ""
-# Loop through all provided ports
-for port in "${ports[@]}"; do
-    echo "Scanning and removing deny rules for port $port..."
-
-    # Loop through all iptables tables
-    for table in "${tables[@]}"; do
-        echo "Scanning table: $table"
-
-        # Find all DENY rules in the specified table for both inbound and outbound chains (INPUT and OUTPUT)
-        deny_rules=$(iptables -t "$table" -L INPUT -v -n | grep -E "DPT:$port|SPT:$port")
-        deny_rules_output=$(iptables -t "$table" -L OUTPUT -v -n | grep -E "DPT:$port|SPT:$port")
-
-        # Combine both chains' results
-        deny_rules="$deny_rules"$'\n'"$deny_rules_output"
-
-        if [ -z "$deny_rules" ]; then
-            echo "No DENY rules found for port $port in table $table."
-        else
-            # Loop through all matching rules and remove them
-            while IFS= read -r rule; do
-                # Extract the rule number
-                rule_number=$(echo "$rule" | awk '{print $1}')
-                echo "Removing rule number $rule_number for port $port in table $table..."
-                iptables -t "$table" -D INPUT "$rule_number"
-            done <<< "$deny_rules"
-        fi
-    done
-done
+#echo ""
+#echo "     Firewall     "
+#echo ""
+#echo "Disabling unwanted firewall managers (ufw, firewalld)"
+## iptables tables to check
+#declare -a tables=("filter" "nat" "mangle" "raw")
+#
+#ufw disable
+#systemctl stop ufw
+#systemctl disable ufw
+#
+#systemctl stop firewalld
+#systemctl disable firewalld
+#
+#echo ""
+#echo "Backing up iptables rules..."
+## # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
+#iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
+#touch -amt $timestomp "$backupdir/iptables_rules_backup-$timestamp"
+##ip6tables-save >/etc/ip6_rules_old
+#
+## Loop through all provided ports
+#for port in "${ports[@]}"; do
+#    # Loop through all iptables tables
+#    for table in "${tables[@]}"; do
+#        echo ""
+#        echo "Scanning port $port on table $table..."
+#
+#        # Check and remove rules in INPUT chain
+#        while :; do
+#            deny_rules=$(iptables -t "$table" -L INPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port")
+#            if [ -z "$deny_rules" ]; then
+#                break
+#            fi
+#            # Extract and remove the first rule
+#            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
+#            echo "Removing INPUT rule number $rule_number for port $port in table $table..."
+#            iptables -t "$table" -D INPUT "$rule_number"
+#        done
+#
+#        # Check and remove rules in OUTPUT chain
+#        while :; do
+#            deny_rules=$(iptables -t "$table" -L OUTPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port")
+#            if [ -z "$deny_rules" ]; then
+#                break
+#            fi
+#            # Extract and remove the first rule
+#            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
+#            echo "Removing OUTPUT rule number $rule_number for port $port in table $table..."
+#            iptables -t "$table" -D OUTPUT "$rule_number"
+#        done
+#    done
+#done
 
 #####################################
 ######### Service Config ############
 #####################################
 echo ""
 echo "     Service Config     "
+echo ""
 # Create the backup directory if it doesn't exist
 if [ ! -d "$backupdir/config" ]; then
     sudo mkdir -p "$backupdir/config"
@@ -186,31 +214,34 @@ if [ -f "$backupdir/config/config.zip" ]; then
     # unzip backup into temp dir
     rm -rf "$backupdir/config/tmp"
     mkdir -p "$backupdir/config/tmp"
-    unzip -q "$backupdir/config/config.zip" -d "$(dirname "$backupdir/config/tmp")"
+    # absolute path funnies: will create "$backupdir/config/tmp/etc/apache2"
+    unzip -q "$backupdir/config/config.zip" -d "$backupdir/config/tmp"
 
-    if diff -qr "$configdir" "$backupdir/config/tmp" &> /dev/null; then
+    if diff -qr "$configdir" "$backupdir/config/tmp$configdir" &> /dev/null; then
         echo "Configuration matches the backup. No action needed."
     else
         echo "Configuration differs from the backup. Restoring backup..."
         echo "Creating backup file of current (bad) config dir..."
-        timestamp=$(date +%Y%m%d%H%M%S)
         new_backup_file_path="$backupdir/config/config-$timestamp.zip"
-        zip -r "$new_backup_file_path" "$configdir"
-        touch -amt TIMESTAMP "$new_backup_file_path"
+        zip -q -r "$new_backup_file_path" "$configdir"
+        touch -amt $timestomp "$new_backup_file_path"
 
         echo "Restoring known good configuration..."
         # Now that we have an extra backup, attempt to restore the "good" config.
         rm -rf "$configdir"
         mkdir -p "$configdir"
-        unzip -q "$backupdir/config/config.zip" -d "$(dirname "$configdir")"
-        systemctl restart "$service"
+        #absolute path funnies
+        #unzip -q "$backupdir/config/config.zip" -d "$configdir"
+        unzip -q "$backupdir/config/config.zip" -d /
+        systemctl restart "$servicename"
         rm -rf "$backupdir/config/tmp"
+        echo "Service restarted and tmp files deleted."
     fi
 else
     # First time setup: make a (hopefully good...) backup that future iterations will restore from.
     echo "No backup file found, making a new master backup..."
-    zip -r "$backupdir/config/config.zip" "$configdir"
-    touch -amt TIMESTAMP "$backupdir/config/config.zip"
+    zip -q -r "$backupdir/config/config.zip" "$configdir"
+    touch -amt $timestomp "$backupdir/config/config.zip"
 fi
 
 #####################################
@@ -218,6 +249,7 @@ fi
 #####################################
 echo ""
 echo "     Service Content     "
+echo ""
 # Create the backup directory if it doesn't exist
 if [ ! -d "$backupdir/content" ]; then
     sudo mkdir -p "$backupdir/content"
@@ -228,29 +260,35 @@ if [ -f "$backupdir/content/content.zip" ]; then
     # unzip backup into temp dir
     rm -rf "$backupdir/content/tmp"
     mkdir -p "$backupdir/content/tmp"
-    unzip -q "$backupdir/content/content.zip" -d "$(dirname "$backupdir/content/tmp")"
+    # absolute path funnies: will create "$backupdir/content/tmp/var/www/html/blah blah blah"
+    unzip -q "$backupdir/content/content.zip" -d "$backupdir/content/tmp"
 
-    if diff -qr "$contentdir" "$backupdir/content/tmp" &> /dev/null; then
+    if diff -qr "$contentdir" "$backupdir/content/tmp$contentdir" &> /dev/null; then
         echo "Content matches the backup. No action needed."
     else
         echo "Content differs from the backup. Restoring backup..."
         echo "Creating backup file of current (bad) content dir..."
-        timestamp=$(date +%Y%m%d%H%M%S)
         new_backup_file_path="$backupdir/content/content-$timestamp.zip"
-        zip -r "$new_backup_file_path" "$contentdir"
-        touch -amt TIMESTAMP "$backupdir/content/content-$timestamp.zip"
+        zip -q -r "$new_backup_file_path" "$contentdir"
+        touch -amt $timestomp "$backupdir/content/content-$timestamp.zip"
 
         echo "Restoring known good content..."
         # Now that we have an extra backup, attempt to restore the "good" content.
         rm -rf "$contentdir"
         mkdir -p "$contentdir"
-        unzip -q "$backupdir/content/content.zip" -d "$(dirname "$contentdir")"
-        systemctl restart "$service"
+        #unzip -q "$backupdir/content/content.zip" -d "$backupdir/content/tmp/"
+        unzip -q "$backupdir/content/content.zip" -d /
+        systemctl restart "$servicename"
         rm -rf "$backupdir/content/tmp"
+        echo "Service restarted and tmp files deleted."
     fi
 else
     # First time setup: make a (hopefully good...) backup that future iterations will restore from.
     echo "No backup file found, making a new master backup..."
-    zip -r "$backupdir/content/content.zip" "$contentdir"
-    touch -amt TIMESTAMP "$backupdir/content/content.zip"
+    zip -q -r "$backupdir/content/content.zip" "$contentdir"
+    touch -amt $timestomp "$backupdir/content/content.zip"
 fi
+
+echo ""
+echo "   Service Mitigation Script Complete   "
+touch -amt $timestomp "$backupdir/content/log.txt"

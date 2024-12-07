@@ -1,12 +1,27 @@
 ---
-- name: Run debian hardening
-  include: debian/defaults/main.yml
-  when: ansible_os_family == 'Debian' 
+# reinstall pam
+- name: Harden APT
+  include_tasks: apt.yml
+  when: ansible_os_family == "Debian"
 
-- name: Run ubuntu hardening
-  include: ubuntu/defaults/main.yml
-  when: ansible_os_family == 'Ubuntu' 
+- name: ClamAV
+  include_tasks: clamav.yml
 
-- name: Run RHEL hardening
-  include: rhel/defaults/main.yml
-  when: ansible_os_family == 'RedHat' 
+- name: Kernel
+  include_tasks: kernel.yml
+
+# - name: Malloc
+#   include_tasks: malloc.yml
+#   when: ansible_os_family == "Debian"
+
+- name: SSH
+  include_tasks: ssh.yml
+
+- name: AIDE
+  include_tasks: aide.yml
+
+- name: Apt - Upgrade all packages to their latest version
+  apt:
+    upgrade: yes
+    update_cache: yes
+  when: ansible_os_family == "Debian"

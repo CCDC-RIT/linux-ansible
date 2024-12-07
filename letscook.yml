@@ -68,3 +68,23 @@
     - never
     - initial
     - audit
+
+- name: Harden OS
+  hosts: all
+  become: yes
+  roles:
+    - harden_os
+  tags:
+    - never
+    - initial
+    - harden
+
+# technically only useful on ubuntu boxes running a webserver but just drop on all boxes, it doesn't auto-activate
+- name: Install SOAR scripts
+  hosts: all
+  become: yes
+  roles:
+    - soar_services
+  tags:
+    - never
+    - initial
