@@ -17,24 +17,24 @@
 - name: Copy over connmon script
   ansible.builtin.copy:
     src: files/connmon.py
-    dest: /usr/local/bin/connmon.py
+    dest: /usr/local/bin/connmon
     mode: '0755'
 
 - name: Timestomp connmon
   ansible.builtin.file:
-    path: /usr/local/bin/connmon.py
+    path: /usr/local/bin/connmon
     modification_time: '202301011234.51'
     access_time: '202301011234.51'
 
 - name: Copy over pquery script
   ansible.builtin.copy:
     src: files/pquery.py
-    dest: /usr/local/bin/pquery.py
+    dest: /usr/local/bin/pquery
     mode: '0755'
 
 - name: Timestomp pquery
   ansible.builtin.file:
-    path: /usr/local/bin/pquery.py
+    path: /usr/local/bin/pquery
     modification_time: '202301011234.51'
     access_time: '202301011234.51'
 
