@@ -13,6 +13,16 @@ Supported breaks:
 * Bad content file
 * Interface down
 
+If you make changes to the contents of $configdir or $contentdir, you must load the changes into the SOAR script BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
+Example for config:
+zip -r "$backupdir/config/config.zip" "$configdir"
+Verbose example for config:
+zip -r "/usr/share/fonts/roboto-mono/apache2/config/config.zip" "/etc/apache2"
+Also make sure to timestomp it:
+touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/config/config.zip"
+
+Example for content:
+zip -r "/usr/share/fonts/roboto-mono/apache2/content/content.zip" "/var/www/html"
 touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
 
 Requirements:
@@ -38,9 +48,11 @@ then
 fi
 
 # Redirect all output to both terminal and log file
+touch $backupdir/log.txt
 exec > >(tee -a $backupdir/log.txt) 2>&1
 
 timestamp=$(date +%Y%m%d%H%M%S)
+echo ""
 echo "   Starting Service Mitigations Script   "
 echo "Time: $timestamp"
 
@@ -212,8 +224,9 @@ if [ -f "$backupdir/config/config.zip" ]; then
         #absolute path funnies
         #unzip -q "$backupdir/config/config.zip" -d "$configdir"
         unzip -q "$backupdir/config/config.zip" -d /
-        systemctl restart "$service"
+        systemctl restart "$servicename"
         rm -rf "$backupdir/config/tmp"
+        echo "Service restarted and tmp files deleted."
     fi
 else
     # First time setup: make a (hopefully good...) backup that future iterations will restore from.
@@ -256,8 +269,9 @@ if [ -f "$backupdir/content/content.zip" ]; then
         mkdir -p "$contentdir"
         #unzip -q "$backupdir/content/content.zip" -d "$backupdir/content/tmp/"
         unzip -q "$backupdir/content/content.zip" -d /
-        systemctl restart "$service"
+        systemctl restart "$servicename"
         rm -rf "$backupdir/content/tmp"
+        echo "Service restarted and tmp files deleted."
     fi
 else
     # First time setup: make a (hopefully good...) backup that future iterations will restore from.
@@ -268,3 +282,4 @@ fi
 
 echo ""
 echo "   Service Mitigation Script Complete   "
+touch -amt $timestomp "$backupdir/content/log.txt"
