@@ -38,6 +38,14 @@
     group: blueteam
     state: directory
 
+- name: Create inventory directory
+  ansible.builtin.file:
+    path: "/opt/inventory"
+    owner: blueteam
+    group: blueteam
+    state: directory
+    mode: 0755
+    
 # - name: Create hosts list
 #   set_fact:
 #     build_hosts: |

@@ -12,6 +12,7 @@
     - clamav-daemon
     - clamav-freshclam
   register: clamav_install
+  ignore_errors: true
 
 - name: ClamAV - Run freshclam after ClamAV packages change.
   ansible.builtin.command: freshclam
@@ -29,6 +30,7 @@
     enabled: yes
     state: started
     masked: no
+  ignore_errors: true
 
 - name: ClamAV - Start and enable clamav-freshclam
   ansible.builtin.systemd:
@@ -36,3 +38,4 @@
     enabled: yes
     state: started
     masked: no
+  ignore_errors: true
