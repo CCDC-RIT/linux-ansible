@@ -55,7 +55,7 @@
     jump: ACCEPT
     protocol: tcp
   loop: "{{ scored_ports_tcp }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Allow scored services ports in (UDP)
   iptables:
@@ -64,7 +64,7 @@
     jump: ACCEPT
     protocol: udp
   loop: "{{ scored_ports_udp }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Allow related and established connections
   iptables:

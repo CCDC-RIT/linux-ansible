@@ -44,7 +44,6 @@
   ansible.builtin.shell: "aide -u -c /etc/aide/aide.conf"
   changed_when: false
   register: aide_init
-  ignore_errors: yes
   when:
     - aide_reinit_enabled | bool
     - aide_database.stat.exists | bool
