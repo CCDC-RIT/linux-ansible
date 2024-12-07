@@ -5,14 +5,9 @@
   ansible.builtin.apt:
     update_cache: yes
 
-# - name: Apt - Upgrade all packages to their latest version
-#   ansible.builtin.apt:
-#     name: "*"
-#     state: latest
-
-# - name: Reinstall of package by uninstall and new install.
-#   shell: "apt-get reinstall {{ item }}"
-#   loop: ['$(dpkg -S /etc/pam.d/\* | cut -d ':' -f 1 | sort | uniq)','openssh-server','coreutils', 'passwd', 'git', 'vim']
+- name: Reinstall pam and common services
+  shell: "apt-get reinstall {{ item }}"
+  loop: ['$(dpkg -S /etc/pam.d/\* | cut -d ':' -f 1 | sort | uniq)','openssh-server','coreutils', 'passwd', 'git', 'vim']
 
 - name: Apt - Ensure debsums is installed
   ansible.builtin.apt:

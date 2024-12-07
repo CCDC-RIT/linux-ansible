@@ -16,6 +16,12 @@
     url: https://www.whonix.org/derivative.asc
     state: present
 
+- name: Harden_malloc - Copy trusted GPG
+  copy:
+    src: /etc/apt/trusted.gpg
+    dest: /etc/apt/trusted.gpg.d/trusted.gpg
+    remote_src: yes
+
 - name: Hardened_malloc - Configure Whonix repository
   ansible.builtin.apt_repository:
     repo: 'deb https://deb.whonix.org bullseye main contrib non-free'

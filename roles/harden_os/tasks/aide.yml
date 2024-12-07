@@ -2,7 +2,7 @@
 # https://raw.githubusercontent.com/dan-kir/ansible-debian-11-hardening/refs/heads/master/tasks/aide.yml
 ---
 - name: AIDE - Install AIDE packages
-  ansible.builtin.apt:
+  ansible.builtin.package:
     name: "{{ packages }}"
     state: present
   vars:

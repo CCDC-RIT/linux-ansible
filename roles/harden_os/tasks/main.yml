@@ -7,14 +7,21 @@
 - name: ClamAV
   include_tasks: clamav.yml
 
-- name: AIDE
-  include_tasks: aide.yml
-
 - name: Kernel
   include_tasks: kernel.yml
 
-- name: Malloc
-  include_tasks: malloc.yml
+# - name: Malloc
+#   include_tasks: malloc.yml
+#   when: ansible_os_family == "Debian"
 
 - name: SSH
   include_tasks: ssh.yml
+
+- name: AIDE
+  include_tasks: aide.yml
+
+- name: Apt - Upgrade all packages to their latest version
+  apt:
+    upgrade: yes
+    update_cache: yes
+  when: ansible_os_family == "Debian"
