@@ -123,6 +123,20 @@
 #     when: ansible_os_family == "Debian" and ansible_distribution == "Debian" and ansible_distribution_version is version("10", "=")
 #     # log the difference into audit_log.txt
 
+- name: Get Service Differences (Ubuntu 18)
+  shell: diff /root/ubuntu18 /root/services
+  register: ubu_services
+  when: ansible_os_family == "Debian" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("18", "=")
+- name: LOG Service Differences (Ubuntu 18)
+  shell: bash /root/append_to_audit_log.sh "Service Differences (Ubuntu 18)" "{{ ubu_services }}"
+
+- name: Get Service Differences (Debian 10)
+  shell: diff /root/debian10 /root/services
+  when: ansible_os_family == "Debian" and ansible_distribution == "Debian" and ansible_distribution_version is version("10", "=")
+  register: deb_services
+- name: LOG Service Differences (Debian 10)
+  shell: bash /root/append_to_audit_log.sh "Service Differences (Debian 10)" "{{ deb_services }}"
+
 
 ##### VERBOSE #####
 
