@@ -9,6 +9,7 @@
     packages:
     - aide
     - aide-common
+  ignore_errors: true
 
 - name: AIDE - Verify that AIDE configuration directory exists
   ansible.builtin.stat:
@@ -22,12 +23,14 @@
   ansible.builtin.template:
     src: ZZ_aide_exclusions.j2
     dest: /etc/aide/aide.conf.d/ZZ_aide_exclusions
+  ignore_errors: true
 
 - name: AIDE - Check to see if AIDE database is already in place
   ansible.builtin.stat:
     path: /var/lib/aide/aide.db
   register: aide_database
   check_mode: no
+  ignore_errors: true
 
 - name: AIDE - Initialize AIDE (this will take a few minutes)
   ansible.builtin.shell: "if test -x /usr/sbin/aideinit; then aideinit; else aide -i; fi"
@@ -35,6 +38,7 @@
   register: aide_init
   when:
     - not aide_database.stat.exists | bool
+  ignore_errors: true
 
 - name: AIDE - Reinitialize AIDE (this will take a few minutes)
   ansible.builtin.shell: "aide -u -c /etc/aide/aide.conf"
@@ -44,9 +48,11 @@
   when:
     - aide_reinit_enabled | bool
     - aide_database.stat.exists | bool
+  ignore_errors: true
 
 - name: AIDE - Move AIDE database into place
   ansible.builtin.command: "mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db"
   changed_when: false
   when:
     - aide_init is not skipped
+  ignore_errors: true
