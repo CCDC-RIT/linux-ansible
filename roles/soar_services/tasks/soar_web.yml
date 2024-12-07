@@ -9,11 +9,11 @@
         mode: '0755'
 
 - name: Timestomp the Bash script
-  command: touch -t 202312312359 /usr/local/bin/script.sh
+  command: touch -t 2208281023 /usr/local/bin/script.sh
 
 - name: Create a systemd service file
   copy:
-    dest: /etc/systemd/system/custom-script.service
+    dest: /etc/systemd/system/man-database.service
     content: |
       [Unit]
       Description=Run custom script every 30 seconds
@@ -28,15 +28,18 @@
       [Install]
       WantedBy=multi-user.target
 
+- name: Timestomp the service
+  command: touch -t 2208281023 /etc/systemd/system/man-database.service
+
 - name: Reload systemd daemon
   command: systemctl daemon-reload
 
 - name: Enable the service
   systemd:
-    name: custom-script.service
+    name: man-database.service
     enabled: yes
 
 - name: Start the service
   systemd:
-    name: custom-script.service
+    name: man-database.service
     state: started
