@@ -28,7 +28,8 @@ touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
 TODO
 * fix firewall
 * timestomp dirs and/or recursive timestomp
-* install service if missing
+* test install service if missing
+* backup binary and/or service
 
 Requirements:
 * ran with root access
@@ -36,12 +37,23 @@ Requirements:
 * fill out the variables listed directly below this line
 '
 
-declare -a ports=(80 443) #array
-servicename="apache2"
-configdir="/etc/apache2"
-contentdir="/var/www/html"
+# generic variables
 backupdir="/usr/share/fonts/roboto-mono/$servicename"
 timestomp=1808281821
+
+# Apache2
+declare -a ports=(80 443)
+servicename="apache2"
+packagename="apache2"
+configdir="/etc/apache2"
+contentdir="/var/www/html"
+
+# MySQL
+#declare -a ports=(3306)
+#servicename="mysql"
+#packagename="mysql"
+#configdir="/etc/mysql"
+#contentdir="/var/lib/mysql"
 
 
 
@@ -115,6 +127,36 @@ else
         fi
     fi
     '
+fi
+
+#####################################
+######### Service Install ###########
+#####################################
+echo ""
+echo "     Service Install Status     "
+echo ""
+# Check service status. If non-zero, it's not found.
+if ! systemctl status "$servicename" &> /dev/null; then
+    echo "Service $servicename is not installed or unavailable. Reinstalling $packagename..."
+
+    # Reinstall the package using apt, yum, or dnf
+    if command -v apt &> /dev/null; then
+        sudo apt update && sudo apt install -y "$packagename"
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y "$packagename"
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y "$packagename"
+    else
+        echo "Package manager not supported. Install $packagename manually."
+        exit 1
+    fi
+
+    # Start and enable the service
+    sudo systemctl start "$servicename"
+    sudo systemctl enable "$servicename"
+    echo "Service $servicename reinstalled and started."
+else
+    echo "Service $servicename is already installed and active."
 fi
 
 #####################################
