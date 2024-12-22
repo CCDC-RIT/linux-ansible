@@ -11,6 +11,7 @@ Supported breaks:
 * Firewall rule blocking service
 * Bad config file
 * Bad content file
+* Bad service binary
 * Interface down
 
 If you make changes to the contents of $configdir or $contentdir, you must load the changes into the SOAR script BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
@@ -29,11 +30,14 @@ TODO
 * fix firewall
 * timestomp dirs and/or recursive timestomp
 * test install service if missing
-* backup binary and/or service
+* test backup binary
+* backup service file
+* save backup dir path as a shell variable to make it easier for blue team?
 
 Requirements:
 * ran with root access
-* only iptables is active, no other firewall
+* only iptables is intended to be active, no other firewall (as others are automatically disabled by this)
+* Each instance of this script can only be used on one service at a time. For additional instances, make sure to change the backup path and have a separate form of persistance running this SOAR script (i.e. for two critical services, have two services running two copies of this script)
 * fill out the variables listed directly below this line
 '
 
@@ -45,13 +49,15 @@ timestomp=1808281821
 declare -a ports=(80 443)
 servicename="apache2"
 packagename="apache2"
+binarypath="/usr/sbin/apache2"
 configdir="/etc/apache2"
 contentdir="/var/www/html"
 
 # MySQL
 #declare -a ports=(3306)
 #servicename="mysql"
-#packagename="mysql"
+#packagename="mysql-server"
+#binarypath="/usr/bin/msql"
 #configdir="/etc/mysql"
 #contentdir="/var/lib/mysql"
 
@@ -100,7 +106,7 @@ else
     if ip addr show "$iface" | grep -q "inet "; then
         echo "Interface $iface has an IP address assigned."
     else
-        echo "Interface $iface does not have an IP address."
+        echo "Interface $iface does not have an IP address. Operator must manually fix this error."
         exit 1
     fi
 
@@ -108,7 +114,7 @@ else
     if ip route show | grep -q "$iface"; then
         echo "Interface $iface is part of the routing table."
     else
-        echo "Interface $iface is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured?"
+        echo "Interface $iface is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured? Operator must manually fix this error."
         exit 1
     fi
 
@@ -119,7 +125,7 @@ else
         echo "Network appears to be offline. Attempting to bring the primary interface to an UP state..."
         ip link set "$iface" up
         if ping -w 2 -c 1 8.8.8.8 &> /dev/null; then
-            echo "Network is still offline. Either the network config is broken, or there is a firewall/routing issue."
+            echo "Network is still offline. Either the network config is broken, or there is a firewall/routing issue.  Operator must manually fix this error."
             exit 1
         else
             echo "Network mitigations successful, connectivity restored."
@@ -147,7 +153,7 @@ if ! systemctl status "$servicename" &> /dev/null; then
     elif command -v dnf &> /dev/null; then
         sudo dnf install -y "$packagename"
     else
-        echo "Package manager not supported. Install $packagename manually."
+        echo "Package manager not supported. Install $packagename manually. Operator must manually fix this error."
         exit 1
     fi
 
@@ -155,6 +161,7 @@ if ! systemctl status "$servicename" &> /dev/null; then
     sudo systemctl start "$servicename"
     sudo systemctl enable "$servicename"
     echo "Service $servicename reinstalled and started."
+    exit 0
 else
     echo "Service $servicename is already installed and active."
 fi
@@ -178,7 +185,7 @@ else
         echo "Service '$servicename' started successfully."
         exit 0
     else
-        echo "Failed to start service '$servicename'."
+        echo "Failed to start service '$servicename'. Operator must manually fix this error."
         exit 1
     fi
 fi
@@ -241,6 +248,54 @@ fi
 #done
 
 #####################################
+######### Service Binary ############
+#####################################
+echo ""
+echo "     Service Binary     "
+echo ""
+# Create the backup directory if it doesn't exist
+if [ ! -d "$backupdir" ]; then
+    sudo mkdir -p "$backupdir/binary"
+fi
+# Check if the original "good" backup file already exists.
+if [ -f "$backupdir/binary/binary.zip" ]; then
+    # Check if the backup and the active binary are different.
+    # unzip backup into temp dir
+    rm -rf "$backupdir/binary/tmp"
+    mkdir -p "$backupdir/binary/tmp"
+    # absolute path funnies: will create "$backupdir/binary/tmp/$binarypath"
+    unzip -q "$backupdir/binary/binary.zip" -d "$backupdir/binary/tmp"
+
+    if diff -qr "$binarypath" "$backupdir/binary/tmp$binarypath" &> /dev/null; then
+        echo "Binary matches the backup. No action needed."
+    else
+        echo "Binary differs from the backup. Restoring backup..."
+        echo "Creating backup file of current (bad) binary dir..."
+        new_backup_file_path="$backupdir/binary/binary-$timestamp.zip"
+        zip -q -r "$new_backup_file_path" "$binarypath"
+        touch -amt $timestomp "$new_backup_file_path"
+
+        echo "Restoring known good binary..."
+        # Now that we have an extra backup, attempt to restore the "good" binary.
+        rm -rf "$binarypath"
+        mkdir -p "$binarypath"
+        #absolute path funnies
+        #unzip -q "$backupdir/binary/binary.zip" -d "$binarypath"
+        unzip -q "$backupdir/binary/binary.zip" -d /
+        systemctl restart "$servicename"
+        rm -rf "$backupdir/binary/tmp"
+        echo "Service restarted and tmp files deleted."
+        exit 0
+    fi
+else
+    # First time setup: make a (hopefully good...) backup that future iterations will restore from.
+    echo "No backup file found, making a new master backup..."
+    # Even though we just have a single file, we still zip it so that we can hide the file name
+    zip -q -r "$backupdir/binary/binary.zip" "$binarypath"
+    touch -amt $timestomp "$backupdir/binary/binary.zip"
+fi
+
+#####################################
 ######### Service Config ############
 #####################################
 echo ""
@@ -278,6 +333,7 @@ if [ -f "$backupdir/config/config.zip" ]; then
         systemctl restart "$servicename"
         rm -rf "$backupdir/config/tmp"
         echo "Service restarted and tmp files deleted."
+        exit 0
     fi
 else
     # First time setup: make a (hopefully good...) backup that future iterations will restore from.
@@ -323,6 +379,7 @@ if [ -f "$backupdir/content/content.zip" ]; then
         systemctl restart "$servicename"
         rm -rf "$backupdir/content/tmp"
         echo "Service restarted and tmp files deleted."
+        exit 0
     fi
 else
     # First time setup: make a (hopefully good...) backup that future iterations will restore from.
