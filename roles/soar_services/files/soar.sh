@@ -30,8 +30,8 @@ TODO
 * fix firewall
 * timestomp dirs and/or recursive timestomp
 * test install service if missing
-* test backup binary
-* backup service file
+* test all the service integrity stuff
+* fix backups of single files
 * save backup dir path as a shell variable to make it easier for blue team?
 
 Requirements:
@@ -248,145 +248,77 @@ fi
 #done
 
 #####################################
-######### Service Binary ############
+######### Service Integrity #########
 #####################################
-echo ""
-echo "     Service Binary     "
-echo ""
-# Create the backup directory if it doesn't exist
-if [ ! -d "$backupdir" ]; then
-    sudo mkdir -p "$backupdir/binary"
+original_dirs=(
+    "/lib/systemd/system/$servicename.service" #override?? /etc/systemd/system/apache2.service
+    "$binarypath"
+    "$configdir"
+    "$contentdir"
+)
+backup_dirs=(
+    "$backupdir/systemd"
+    "$backupdir/binary"
+    "$backupdir/config"
+    "$backupdir/data"
+)
+
+# Ensure arrays are the same length
+if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
+    echo "Error: Mismatched backup and original directory arrays."
+    exit 1
 fi
-# Check if the original "good" backup file already exists.
-if [ -f "$backupdir/binary/binary.zip" ]; then
-    # Check if the backup and the active binary are different.
-    # unzip backup into temp dir
-    rm -rf "$backupdir/binary/tmp"
-    mkdir -p "$backupdir/binary/tmp"
-    # absolute path funnies: will create "$backupdir/binary/tmp/$binarypath"
-    unzip -q "$backupdir/binary/binary.zip" -d "$backupdir/binary/tmp"
 
-    if diff -qr "$binarypath" "$backupdir/binary/tmp$binarypath" &> /dev/null; then
-        echo "Binary matches the backup. No action needed."
-    else
-        echo "Binary differs from the backup. Restoring backup..."
-        echo "Creating backup file of current (bad) binary dir..."
-        new_backup_file_path="$backupdir/binary/binary-$timestamp.zip"
-        zip -q -r "$new_backup_file_path" "$binarypath"
-        touch -amt $timestomp "$new_backup_file_path"
+for i in "${!original_dirs[@]}"; do
+    original_dir="${original_dirs[$i]}"
+    backup_dir="${backup_dirs[$i]}"
+    
+    echo ""
+    echo "     Service Integrity - $(basename "$backup_dir")     "
+    echo ""
 
-        echo "Restoring known good binary..."
-        # Now that we have an extra backup, attempt to restore the "good" binary.
-        rm -rf "$binarypath"
-        mkdir -p "$binarypath"
-        #absolute path funnies
-        #unzip -q "$backupdir/binary/binary.zip" -d "$binarypath"
-        unzip -q "$backupdir/binary/binary.zip" -d /
-        systemctl restart "$servicename"
-        rm -rf "$backupdir/binary/tmp"
-        echo "Service restarted and tmp files deleted."
-        exit 0
+    # Create the backup directory if it doesn't exist
+    if [ ! -d "$backup_dir" ]; then
+        sudo mkdir -p "$backup_dir"
     fi
-else
-    # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-    echo "No backup file found, making a new master backup..."
-    # Even though we just have a single file, we still zip it so that we can hide the file name
-    zip -q -r "$backupdir/binary/binary.zip" "$binarypath"
-    touch -amt $timestomp "$backupdir/binary/binary.zip"
-fi
+    # Check if the original "good" backup file already exists.
+    if [ -f "$backup_dir/backup.zip" ]; then
+        # Check if the backup and the active config are different.
+        # unzip backup into temp dir
+        rm -rf "$backup_dir/tmp"
+        mkdir -p "$backup_dir/tmp"
+        # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
+        unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp"
 
-#####################################
-######### Service Config ############
-#####################################
-echo ""
-echo "     Service Config     "
-echo ""
-# Create the backup directory if it doesn't exist
-if [ ! -d "$backupdir/config" ]; then
-    sudo mkdir -p "$backupdir/config"
-fi
-# Check if the original "good" backup file already exists.
-if [ -f "$backupdir/config/config.zip" ]; then
-    # Check if the backup and the active config are different.
-    # unzip backup into temp dir
-    rm -rf "$backupdir/config/tmp"
-    mkdir -p "$backupdir/config/tmp"
-    # absolute path funnies: will create "$backupdir/config/tmp/etc/apache2"
-    unzip -q "$backupdir/config/config.zip" -d "$backupdir/config/tmp"
+        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null; then
+            echo "Live files match the backup files. No action needed."
+            rm -rf "$backup_dir/tmp"
+        else
+            echo "Live files differ from the backup. Restoring backup..."
+            echo "Creating backup file of current (bad) files..."
+            new_backup_file_path="$backup_dir/bad_backup-$timestamp.zip"
+            zip -q -r "$new_backup_file_path" "$original_dir"
+            touch -amt $timestomp "$new_backup_file_path"
 
-    if diff -qr "$configdir" "$backupdir/config/tmp$configdir" &> /dev/null; then
-        echo "Configuration matches the backup. No action needed."
+            echo "Restoring known good configuration..."
+            # Now that we have an extra backup, attempt to restore the "good" config.
+            rm -rf "$original_dir"
+            mkdir -p "$original_dir"
+            #absolute path funnies
+            #unzip -q "$backup_dir/config/config.zip" -d "$original_dir"
+            unzip -q "$backup_dir/config/config.zip" -d /
+            systemctl restart "$servicename"
+            rm -rf "$backup_dir/tmp"
+            echo "Service restarted and tmp files deleted."
+            exit 0
+        fi
     else
-        echo "Configuration differs from the backup. Restoring backup..."
-        echo "Creating backup file of current (bad) config dir..."
-        new_backup_file_path="$backupdir/config/config-$timestamp.zip"
-        zip -q -r "$new_backup_file_path" "$configdir"
-        touch -amt $timestomp "$new_backup_file_path"
-
-        echo "Restoring known good configuration..."
-        # Now that we have an extra backup, attempt to restore the "good" config.
-        rm -rf "$configdir"
-        mkdir -p "$configdir"
-        #absolute path funnies
-        #unzip -q "$backupdir/config/config.zip" -d "$configdir"
-        unzip -q "$backupdir/config/config.zip" -d /
-        systemctl restart "$servicename"
-        rm -rf "$backupdir/config/tmp"
-        echo "Service restarted and tmp files deleted."
-        exit 0
+        # First time setup: make a (hopefully good...) backup that future iterations will restore from.
+        echo "No backup file found, making a new master backup..."
+        zip -q -r "$backup_dir/backup.zip" "$original_dir"
+        touch -amt $timestomp "$backup_dir/backup.zip"
     fi
-else
-    # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-    echo "No backup file found, making a new master backup..."
-    zip -q -r "$backupdir/config/config.zip" "$configdir"
-    touch -amt $timestomp "$backupdir/config/config.zip"
-fi
-
-#####################################
-######### Service Content ###########
-#####################################
-echo ""
-echo "     Service Content     "
-echo ""
-# Create the backup directory if it doesn't exist
-if [ ! -d "$backupdir/content" ]; then
-    sudo mkdir -p "$backupdir/content"
-fi
-# Check if the original "good" backup file already exists.
-if [ -f "$backupdir/content/content.zip" ]; then
-    # Check if the backup and the active content are different.
-    # unzip backup into temp dir
-    rm -rf "$backupdir/content/tmp"
-    mkdir -p "$backupdir/content/tmp"
-    # absolute path funnies: will create "$backupdir/content/tmp/var/www/html/blah blah blah"
-    unzip -q "$backupdir/content/content.zip" -d "$backupdir/content/tmp"
-
-    if diff -qr "$contentdir" "$backupdir/content/tmp$contentdir" &> /dev/null; then
-        echo "Content matches the backup. No action needed."
-    else
-        echo "Content differs from the backup. Restoring backup..."
-        echo "Creating backup file of current (bad) content dir..."
-        new_backup_file_path="$backupdir/content/content-$timestamp.zip"
-        zip -q -r "$new_backup_file_path" "$contentdir"
-        touch -amt $timestomp "$backupdir/content/content-$timestamp.zip"
-
-        echo "Restoring known good content..."
-        # Now that we have an extra backup, attempt to restore the "good" content.
-        rm -rf "$contentdir"
-        mkdir -p "$contentdir"
-        #unzip -q "$backupdir/content/content.zip" -d "$backupdir/content/tmp/"
-        unzip -q "$backupdir/content/content.zip" -d /
-        systemctl restart "$servicename"
-        rm -rf "$backupdir/content/tmp"
-        echo "Service restarted and tmp files deleted."
-        exit 0
-    fi
-else
-    # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-    echo "No backup file found, making a new master backup..."
-    zip -q -r "$backupdir/content/content.zip" "$contentdir"
-    touch -amt $timestomp "$backupdir/content/content.zip"
-fi
+done
 
 echo ""
 echo "   Service Mitigation Script Complete   "
