@@ -4,34 +4,35 @@ Author: Guac0
 
 Provides a SOAR-analogue for service uptime.
 If a basic break is detected (network interface problems, service stopped), script will fix it and exit before checking service config/firewall.
-Firewall and service config/content fixes do not stop the script; all fixes will be attempted.
+Firewall and service config/content fixes also stop the script, so complex breaks may take multiple minutes to fix (depending on check interval).
 
 Supported breaks:
 * Stopped service
+* Service was uninstalled
 * Firewall rule blocking service
 * Bad config file
 * Bad content file
 * Bad service binary
-* Interface down
+* Bad systemd config file
+* Network interface down
 
 If you make changes to the contents of $configdir or $contentdir, you must load the changes into the SOAR script BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
 Example for config:
-zip -r "$backupdir/config/config.zip" "$configdir"
+zip -r "$backupdir/config/backup.zip" "$configdir"
 Verbose example for config:
-zip -r "/usr/share/fonts/roboto-mono/apache2/config/config.zip" "/etc/apache2"
+zip -r "/usr/share/fonts/roboto-mono/apache2/config/backup.zip" "/etc/apache2"
 Also make sure to timestomp it:
-touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/config/config.zip"
+touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/config/backup.zip"
 
 Example for content:
-zip -r "/usr/share/fonts/roboto-mono/apache2/content/content.zip" "/var/www/html"
-touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/content.zip"
+zip -r "/usr/share/fonts/roboto-mono/apache2/content/backup.zip" "/var/www/html"
+touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/backup.zip"
 
 TODO
 * fix firewall
 * timestomp dirs and/or recursive timestomp
 * test install service if missing
 * test all the service integrity stuff
-* fix backups of single files
 * save backup dir path as a shell variable to make it easier for blue team?
 
 Requirements:
@@ -262,6 +263,12 @@ backup_dirs=(
     "$backupdir/config"
     "$backupdir/data"
 )
+is_single_files=(
+    true
+    true
+    false
+    false
+)
 
 # Ensure arrays are the same length
 if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
@@ -272,6 +279,7 @@ fi
 for i in "${!original_dirs[@]}"; do
     original_dir="${original_dirs[$i]}"
     backup_dir="${backup_dirs[$i]}"
+    is_single_file="${is_single_files[$i]}"
     
     echo ""
     echo "     Service Integrity - $(basename "$backup_dir")     "
@@ -303,7 +311,9 @@ for i in "${!original_dirs[@]}"; do
             echo "Restoring known good configuration..."
             # Now that we have an extra backup, attempt to restore the "good" config.
             rm -rf "$original_dir"
-            mkdir -p "$original_dir"
+            if [ "$is_single_file" = false ] ; then
+                mkdir -p "$original_dir" # this breaks if its just one file, so only do it if its a dir
+            fi
             #absolute path funnies
             #unzip -q "$backup_dir/config/config.zip" -d "$original_dir"
             unzip -q "$backup_dir/config/config.zip" -d /
