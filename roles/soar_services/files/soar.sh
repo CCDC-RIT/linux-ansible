@@ -33,7 +33,6 @@ TODO
 * timestomp dirs and/or recursive timestomp
 * test install service if missing
 * test all the service integrity stuff
-* save backup dir path as a shell variable to make it easier for blue team?
 
 Requirements:
 * ran with root access
@@ -53,6 +52,17 @@ packagename="apache2"
 binarypath="/usr/sbin/apache2"
 configdir="/etc/apache2"
 contentdir="/var/www/html"
+# /usr/share/apache2
+
+# Nginx
+declare -a ports=(80 443)
+servicename="nginx"
+packagename="nginx"
+binarypath="/usr/sbin/nginx"
+configdir="/etc/nginx"
+contentdir="/var/www/html"
+# /usr/lib/nginx
+# /usr/share/nginx
 
 # MySQL
 #declare -a ports=(3306)
@@ -62,6 +72,15 @@ contentdir="/var/www/html"
 #configdir="/etc/mysql"
 #contentdir="/var/lib/mysql"
 
+# PostGreSQL
+#declare -a ports=(3306)
+#servicename="mysql"
+#packagename="mysql-server"
+#binarypath="/usr/bin/msql"
+#configdir="/etc/mysql"
+#contentdir="/usr/local/pgsql/data" # or /var/lib/postgresql/[version]/data/
+
+
 
 
 # check for root and exit if not found
@@ -70,6 +89,7 @@ then
     echo "User is not root. Skill issue."
     exit 1
 fi
+
 
 # Redirect all output to both terminal and log file
 touch $backupdir/log.txt
@@ -287,7 +307,7 @@ for i in "${!original_dirs[@]}"; do
 
     # Create the backup directory if it doesn't exist
     if [ ! -d "$backup_dir" ]; then
-        sudo mkdir -p "$backup_dir"
+        sudo mkdir -p "$backup_dir"        touch -amt $timestomp "$backup_dir"
     fi
     # Check if the original "good" backup file already exists.
     if [ -f "$backup_dir/backup.zip" ]; then
@@ -295,6 +315,7 @@ for i in "${!original_dirs[@]}"; do
         # unzip backup into temp dir
         rm -rf "$backup_dir/tmp"
         mkdir -p "$backup_dir/tmp"
+        touch -amt $timestomp "$backup_dir/tmp" # not really needed since it'll be yeeted asap...
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
         unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp"
 
