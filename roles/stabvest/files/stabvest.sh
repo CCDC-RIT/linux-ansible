@@ -1,13 +1,18 @@
 #!/bin/bash
 : '
+Name: StabVest
 Author: Guac0
 
-Provides a SOAR-analogue for service uptime.
-If a basic break is detected (network interface problems, service stopped), script will fix it and exit before checking service config/firewall.
-Firewall and service config/content fixes also stop the script, so complex breaks may take multiple minutes to fix (depending on check interval).
+Provides a Security Operations Automated Response (SOAR)-analogue for service uptime.
+TLDR:
+    You put the stab vest on a critical service on a VM.
+    It does absolutely nothing until the service gets shanked (disabled by red team).
+    However, once the knife is in the wound (service is disabled), the vest says "nah bro" and removes the knife (gets the service back online).
+    This is done by automatically detecting symptons of common service break methods and remediating them every 60 seconds (configurable).
+    It does NOT do anything to prevent Red Team from gaining access to the system, and it does NOT kick them out when they attempt to mess with the service.
 
 Supported breaks:
-* Stopped service
+* Service was stopped
 * Service was uninstalled
 * Firewall rule blocking service
 * Bad config file
@@ -15,10 +20,11 @@ Supported breaks:
 * Bad service binary
 * Bad systemd config file
 * Network interface down
+* Some additional breaks are also detected but cannot be automatically remediated. Available information about these is logged to "log.txt" in the root of the backup directory (see below).
 
-If you make changes to the contents of $configdir or $contentdir, you must load the changes into the SOAR script BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
+If you make changes to the contents of any of the backed up directories, you must load the changes into the StabVest backup database BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
 Example for reloading ALL configured backup directories for the enabled service:
-    bash soar.sh backup
+    bash stabvest.sh backup
 Example for config:
     zip -r "$backupdir/config/backup.zip" "$configdir"
 Verbose example for config:
@@ -38,10 +44,12 @@ TODO
 * backup /usr/share folders? benchmark the processing power needed...
 
 Requirements:
-* ran with root access
-* only iptables is intended to be active, no other firewall (as others are automatically disabled by this)
-* Each instance of this script can only be used on one service at a time. For additional instances, make sure to change the backup path and have a separate form of persistance running this SOAR script (i.e. for two critical services, have two services running two copies of this script)
-* fill out the variables listed directly below this line
+* Run this script with root access
+* This script file must be automatically executed every 60 seconds in some manner (cronjob/service). See the accompying setup script for suggestions.
+* This script file should be set to 0755 or similar permissions, and it is recommended to timestomp it to an innocuous value.
+* Only iptables is intended to be active, no other firewalls (as others are automatically disabled by this script)
+* Each instance of this script can only be used on one service at a time. For additional instances, make a copy of this script and make sure to change the backup path, and have a separate form of persistance running this script (i.e. for two critical services, have two services running two copies of this script)
+* Fill out the variables listed directly below this line. These determine the backup directory to use and the directories that should be included in the backup.
 '
 
 # generic variables
@@ -264,7 +272,7 @@ if ! systemctl status "$servicename" &> /dev/null; then
 
     # Reinstall the package using apt, yum, or dnf
     if command -v apt &> /dev/null; then
-        sudo apt update && sudo apt install -y "$packagename"
+        sudo apt update && sudo apt install -y "$packagename" # TODO does APT UPDATE make it take too long?
     elif command -v yum &> /dev/null; then
         sudo yum install -y "$packagename"
     elif command -v dnf &> /dev/null; then

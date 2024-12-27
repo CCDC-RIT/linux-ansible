@@ -1,3 +1,0 @@
----
-- name: Deploy Web Service SOAR script
-  ansible.builtin.include_tasks: soar_web.yaml
