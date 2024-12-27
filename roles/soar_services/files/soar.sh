@@ -17,22 +17,25 @@ Supported breaks:
 * Network interface down
 
 If you make changes to the contents of $configdir or $contentdir, you must load the changes into the SOAR script BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
+Example for reloading ALL configured backup directories for the enabled service:
+    bash soar.sh backup
 Example for config:
-zip -r "$backupdir/config/backup.zip" "$configdir"
+    zip -r "$backupdir/config/backup.zip" "$configdir"
 Verbose example for config:
-zip -r "/usr/share/fonts/roboto-mono/apache2/config/backup.zip" "/etc/apache2"
+    zip -r "/usr/share/fonts/roboto-mono/apache2/config/backup.zip" "/etc/apache2"
 Also make sure to timestomp it:
-touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/config/backup.zip"
-
-Example for content:
-zip -r "/usr/share/fonts/roboto-mono/apache2/content/backup.zip" "/var/www/html"
-touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/backup.zip"
+    touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/config/backup.zip"
+Full example if youre backing up the webroot for apache2:
+    zip -r "/usr/share/fonts/roboto-mono/apache2/content/backup.zip" "/var/www/html"
+    touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/backup.zip"
 
 TODO
 * fix firewall
-* timestomp dirs and/or recursive timestomp
+* timestomp dirs and/or recursive timestomp - partially done?
 * test install service if missing
 * test all the service integrity stuff
+* test the backup mode
+* backup /usr/share folders? benchmark the processing power needed...
 
 Requirements:
 * ran with root access
@@ -82,6 +85,99 @@ contentdir="/var/www/html"
 
 
 
+#####################################
+############ BACKUP  MODE ###########
+#####################################
+
+# "Special" mode designed to be manually executed by operator to reset the backups.
+# Use when you must make changes to the service (i.e. modifying the config file or updating to a newer version).
+#   You may wish to temporarily stop the automatic backup script while you are making your changes, then run this special backup mode, then restart the automatic script.
+# Archives any existing backup files and re-creates master backups based on current live files at run time.
+# Note: re-archives ALL of the configured directories. Make sure they're all secured and that Red Team didn't pull a funny between you stopping and starting the automatic script!
+# Intended to be executed using the same script file as the automated process uses so that all config and backup dirs are the same.
+# Usage: execute the script with "backup" as the first argument
+
+# TODO: what happens to file permissions?????
+
+# Check if the first argument is "backup" to execute in backup mode
+if [ "$1" -eq "backup" ]; then
+
+    # Redirect all output to both terminal and log file
+    touch $backupdir/log_manual.txt
+    exec > >(tee -a $backupdir/log_manual.txt) 2>&1
+
+    timestamp=$(date +%Y%m%d%H%M%S)
+    echo ""
+    echo "   Starting Service Mitigations Script - Backup Only Mode   "
+    echo "Time: $timestamp"
+
+    #####################################
+    ######### MAKE THE BACKUPS ##########
+    #####################################
+
+    original_dirs=(
+        "/lib/systemd/system/$servicename.service" #override?? /etc/systemd/system/apache2.service
+        "$binarypath"
+        "$configdir"
+        "$contentdir"
+    )
+    backup_dirs=(
+        "$backupdir/systemd"
+        "$backupdir/binary"
+        "$backupdir/config"
+        "$backupdir/data"
+    )
+    is_single_files=(
+        true
+        true
+        false
+        false
+    )
+
+    # Ensure arrays are the same length
+    if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
+        echo "Error: Mismatched backup and original directory arrays."
+        exit 1
+    fi
+
+    for i in "${!original_dirs[@]}"; do
+        original_dir="${original_dirs[$i]}"
+        backup_dir="${backup_dirs[$i]}"
+        is_single_file="${is_single_files[$i]}"
+        
+        echo ""
+        echo "     Service Backup - $(basename "$backup_dir")     "
+        echo ""
+
+        # Create the backup directory if it doesn't exist (should NOT exist...)
+        if [ ! -d "$backup_dir" ]; then
+            sudo mkdir -p "$backup_dir"
+            touch -amt $timestomp "$backup_dir"
+        else
+            # If backup already exists, "archive" them by appending the current time to their name.
+            new_filename="$backup_dir-$timestamp"
+            echo "Archiving existing backup files to $new_filename..."
+            mv "$backup_dir" "$new_filename"
+            touch -amt $timestomp "$new_filename"
+        fi
+        # First time setup: make a (hopefully good...) backup that future iterations will restore from.
+        echo "Making a new master backup at $backup_dir/backup.zip..."
+        zip -q -r "$backup_dir/backup.zip" "$original_dir"
+        touch -amt $timestomp "$backup_dir/backup.zip"
+    done
+
+    # Do not perform regular script operations after all backups are finished.
+    echo ""
+    echo "Backup is finished to $backupdir. Script exiting..."
+    touch -amt $timestomp "$backupdir/log_manual.txt"
+    exit 0
+fi
+
+
+
+#####################################
+#### REGULAR (AUTOMATED) MODE #######
+#####################################
 
 # check for root and exit if not found
 if  [ "$EUID" -ne 0 ];
@@ -307,7 +403,8 @@ for i in "${!original_dirs[@]}"; do
 
     # Create the backup directory if it doesn't exist
     if [ ! -d "$backup_dir" ]; then
-        sudo mkdir -p "$backup_dir"        touch -amt $timestomp "$backup_dir"
+        sudo mkdir -p "$backup_dir"
+        touch -amt $timestomp "$backup_dir"
     fi
     # Check if the original "good" backup file already exists.
     if [ -f "$backup_dir/backup.zip" ]; then
@@ -317,7 +414,7 @@ for i in "${!original_dirs[@]}"; do
         mkdir -p "$backup_dir/tmp"
         touch -amt $timestomp "$backup_dir/tmp" # not really needed since it'll be yeeted asap...
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
-        unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp"
+        unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp" # TODO what's the resulting timestamps on this? Not that it matters...
 
         if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null; then
             echo "Live files match the backup files. No action needed."
@@ -334,10 +431,11 @@ for i in "${!original_dirs[@]}"; do
             rm -rf "$original_dir"
             if [ "$is_single_file" = false ] ; then
                 mkdir -p "$original_dir" # this breaks if its just one file, so only do it if its a dir
+                # no need for timestomp. What would we even timestomp it to? TODO: does diff throw a fit if its different times?
             fi
             #absolute path funnies
             #unzip -q "$backup_dir/config/config.zip" -d "$original_dir"
-            unzip -q "$backup_dir/config/config.zip" -d /
+            unzip -q "$backup_dir/config/config.zip" -d /  # TODO what's the resulting timestamps on this? Not that it matters...
             systemctl restart "$servicename"
             rm -rf "$backup_dir/tmp"
             echo "Service restarted and tmp files deleted."
@@ -345,7 +443,7 @@ for i in "${!original_dirs[@]}"; do
         fi
     else
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-        echo "No backup file found, making a new master backup..."
+        echo "No backup file found, making a new master backup at $backup_dir/backup.zip..."
         zip -q -r "$backup_dir/backup.zip" "$original_dir"
         touch -amt $timestomp "$backup_dir/backup.zip"
     fi
@@ -353,4 +451,4 @@ done
 
 echo ""
 echo "   Service Mitigation Script Complete   "
-touch -amt $timestomp "$backupdir/content/log.txt"
+touch -amt $timestomp "$backupdir/log.txt"
