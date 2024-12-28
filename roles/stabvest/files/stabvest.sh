@@ -3,11 +3,11 @@
 Name: StabVest
 Author: Guac0
 
-Provides a Security Operations Automated Response (SOAR)-analogue for service uptime.
+Provides a Security Orchestration, Automations, Response (SOAR)-analogue for service uptime.
 TLDR:
     You put the stab vest on a critical service on a VM.
     It does absolutely nothing until the service gets shanked (disabled by red team).
-    However, once the knife is in the wound (service is disabled), the vest says "nah bro" and removes the knife (gets the service back online).
+    The vest stops the knife from penetrating and injuring the person, but the wearer still feels the impact and needs to take a minute to get their breath back (script fixes downed service during its next activation cycle).
     This is done by automatically detecting symptons of common service break methods and remediating them every 60 seconds (configurable).
     It does NOT do anything to prevent Red Team from gaining access to the system, and it does NOT kick them out when they attempt to mess with the service.
 
