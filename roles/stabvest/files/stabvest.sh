@@ -318,63 +318,68 @@ fi
 #####################################
 ############# Firewall ##############
 #####################################
-#echo ""
-#echo "     Firewall     "
-#echo ""
-#echo "Disabling unwanted firewall managers (ufw, firewalld)"
+echo ""
+echo "     Firewall     "
+echo ""
+echo "Disabling unwanted firewall managers (ufw, firewalld)"
 ## iptables tables to check
-#declare -a tables=("filter" "nat" "mangle" "raw")
-#
-#ufw disable
-#systemctl stop ufw
-#systemctl disable ufw
-#
-#systemctl stop firewalld
-#systemctl disable firewalld
-#
-#echo ""
-#echo "Backing up iptables rules..."
-## # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
-#iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
-#touch -amt $timestomp "$backupdir/iptables_rules_backup-$timestamp"
-##ip6tables-save >/etc/ip6_rules_old
-#
-## Loop through all provided ports
-#for port in "${ports[@]}"; do
-#    # Loop through all iptables tables
-#    for table in "${tables[@]}"; do
-#        echo ""
-#        echo "Scanning port $port on table $table..."
-#
-#        # Check and remove rules in INPUT chain
-#        while :; do
-#            deny_rules=$(iptables -t "$table" -L INPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port")
-#            if [ -z "$deny_rules" ]; then
-#                break
-#            fi
-#            # Extract and remove the first rule
-#            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
-#            echo "Removing INPUT rule number $rule_number for port $port in table $table..."
-#            iptables -t "$table" -D INPUT "$rule_number"
-#        done
-#
-#        # Check and remove rules in OUTPUT chain
-#        while :; do
-#            deny_rules=$(iptables -t "$table" -L OUTPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port")
-#            if [ -z "$deny_rules" ]; then
-#                break
-#            fi
-#            # Extract and remove the first rule
-#            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
-#            echo "Removing OUTPUT rule number $rule_number for port $port in table $table..."
-#            iptables -t "$table" -D OUTPUT "$rule_number"
-#        done
-#    done
-#done
+declare -a tables=("filter" "nat" "mangle" "raw")
 
-#####################################
-######### Service Integrity #########
-#####################################
+ufw disable
+systemctl stop ufw
+systemctl disable ufw
+
+systemctl stop firewalld
+systemctl disable firewalld
+
+echo ""
+echo "Backing up iptables rules..."
+# # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
+iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
+touch -amt $timestomp "$backupdir/iptables_rules_backup-$timestamp"
+#ip6tables-save >/etc/ip6_rules_old
+
+# Loop through all provided ports
+for port in "${ports[@]}"; do
+    # Loop through all iptables tables
+    for table in "${tables[@]}"; do
+        echo ""
+        echo "Scanning port $port on table $table..."
+
+        # Check and remove rules in INPUT chain
+        while :; do
+            # Some notes:
+            # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
+            # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
+           deny_rules=$(iptables -t $table -L INPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
+            if [ -z "$deny_rules" ]; then
+                break
+            fi
+            # Extract and remove the first rule
+            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
+            echo "Removing INPUT rule number $rule_number for port $port in table $table..."
+            iptables -t $table -D INPUT "$rule_number"
+        done
+
+        # Check and remove rules in OUTPUT chain
+        while :; do
+            deny_rules=$(iptables -t $table -L OUTPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port|dports.*\b$port\b|sports.*\b$port\b")
+            if [ -z "$deny_rules" ]; then
+                break
+            fi
+            # Extract and remove the first rule
+            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
+            echo "Removing OUTPUT rule number $rule_number for port $port in table $table..."
+            iptables -t $table -D OUTPUT "$rule_number"
+        done
+    done
+done
+
+
+
+####################################
+######## Service Integrity #########
+####################################
 original_dirs=(
     "/lib/systemd/system/$servicename.service" #override?? /etc/systemd/system/apache2.service
     "$binarypath"
