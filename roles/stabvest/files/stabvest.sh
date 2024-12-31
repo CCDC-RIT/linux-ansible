@@ -52,10 +52,6 @@ Requirements:
 * Fill out the variables listed directly below this line. These determine the backup directory to use and the directories that should be included in the backup.
 '
 
-# generic variables
-backupdir="/usr/share/fonts/roboto-mono/$servicename"
-timestomp=1808281821
-
 # Apache2
 declare -a ports=(80 443)
 servicename="apache2"
@@ -66,12 +62,12 @@ contentdir="/var/www/html"
 # /usr/share/apache2
 
 # Nginx
-declare -a ports=(80 443)
-servicename="nginx"
-packagename="nginx"
-binarypath="/usr/sbin/nginx"
-configdir="/etc/nginx"
-contentdir="/var/www/html"
+# declare -a ports=(80 443)
+# servicename="nginx"
+# packagename="nginx"
+# binarypath="/usr/sbin/nginx"
+# configdir="/etc/nginx"
+# contentdir="/var/www/html"
 # /usr/lib/nginx
 # /usr/share/nginx
 
@@ -93,6 +89,12 @@ contentdir="/var/www/html"
 
 
 
+# generic variables
+backupdir="/usr/share/fonts/roboto-mono/$servicename"
+timestomp=1808281821
+
+
+
 #####################################
 ############ BACKUP  MODE ###########
 #####################################
@@ -108,7 +110,7 @@ contentdir="/var/www/html"
 # TODO: what happens to file permissions?????
 
 # Check if the first argument is "backup" to execute in backup mode
-if [ "$1" -eq "backup" ]; then
+if [ "$1" = "backup" ]; then
 
     # Redirect all output to both terminal and log file
     touch $backupdir/log_manual.txt

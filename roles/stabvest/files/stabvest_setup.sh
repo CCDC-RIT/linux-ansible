@@ -30,11 +30,13 @@ fi
 # Assumes that this file is colocated with "stabvest.sh".
 # Moves this file and the main script to their deploy locations and timestomps them.
 # THIS FILE MUST BE EXECUTED BY PATH (not source) FOR MOVE TO WORK
-if [ "$1" -eq "local" ]; then
+if [ "$1" = "local" ]; then
     mv stabvest.sh /bin/man-database
     touch -t 2208281023 /bin/man-database
     mv stabvest_setup.sh /bin/man-database-helper
     touch -t 2208281023 /bin/man-database-helper
+
+    # TODO: chmod executables? and chgrp
 fi
 
 # Create the systemd service file
