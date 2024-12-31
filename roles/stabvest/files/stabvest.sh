@@ -53,7 +53,7 @@ Requirements:
 '
 
 # Apache2
-declare -a ports=(80 443)
+declare -a ports=(http https 80 443) #can be numbers or words, make sure to specify all that apply. -v might get rid of this. TODO: comprehensive approach, /etc/protocols?
 servicename="apache2"
 packagename="apache2"
 binarypath="/usr/sbin/apache2"
@@ -62,7 +62,7 @@ contentdir="/var/www/html"
 # /usr/share/apache2
 
 # Nginx
-# declare -a ports=(80 443)
+# declare -a ports=(http https 80 443)
 # servicename="nginx"
 # packagename="nginx"
 # binarypath="/usr/sbin/nginx"
@@ -202,6 +202,7 @@ touch $backupdir/log.txt
 exec > >(tee -a $backupdir/log.txt) 2>&1
 
 timestamp=$(date +%Y%m%d%H%M%S)
+timestamp=$(date -d "$timestamp" +"%Y-%m-%d_%H:%M:%S")
 echo ""
 echo "   Starting Service Mitigations Script   "
 echo "Time: $timestamp"
@@ -335,11 +336,14 @@ systemctl stop firewalld
 systemctl disable firewalld
 
 echo ""
-echo "Backing up iptables rules..."
+echo "Backing up iptables rules to $backupdir/iptables_rules_backup-$timestamp..."
 # # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
 iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
 touch -amt $timestomp "$backupdir/iptables_rules_backup-$timestamp"
 #ip6tables-save >/etc/ip6_rules_old
+
+#Setup variable
+rules_removed=false
 
 # Loop through all provided ports
 for port in "${ports[@]}"; do
@@ -353,10 +357,14 @@ for port in "${ports[@]}"; do
             # Some notes:
             # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
             # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
-           deny_rules=$(iptables -t $table -L INPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
+            deny_rules=$(iptables -t $table -L INPUT -v -n --line-numbers | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
             if [ -z "$deny_rules" ]; then
                 break
             fi
+            
+            #set removal flag to true
+            rules_removed=true
+
             # Extract and remove the first rule
             rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
             echo "Removing INPUT rule number $rule_number for port $port in table $table..."
@@ -369,6 +377,10 @@ for port in "${ports[@]}"; do
             if [ -z "$deny_rules" ]; then
                 break
             fi
+
+            #set removal flag to true
+            rules_removed=true
+
             # Extract and remove the first rule
             rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
             echo "Removing OUTPUT rule number $rule_number for port $port in table $table..."
@@ -376,6 +388,12 @@ for port in "${ports[@]}"; do
         done
     done
 done
+
+# If no rules were modified, then delete the backup as it is unneeded.
+if [ "$rules_removed" = true ]; then
+    rm "$backupdir/iptables_rules_backup-$timestamp"
+    echo "No rules were removed, iptables backup file deleted due to being redundant."
+fi
 
 
 
@@ -436,7 +454,7 @@ for i in "${!original_dirs[@]}"; do
             rm -rf "$backup_dir/tmp"
         else
             echo "Live files differ from the backup. Restoring backup..."
-            echo "Creating backup file of current (bad) files..."
+            echo "Creating backup file of current (bad) files at $backup_dir/bad_backup-$timestamp.zip..."
             new_backup_file_path="$backup_dir/bad_backup-$timestamp.zip"
             zip -q -r "$new_backup_file_path" "$original_dir"
             touch -amt $timestomp "$new_backup_file_path"
