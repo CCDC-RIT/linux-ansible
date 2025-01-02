@@ -62,6 +62,69 @@
 #   with_items: "{{ build_hosts.split('\n') }}"
 #   when: build_hosts is defined
 
+# - name: Compare sources.list (Debian/Ubuntu)
+#   shell: diff /etc/apt/sources.list files/sources.list
+#   register: diff
+#   ignore_errors: yes
+#   changed_when: diff.rc == 1
+#   when: ansible_facts['os_family'] == 'Debian'
+
+# in Debian, all repos are in /etc/apt/sources.list
+- name: Copy sources.list (Debian/Ubuntu)
+  ansible.builtin.copy:
+    src: files/sources.list
+    dest: /etc/apt/sources.list
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_facts['os_family'] == 'Debian'
+
+# in RHEL, each repo is its own file in /etc/yum.repos.d/
+# - name: Copy over repo files (RHEL/CentOS)
+#   ansible.builtin.copy:
+#     src: "files/{{ item }}"
+#     dest: "/etc/yum.repos.d/{{ item }}"
+#     owner: root
+#     group: root
+#     mode: 0644
+#   with_items:
+#     - "rhel.repo"
+#     - "epel.repo"
+#   when: ansible_facts['os_family'] == 'RedHat'
+# TODO: find good repos because they vary by version, hard to be dynamic
+
+# in SUSE, each repo is its own file in /etc/zypp/repos.d/
+# - name: Copy over repo files (SUSE)
+#   ansible.builtin.copy:
+#     src: "files/{{ item }}"
+#     dest: "/etc/zypp/repos.d/{{ item }}"
+#     owner: root
+#     group: root
+#     mode: 0644
+#   with_items:
+#     - "suse.repo"
+#   when: ansible_facts['os_family'] == 'Suse'
+# TODO: same thing with this, need to find file maybe from clean install bc bad sources online
+
+- name: Update the package cache and all packages (Debian/Ubuntu)
+    ansible.builtin.apt:
+      update_cache: yes # Equivalent of "apt-get update"
+      name: "*"
+      state: latest # Update all packages to their latest version
+    when: ansible_facts['os_family'] == 'Debian'
+
+- name: Upgrade all packages (RHEL/CentOS)
+    ansible.builtin.dnf:
+      name: "*"
+      state: latest
+    when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Upgrade all packages (SUSE)
+  community.general.zypper:
+    name: "*"
+    state: latest
+  when: ansible_facts['os_family'] == 'Suse'
+
 - name: Install Common Packages
   package:
     name: "{{ item }}"
