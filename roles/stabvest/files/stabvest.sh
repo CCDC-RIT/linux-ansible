@@ -38,7 +38,8 @@ Full example if youre backing up the webroot for apache2:
 TODO
 * test literally everything including timestamps
 * dont exit after fixing 1 misconfig?
-* check default policy for iptables + find more iptables breaks
+* check default policy for iptables + find more iptables breaks + deconflict with team SOP (default deny policy)
+* freebsd compat (pf for firewall)
 * backup /usr/share folders? benchmark the processing power needed...
 
 Requirements:
@@ -366,8 +367,35 @@ ufw disable
 systemctl stop ufw
 systemctl disable ufw
 
+# RHEL
+# TODO mask?
+# sudo systemctl mask nftables
 systemctl stop firewalld
 systemctl disable firewalld
+systemctl stop nftables
+systemctl disable nftables
+
+# Enable iptables if its not running on this system
+# Install iptables if not found
+if ! systemctl status iptables &> /dev/null; then
+    # Reinstall the package using apt, yum, or dnf
+    if command -v apt &> /dev/null; then
+        apt update # TODO: needed?
+        apt install -y iptables-services # TODO: is it iptables-services or iptables??
+    elif command -v yum &> /dev/null; then
+        yum install -y iptables-services
+    elif command -v dnf &> /dev/null; then
+        dnf install -y iptables-services
+    else
+        echo "ERROR: Package manager not supported. Install iptables-services manually. Operator must manually fix this error."
+        exit 1
+    fi
+fi
+# Enable iptables if not active
+if ! systemctl is-active --quiet iptables; then
+    sudo systemctl start iptables
+    sudo systemctl enable iptables
+fi
 
 echo ""
 echo "Backing up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp..."
