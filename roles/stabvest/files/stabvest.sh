@@ -38,6 +38,7 @@ Full example if youre backing up the webroot for apache2:
 TODO
 * test literally everything including timestamps
 * dont exit after fixing 1 misconfig?
+* check default policy for iptables + find more iptables breaks
 * backup /usr/share folders? benchmark the processing power needed...
 
 Requirements:
@@ -359,6 +360,7 @@ echo "Disabling unwanted firewall managers if found... (ufw, firewalld)"
 
 ## iptables tables to check
 declare -a tables=("filter" "nat" "mangle" "raw")
+declare -a chains=("INPUT" "OUTPUT")
 
 ufw disable
 systemctl stop ufw
@@ -369,6 +371,7 @@ systemctl disable firewalld
 
 echo ""
 echo "Backing up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp..."
+echo ""
 # # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
 iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
 #ip6tables-save >/etc/ip6_rules_old
@@ -378,52 +381,43 @@ rules_removed=false
 
 # Loop through all provided ports
 for port in "${ports[@]}"; do
-    # Loop through all iptables tables
+    # Loop through provided iptables tables
     for table in "${tables[@]}"; do
-        echo ""
+        # Loop through provided iptables chains
+        #echo ""
         #echo "Scanning port $port on table $table..."
+        for chain in "${chains[@]}"; do
+            # Check and remove rules in chain until no more malicious rules are found
+            while :; do
+                # Some notes:
+                # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
+                # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
+                # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
+                deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
+                if [ -z "$deny_rules" ]; then
+                    break
+                fi
+                
+                #set removal flag to true
+                rules_removed=true
 
-        # Check and remove rules in INPUT chain
-        while :; do
-            # Some notes:
-            # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
-            # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
-            # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
-            deny_rules=$(iptables -t $table -L INPUT -v -n --line-numbers | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
-            if [ -z "$deny_rules" ]; then
-                break
-            fi
-            
-            #set removal flag to true
-            rules_removed=true
+                # Extract and display the full text of the first rule before removing it
+                rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
+                echo "$table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
 
-            # Extract and remove the first rule
-            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
-            echo "Removing potentially malicious INPUT rule number $rule_number for port $port in table $table..."
-            iptables -t $table -D INPUT "$rule_number"
-        done
-
-        # Check and remove rules in OUTPUT chain
-        while :; do
-            deny_rules=$(iptables -t $table -L OUTPUT -v -n --line-numbers | grep -E "DPT:$port|SPT:$port|dports.*\b$port\b|sports.*\b$port\b")
-            if [ -z "$deny_rules" ]; then
-                break
-            fi
-
-            #set removal flag to true
-            rules_removed=true
-
-            # Extract and remove the first rule
-            rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
-            echo "Removing potentially malicious OUTPUT rule number $rule_number for port $port in table $table..."
-            iptables -t $table -D OUTPUT "$rule_number"
+                # Extract and remove the first rule
+                rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
+                #echo "Removing potentially malicious $chain rule number $rule_number for port $port in table $table..."
+                iptables -t $table -D "$chain" "$rule_number"
+            done
         done
     done
 done
 
 # If no rules were modified, then delete the backup as it is unneeded.
-if [ "$rules_removed" = true ]; then
+if [ "$rules_removed" = false ]; then
     rm "$backupdir/iptables_rules_backup-$timestamp"
+    echo ""
     echo "No rules were removed, iptables backup file deleted due to being redundant."
 fi
 
