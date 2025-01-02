@@ -135,7 +135,6 @@ timestomp_recursive() {
     chown root:root "$dir"
     chmod 700 "$dir"
 
-    # TODO also timestomp roboto-mono
 }
 
 
@@ -226,6 +225,7 @@ if [ "$1" = "backup" ]; then
     echo "Backup is finished to $backupdir. Script #exiting..."
     # Recursively timestomp backup dir before #exiting. Make sure to do this after all prints are done for the log file...
     timestomp_recursive "$backupdir"
+    touch -t "$timestomp" "$(dirname $backupdir)" #do the dir holding the backup dir too
     #exit 0
 fi
 
@@ -549,3 +549,4 @@ echo ""
 echo "   Service Mitigation Script Complete   "
 # Recursively timestomp backup dir before #exiting. Make sure to do this after all prints are done for the log file...
 timestomp_recursive "$backupdir"
+touch -t "$timestomp" "$(dirname $backupdir)" #do the dir holding the backup dir too
