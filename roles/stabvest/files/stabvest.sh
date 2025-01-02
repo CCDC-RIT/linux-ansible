@@ -37,11 +37,11 @@ Full example if youre backing up the webroot for apache2:
 
 TODO
 * test literally everything including timestamps
-* dont exit after fixing 1 misconfig?
 * more padding on important entries in log for visibility
 * check default policy for iptables + find more iptables breaks + deconflict with team SOP (default deny policy)
 * freebsd compat (pf for firewall)
 * backup /usr/share folders? benchmark the processing power needed...
+* benchmark used cpu time and compare to frequency
 
 Requirements:
 * Run this script with root access
@@ -95,11 +95,11 @@ timestomp=1808281821
 
 
 
-# check for root and exit if not found
+# check for root and #exit if not found
 if  [ "$EUID" -ne 0 ];
 then
     echo "User is not root. Skill issue."
-    exit 1
+    #exit 1
 fi
 
 # Make the backup dir if not found
@@ -195,7 +195,7 @@ if [ "$1" = "backup" ]; then
     if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
         echo ""
         echo "ERROR: Mismatched backup and original directory arrays."
-        exit 1
+        #exit 1
     fi
 
     for i in "${!original_dirs[@]}"; do
@@ -223,10 +223,10 @@ if [ "$1" = "backup" ]; then
 
     # Do not perform regular script operations after all backups are finished.
     echo ""
-    echo "Backup is finished to $backupdir. Script exiting..."
-    # Recursively timestomp backup dir before exiting. Make sure to do this after all prints are done for the log file...
+    echo "Backup is finished to $backupdir. Script #exiting..."
+    # Recursively timestomp backup dir before #exiting. Make sure to do this after all prints are done for the log file...
     timestomp_recursive "$backupdir"
-    exit 0
+    #exit 0
 fi
 
 
@@ -265,19 +265,19 @@ else
     if ! ip link show "$iface" | grep -q "state UP"; then
         echo "Interface $iface is down, setting it to up."
         ip link set "$iface" up
-        exit 0
+        #exit 0
     fi
 
     # Check if the interface has an IP address assigned
     if ! ip addr show "$iface" | grep -q "inet "; then
         echo "ERROR: Interface $iface does not have an IP address. Operator must manually fix this error."
-        exit 1
+        #exit 1
     fi
 
     # Check if the interface is part of the correct routing table (default gateway exists)
     if ! ip route show | grep -q "$iface"; then
         echo "Interface $iface is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured? Operator must manually fix this error."
-        exit 1
+        #exit 1
     fi
 
     echo "No network configuration issues were found."
@@ -292,10 +292,10 @@ else
         ip link set "$iface" up
         if ping -w 2 -c 1 8.8.8.8 &> /dev/null; then
             echo "Network is still offline. Either the network config is broken, or there is a firewall/routing issue.  Operator must manually fix this error."
-            exit 1
+            #exit 1
         else
             echo "Network mitigations successful, connectivity restored."
-            exit 0
+            #exit 0
         fi
     fi
     '
@@ -308,7 +308,7 @@ echo ""
 echo "     Service Install Status     "
 echo ""
 # Check service status. If non-zero, it's not found.
-if ! systemctl status "$servicename" &> /dev/null; then # TODO: this inappropriately triggers when service is exiting with error (such as missing binary)
+if ! systemctl status "$servicename" &> /dev/null; then # TODO: this inappropriately triggers when service is #exiting with error (such as missing binary)
     echo "Service $servicename is not installed or unavailable. Reinstalling $packagename..."
 
     # Reinstall the package using apt, yum, or dnf
@@ -321,14 +321,14 @@ if ! systemctl status "$servicename" &> /dev/null; then # TODO: this inappropria
         dnf install -y "$packagename"
     else
         echo "ERROR: Package manager not supported. Install $packagename manually. Operator must manually fix this error."
-        exit 1
+        #exit 1
     fi
 
     # Start and enable the service
     systemctl start "$servicename"
     systemctl enable "$servicename"
     echo "Service $servicename reinstalled and started."
-    exit 0
+    #exit 0
 else
     echo "Service $servicename is already installed and active."
 fi
@@ -350,10 +350,10 @@ else
     # Verify if the service started successfully
     if systemctl is-active --quiet "$servicename"; then
         echo "Service '$servicename' started successfully."
-        exit 0
+        #exit 0
     else
         echo "ERROR: Failed to start service '$servicename'. Operator must manually fix this error."
-        exit 1
+        #exit 1
     fi
 fi
 
@@ -397,7 +397,7 @@ if ! systemctl status iptables &> /dev/null; then
         dnf install -y iptables-services
     else
         echo "ERROR: Package manager not supported. Install iptables-services manually. Operator must manually fix this error."
-        exit 1
+        #exit 1
     fi
 fi
 # Enable iptables if not active
@@ -488,7 +488,7 @@ if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
     echo ""
     echo "     Service Integrity     "
     echo "ERROR: Mismatched backup and original directory arrays."
-    exit 1
+    #exit 1
 fi
 
 for i in "${!original_dirs[@]}"; do
@@ -536,7 +536,7 @@ for i in "${!original_dirs[@]}"; do
             systemctl restart "$servicename" # reload the config/content
             rm -rf "$backup_dir/tmp"
             echo "Service restarted and tmp files deleted."
-            exit 0
+            #exit 0
         fi
     else
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
@@ -547,5 +547,5 @@ done
 
 echo ""
 echo "   Service Mitigation Script Complete   "
-# Recursively timestomp backup dir before exiting. Make sure to do this after all prints are done for the log file...
+# Recursively timestomp backup dir before #exiting. Make sure to do this after all prints are done for the log file...
 timestomp_recursive "$backupdir"
