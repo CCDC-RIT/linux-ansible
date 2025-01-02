@@ -50,7 +50,7 @@ Requirements:
 '
 
 # Apache2
-declare -a ports=(http https 80 443) #can be numbers or words, make sure to specify all that apply. -v might get rid of this. TODO: comprehensive approach, /etc/protocols?
+declare -a ports=( 80 443 ) 
 servicename="apache2"
 packagename="apache2"
 binarypath="/usr/sbin/apache2"
@@ -59,7 +59,7 @@ contentdir="/var/www/html"
 # /usr/share/apache2
 
 # Nginx
-# declare -a ports=(http https 80 443)
+# declare -a ports=( 80 443 ) # use numbers only, no named alias like "http"
 # servicename="nginx"
 # packagename="nginx"
 # binarypath="/usr/sbin/nginx"
@@ -69,7 +69,7 @@ contentdir="/var/www/html"
 # /usr/share/nginx
 
 # MySQL
-#declare -a ports=(3306)
+#declare -a ports=( 3306 )
 #servicename="mysql"
 #packagename="mysql-server"
 #binarypath="/usr/bin/msql"
@@ -77,7 +77,7 @@ contentdir="/var/www/html"
 #contentdir="/var/lib/mysql"
 
 # PostGreSQL
-#declare -a ports=(3306)
+#declare -a ports=( 3306 )
 #servicename="mysql"
 #packagename="mysql-server"
 #binarypath="/usr/bin/msql"
@@ -381,6 +381,7 @@ for port in "${ports[@]}"; do
             # Some notes:
             # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
             # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
+            # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
             deny_rules=$(iptables -t $table -L INPUT -v -n --line-numbers | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
             if [ -z "$deny_rules" ]; then
                 break
@@ -485,7 +486,7 @@ for i in "${!original_dirs[@]}"; do
             rm -rf "$original_dir"
             if [ "$is_single_file" = false ] ; then
                 mkdir -p "$original_dir" # this breaks if its just one file, so only do it if its a dir
-                # no need for timestomp. What would we even timestomp it to? TODO: does diff throw a fit if its different times?
+                # no need for timestomp. What would we even timestomp it to? It's too hard to store that info and would be confusing.
             fi
             #absolute path funnies
             #unzip -q "$backup_dir/config/config.zip" -d "$original_dir"
