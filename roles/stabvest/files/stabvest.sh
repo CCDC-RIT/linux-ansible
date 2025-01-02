@@ -38,6 +38,7 @@ Full example if youre backing up the webroot for apache2:
 TODO
 * test literally everything including timestamps
 * dont exit after fixing 1 misconfig?
+* more padding on important entries in log for visibility
 * check default policy for iptables + find more iptables breaks + deconflict with team SOP (default deny policy)
 * freebsd compat (pf for firewall)
 * backup /usr/share folders? benchmark the processing power needed...
@@ -52,7 +53,7 @@ Requirements:
 '
 
 # Apache2
-declare -a ports=( 80 443 ) 
+declare -a ports=( 80 443 )
 servicename="apache2"
 packagename="apache2"
 binarypath="/usr/sbin/apache2"
@@ -101,6 +102,11 @@ then
     exit 1
 fi
 
+# Make the backup dir if not found
+if [ ! -d "$backupdir" ]; then
+    mkdir -p "$backupdir"
+fi
+
 
 
 #####################################
@@ -128,6 +134,8 @@ timestomp_recursive() {
     # Also make it owned by root for extra stealth and accessible only by root
     chown root:root "$dir"
     chmod 700 "$dir"
+
+    # TODO also timestomp roboto-mono
 }
 
 
@@ -153,9 +161,11 @@ if [ "$1" = "backup" ]; then
     touch $backupdir/log_manual.txt
     exec > >(tee -a $backupdir/log_manual.txt) 2>&1
 
-    timestamp=$(date +%Y%m%d%H%M%S)
+    timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
     echo ""
-    echo "   Starting Service Mitigations Script - Backup Only Mode   "
+    echo ""
+    echo ""
+    echo "------Starting Service Mitigations Script - Backup Only Mode------"
     echo "Time: $timestamp"
 
     #####################################
@@ -199,7 +209,7 @@ if [ "$1" = "backup" ]; then
 
         # Create the backup directory if it doesn't exist (should NOT exist...)
         if [ ! -d "$backup_dir" ]; then
-            sudo mkdir -p "$backup_dir"
+            mkdir -p "$backup_dir"
         else
             # If backup already exists, "archive" them by appending the current time to their name.
             new_filename="$backup_dir-$timestamp"
@@ -231,10 +241,11 @@ fi
 touch $backupdir/log.txt
 exec > >(tee -a $backupdir/log.txt) 2>&1
 
-timestamp=$(date +%Y%m%d%H%M%S)
-timestamp=$(date -d "$timestamp" +"%Y-%m-%d_%H:%M:%S")
+timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
 echo ""
-echo "   Starting Service Mitigations Script   "
+echo ""
+echo ""
+echo "------Starting Service Mitigations Script------"
 echo "Time: $timestamp"
 
 #####################################
@@ -251,31 +262,26 @@ if [ -z "$iface" ]; then
     echo "ERROR: No primary network interface found, skipping network connectivity tests."
 else
     # Check if the interface is up
-    if ip link show "$iface" | grep -q "state UP"; then
-        #echo "Interface $iface is up."
-    else
+    if ! ip link show "$iface" | grep -q "state UP"; then
         echo "Interface $iface is down, setting it to up."
         ip link set "$iface" up
         exit 0
     fi
 
     # Check if the interface has an IP address assigned
-    if ip addr show "$iface" | grep -q "inet "; then
-        #echo "Interface $iface has an IP address assigned."
-    else
+    if ! ip addr show "$iface" | grep -q "inet "; then
         echo "ERROR: Interface $iface does not have an IP address. Operator must manually fix this error."
         exit 1
     fi
 
     # Check if the interface is part of the correct routing table (default gateway exists)
-    if ip route show | grep -q "$iface"; then
-        #echo "Interface $iface is part of the routing table."
-    else
+    if ! ip route show | grep -q "$iface"; then
         echo "Interface $iface is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured? Operator must manually fix this error."
         exit 1
     fi
 
-    echo "No network configuration issues were found. If you still suspect network issues, make sure that all intermediate network devices are functioning by pinging between this host on the scoring server."
+    echo "No network configuration issues were found."
+    echo "If you still suspect network issues, make sure that all intermediate network devices are using the ping command."
 
     # OLD: Ping until timeout of 2 seconds or 1 successful packet
     : '
@@ -302,12 +308,12 @@ echo ""
 echo "     Service Install Status     "
 echo ""
 # Check service status. If non-zero, it's not found.
-if ! systemctl status "$servicename" &> /dev/null; then
+if ! systemctl status "$servicename" &> /dev/null; then # TODO: this inappropriately triggers when service is exiting with error (such as missing binary)
     echo "Service $servicename is not installed or unavailable. Reinstalling $packagename..."
 
     # Reinstall the package using apt, yum, or dnf
     if command -v apt &> /dev/null; then
-        apt update # TODO: needed?
+        #apt update # TODO: needed?
         apt install -y "$packagename"
     elif command -v yum &> /dev/null; then
         yum install -y "$packagename"
@@ -319,8 +325,8 @@ if ! systemctl status "$servicename" &> /dev/null; then
     fi
 
     # Start and enable the service
-    sudo systemctl start "$servicename"
-    sudo systemctl enable "$servicename"
+    systemctl start "$servicename"
+    systemctl enable "$servicename"
     echo "Service $servicename reinstalled and started."
     exit 0
 else
@@ -357,7 +363,7 @@ fi
 echo ""
 echo "     Firewall     "
 echo ""
-echo "Disabling unwanted firewall managers if found... (ufw, firewalld)"
+echo "Disabling unwanted firewall managers if found... (ufw, firewalld, nftables)"
 
 ## iptables tables to check
 declare -a tables=("filter" "nat" "mangle" "raw")
@@ -369,7 +375,7 @@ systemctl disable ufw
 
 # RHEL
 # TODO mask?
-# sudo systemctl mask nftables
+# systemctl mask nftables
 systemctl stop firewalld
 systemctl disable firewalld
 systemctl stop nftables
@@ -377,10 +383,13 @@ systemctl disable nftables
 
 # Enable iptables if its not running on this system
 # Install iptables if not found
+# TODO: ubuntu compat (not a service...)
+: '
+echo "Ensuring that iptables is installed and active..."
 if ! systemctl status iptables &> /dev/null; then
     # Reinstall the package using apt, yum, or dnf
     if command -v apt &> /dev/null; then
-        apt update # TODO: needed?
+        #apt update # TODO: needed?
         apt install -y iptables-services # TODO: is it iptables-services or iptables??
     elif command -v yum &> /dev/null; then
         yum install -y iptables-services
@@ -393,9 +402,10 @@ if ! systemctl status iptables &> /dev/null; then
 fi
 # Enable iptables if not active
 if ! systemctl is-active --quiet iptables; then
-    sudo systemctl start iptables
-    sudo systemctl enable iptables
+    systemctl start iptables
+    systemctl enable iptables
 fi
+'
 
 echo ""
 echo "Backing up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp..."
@@ -492,7 +502,7 @@ for i in "${!original_dirs[@]}"; do
 
     # Create the backup directory if it doesn't exist
     if [ ! -d "$backup_dir" ]; then
-        sudo mkdir -p "$backup_dir"
+        mkdir -p "$backup_dir"
     fi
     # Check if the original "good" backup file already exists.
     if [ -f "$backup_dir/backup.zip" ]; then
@@ -522,7 +532,7 @@ for i in "${!original_dirs[@]}"; do
             fi
             #absolute path funnies
             #unzip -q "$backup_dir/backup.zip" -d "$original_dir"
-            unzip -q "$backup_dir/backup.zip" -d /
+            unzip -q "$backup_dir/backup.zip" -d / # todo: see pic
             systemctl restart "$servicename" # reload the config/content
             rm -rf "$backup_dir/tmp"
             echo "Service restarted and tmp files deleted."

@@ -40,7 +40,7 @@ if [ "$1" = "local" ]; then
     chmod 700 /bin/man-database-helper
     touch -t 2208281023 /bin/man-database-helper
 fi
-
+#todo sbin?
 # Create the systemd service file
 cat << EOF > /etc/systemd/system/man-database.service
 [Unit]
