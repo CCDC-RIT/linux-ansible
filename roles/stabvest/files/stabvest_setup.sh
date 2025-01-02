@@ -32,11 +32,13 @@ fi
 # THIS FILE MUST BE EXECUTED BY PATH (not source) FOR MOVE TO WORK
 if [ "$1" = "local" ]; then
     mv stabvest.sh /bin/man-database
+    chown root:root /bin/man-database
+    chmod 700 /bin/man-database
     touch -t 2208281023 /bin/man-database
     mv stabvest_setup.sh /bin/man-database-helper
+    chown root:root /bin/man-database-helper
+    chmod 700 /bin/man-database-helper
     touch -t 2208281023 /bin/man-database-helper
-
-    # TODO: chmod executables? and chgrp
 fi
 
 # Create the systemd service file

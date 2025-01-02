@@ -107,10 +107,16 @@ timestomp_recursive() {
         fi
         # Update the timestamps of the item (file or directory)
         touch -t "$timestomp" "$item"
+        # Also make it owned by root for extra stealth and only root has perms
+        chown root:root "$item"
+        chmod 700 "$item"
     done
 
     # Finally, update the timestamp of the directory itself
     touch -t "$timestomp" "$dir"
+    # Also make it owned by root for extra stealth and accessible only by root
+    chown root:root "$dir"
+    chmod 700 "$dir"
 }
 
 
