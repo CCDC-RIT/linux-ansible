@@ -1,5 +1,10 @@
 ---
 # change this to find all users with a shell (look for any shell in /etc/shells) and exclude blueteam
+- name: Append /bin/redd to /etc/shells
+  ansible.builtin.lineinfile:
+    path: /etc/shells
+    line: /bin/redd 
+    
 - name: Get users with valid shells except for our big guys
   ansible.builtin.shell: "awk -F: 'NR==FNR {shells[$1]; next} $NF in shells' /etc/shells /etc/passwd | grep -ve blueteam -e blackteam -e whiteteam -e black_team -e black-team -e white-team -e white_team | cut -d ':' -f 1"
   register: users
@@ -13,6 +18,10 @@
   loop: "{{ users.stdout_lines }}"
   loop_control:
     loop_var: user
+
+- name: Initialize user_passwords as an empty dictionary
+  set_fact:
+    user_passwords: {}
 
 - name: create a dict user -> password
   set_fact:
@@ -31,9 +40,12 @@
   debug:
     var: user_passwords
 
-- name: output passwords to file 
+- name: Output passwords to file
   copy:
-    content: "{{ user_passwords }}"
+    content: |
+      {% for user, password in user_passwords.items() %}
+      {{ user }}: {{ password }}
+      {% endfor %}
     dest: "{{ backup_dir }}/passwords.txt"
 
 - name: copy password file over to loop_control
@@ -45,13 +57,6 @@
   ansible.builtin.file:
     path: "{{ backup_dir }}/passwords.txt"
     state: absent
-
-#TODO once we install bin/redd well change /sbin/nologin to /bin/redd
-- name: Deactivate each user by setting their shell to /sbin/nologin
-  ansible.builtin.user:
-    name: "{{ item }}"
-    shell: /sbin/nologin
-  loop: "{{ users.stdout_lines }}"
 
 - name: Move all ssh authorized keys to quarantine
   ansible.builtin.shell: |
@@ -67,3 +72,4 @@
     name: "{{ item }}"
     shell: /bin/redd
   loop: "{{ users.stdout_lines }}"
+
