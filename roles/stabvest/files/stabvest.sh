@@ -30,16 +30,13 @@ Example for config:
 Verbose example for config:
     zip -r "/usr/share/fonts/roboto-mono/apache2/config/backup.zip" "/etc/apache2"
 Also make sure to timestomp it:
-    touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/config/backup.zip"
+    touch -t 1808281821 "/usr/share/fonts/roboto-mono/apache/config/backup.zip"
 Full example if youre backing up the webroot for apache2:
     zip -r "/usr/share/fonts/roboto-mono/apache2/content/backup.zip" "/var/www/html"
-    touch -amt 1808281821 "/usr/share/fonts/roboto-mono/apache/content/backup.zip"
+    touch -t 1808281821 "/usr/share/fonts/roboto-mono/apache/content/backup.zip"
 
 TODO
-* fix firewall
-* timestomp dirs and/or recursive timestomp - partially done?
-* test install service if missing
-* test all the service integrity stuff
+* test literally everything including timestamps
 * test the backup mode
 * backup /usr/share folders? benchmark the processing power needed...
 
@@ -89,9 +86,32 @@ contentdir="/var/www/html"
 
 
 
-# generic variables
+# generic variables regardless of the service to back up
 backupdir="/usr/share/fonts/roboto-mono/$servicename"
 timestomp=1808281821
+
+
+
+#####################################
+########## TIMESTOMP FUNC ###########
+#####################################
+# Function to recursively timestomp files and directories
+timestomp_recursive() {
+    local dir="$1"
+
+    # Update timestamps for all files and directories in the current directory
+    for item in "$dir"/*; do
+        if [[ -d "$item" ]]; then
+            # If item is a directory, recurse
+            timestomp_recursive "$item"
+        fi
+        # Update the timestamps of the item (file or directory)
+        touch -t "$timestomp" "$item"
+    done
+
+    # Finally, update the timestamp of the directory itself
+    touch -t "$timestomp" "$dir"
+}
 
 
 
@@ -162,24 +182,22 @@ if [ "$1" = "backup" ]; then
         # Create the backup directory if it doesn't exist (should NOT exist...)
         if [ ! -d "$backup_dir" ]; then
             sudo mkdir -p "$backup_dir"
-            touch -amt $timestomp "$backup_dir"
         else
             # If backup already exists, "archive" them by appending the current time to their name.
             new_filename="$backup_dir-$timestamp"
             echo "Archiving existing backup files to $new_filename..."
             mv "$backup_dir" "$new_filename"
-            touch -amt $timestomp "$new_filename"
         fi
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
         echo "Making a new master backup at $backup_dir/backup.zip..."
         zip -q -r "$backup_dir/backup.zip" "$original_dir"
-        touch -amt $timestomp "$backup_dir/backup.zip"
     done
 
     # Do not perform regular script operations after all backups are finished.
     echo ""
     echo "Backup is finished to $backupdir. Script exiting..."
-    touch -amt $timestomp "$backupdir/log_manual.txt"
+    # Recursively timestomp backup dir before exiting. Make sure to do this after all prints are done for the log file...
+    timestomp_recursive "$backupdir"
     exit 0
 fi
 
@@ -275,11 +293,12 @@ if ! systemctl status "$servicename" &> /dev/null; then
 
     # Reinstall the package using apt, yum, or dnf
     if command -v apt &> /dev/null; then
-        sudo apt update && sudo apt install -y "$packagename" # TODO does APT UPDATE make it take too long?
+        apt update # TODO: needed?
+        apt install -y "$packagename"
     elif command -v yum &> /dev/null; then
-        sudo yum install -y "$packagename"
+        yum install -y "$packagename"
     elif command -v dnf &> /dev/null; then
-        sudo dnf install -y "$packagename"
+        dnf install -y "$packagename"
     else
         echo "Package manager not supported. Install $packagename manually. Operator must manually fix this error."
         exit 1
@@ -339,7 +358,6 @@ echo ""
 echo "Backing up iptables rules to $backupdir/iptables_rules_backup-$timestamp..."
 # # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
 iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
-touch -amt $timestomp "$backupdir/iptables_rules_backup-$timestamp"
 #ip6tables-save >/etc/ip6_rules_old
 
 #Setup variable
@@ -437,7 +455,6 @@ for i in "${!original_dirs[@]}"; do
     # Create the backup directory if it doesn't exist
     if [ ! -d "$backup_dir" ]; then
         sudo mkdir -p "$backup_dir"
-        touch -amt $timestomp "$backup_dir"
     fi
     # Check if the original "good" backup file already exists.
     if [ -f "$backup_dir/backup.zip" ]; then
@@ -445,7 +462,6 @@ for i in "${!original_dirs[@]}"; do
         # unzip backup into temp dir
         rm -rf "$backup_dir/tmp"
         mkdir -p "$backup_dir/tmp"
-        touch -amt $timestomp "$backup_dir/tmp" # not really needed since it'll be yeeted asap...
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
         unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp" # TODO what's the resulting timestamps on this? Not that it matters...
 
@@ -457,7 +473,6 @@ for i in "${!original_dirs[@]}"; do
             echo "Creating backup file of current (bad) files at $backup_dir/bad_backup-$timestamp.zip..."
             new_backup_file_path="$backup_dir/bad_backup-$timestamp.zip"
             zip -q -r "$new_backup_file_path" "$original_dir"
-            touch -amt $timestomp "$new_backup_file_path"
 
             echo "Restoring known good configuration..."
             # Now that we have an extra backup, attempt to restore the "good" config.
@@ -468,7 +483,7 @@ for i in "${!original_dirs[@]}"; do
             fi
             #absolute path funnies
             #unzip -q "$backup_dir/config/config.zip" -d "$original_dir"
-            unzip -q "$backup_dir/config/config.zip" -d /  # TODO what's the resulting timestamps on this? Not that it matters...
+            unzip -q "$backup_dir/config/config.zip" -d /
             systemctl restart "$servicename"
             rm -rf "$backup_dir/tmp"
             echo "Service restarted and tmp files deleted."
@@ -478,10 +493,10 @@ for i in "${!original_dirs[@]}"; do
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
         echo "No backup file found, making a new master backup at $backup_dir/backup.zip..."
         zip -q -r "$backup_dir/backup.zip" "$original_dir"
-        touch -amt $timestomp "$backup_dir/backup.zip"
     fi
 done
 
 echo ""
 echo "   Service Mitigation Script Complete   "
-touch -amt $timestomp "$backupdir/log.txt"
+# Recursively timestomp backup dir before exiting. Make sure to do this after all prints are done for the log file...
+timestomp_recursive "$backupdir"
