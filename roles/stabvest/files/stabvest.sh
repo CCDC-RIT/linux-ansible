@@ -266,7 +266,14 @@ if [ "$1" = "backup" ]; then
         fi
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
         echo "  Making a new master backup at $backup_dir/backup.zip..."
-        zip -q -r "$backup_dir/backup.zip" "$original_dir"
+        if [ -d "$original_dir" ]; then
+            #echo "$file is a directory."
+            #only recurse if dir
+            zip -q -r "$backup_dir/backup.zip" "$original_dir"
+        else
+            #echo "$file is not a directory."
+            zip -q "$backup_dir/backup.zip" "$original_dir"
+        fi
     done
 
     # Do not perform regular script operations after all backups are finished.
@@ -313,7 +320,6 @@ if [ -z "$iface" ]; then
 else
     # Check if the interface is up
     if ! ip link show "$iface" | grep -q "state UP"; then
-        #todo success format
         pad_string " Interface $iface is down, setting it to up. " "+" 55
         #echo "  Interface $iface is down, setting it to up."
         ip link set "$iface" up
@@ -592,11 +598,18 @@ for i in "${!original_dirs[@]}"; do
             rm -rf "$backup_dir/tmp"
         else
             echo "  Live files differ from the backup. Restoring backup..."
-            pad_string " Creating backup file of current (bad) files at: " "!" 55
-            echo "  $backup_dir/bad_backup-$timestamp.zip"
-            #echo "  Creating backup file of current (bad) files at $backup_dir/bad_backup-$timestamp.zip..."
+            pad_string " Creating backup file of current (bad) files to: " "!" 55
+            pad_string " $backup_dir/bad_backup-$timestamp.zip " "!" 55
+            #echo "  Creating backup file of current (bad) files to $backup_dir/bad_backup-$timestamp.zip..."
             new_backup_file_path="$backup_dir/bad_backup-$timestamp.zip"
-            zip -q -r "$new_backup_file_path" "$original_dir"
+            if [ -d "$original_dir" ]; then
+                #echo "$file is a directory."
+                #only recurse if dir
+                zip -q -r "$new_backup_file_path" "$original_dir"
+            else
+                #echo "$file is not a directory."
+                zip -q "$new_backup_file_path" "$original_dir"
+            fi
 
             echo "  Restoring known good configuration..."
             # Now that we have an extra backup, attempt to restore the "good" config.
@@ -619,7 +632,14 @@ for i in "${!original_dirs[@]}"; do
         pad_string " No backup file found, making a new master backup at: " "!" 65
         echo "  $backup_dir/backup.zip"
         #echo "  No backup file found, making a new master backup at $backup_dir/backup.zip..."
-        zip -q -r "$backup_dir/backup.zip" "$original_dir"
+        if [ -d "$original_dir" ]; then
+        #echo "$file is a directory."
+            #only recurse if dir
+            zip -q -r "$backup_dir/backup.zip" "$original_dir"
+        else
+            #echo "$file is not a directory."
+            zip -q "$new_backup_file_path" "$original_dir"
+        fi
     fi
 done
 
