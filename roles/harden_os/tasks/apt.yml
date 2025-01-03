@@ -5,9 +5,24 @@
   ansible.builtin.apt:
     update_cache: yes
 
-- name: Reinstall pam and common services
+- name: Get list of PAM-related packages
+  shell: "dpkg -S /etc/pam.d/* | cut -d ':' -f 1 | sort | uniq | grep -v 'openssh-server'"
+  register: pam_packages
+  ignore_errors: yes
+
+- name: Reinstall PAM-related packages (excluding openssh-server)
   shell: "apt-get reinstall {{ item }}"
-  loop: ['$(dpkg -S /etc/pam.d/\* | cut -d ':' -f 1 | sort | uniq)','openssh-server','coreutils', 'passwd', 'git', 'vim']
+  loop: "{{ pam_packages.stdout_lines }}"
+  ignore_errors: true
+
+- name: Reinstall static packages (excluding openssh-server)
+  shell: "apt-get reinstall {{ item }}"
+  loop:
+    - coreutils
+    - passwd
+    - git
+    - vim
+  ignore_errors: true
 
 - name: Apt - Ensure debsums is installed
   ansible.builtin.apt:
