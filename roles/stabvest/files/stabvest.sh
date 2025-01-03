@@ -97,7 +97,8 @@ contentdir="/var/www/html"
 
 # generic variables regardless of the service to back up
 backupdir="/usr/share/fonts/roboto-mono/$servicename"
-timestomp=1808281821
+timestomp_start_year=2016
+timestomp_end_year=2022
 
 
 
@@ -142,6 +143,22 @@ pad_string() {
 #####################################
 ########## TIMESTOMP FUNC ###########
 #####################################
+# Function to generate a random time for timestomp between two given years
+generate_random_date() {
+    # Generate a random year between given values
+    local year=$(( RANDOM % ($timestomp_end_year - $timestomp_start_year + 1) + $timestomp_start_year ))
+    # Generate a random month (01 to 12)
+    local month=$(printf "%02d" $(( RANDOM % 12 + 1 )))
+    # Generate a random day (01 to 28)
+    local day=$(printf "%02d" $(( RANDOM % 28 + 1 )))
+    # Generate a random hour (00 to 23), minute (00 to 59), and second (00 to 59)
+    local hour=$(printf "%02d" $(( RANDOM % 24 )))
+    local minute=$(printf "%02d" $(( RANDOM % 60 )))
+    local second=$(printf "%02d" $(( RANDOM % 60 )))
+    # Combine into the format for `touch -t`: [[CC]YY]MMDDhhmm[.ss]
+    local random_date="${year}${month}${day}${hour}${minute}.${second}"
+    echo "$random_date"
+}
 # Function to recursively timestomp files and directories
 timestomp_recursive() {
     local dir="$1"
@@ -153,14 +170,14 @@ timestomp_recursive() {
             timestomp_recursive "$item"
         fi
         # Update the timestamps of the item (file or directory)
-        touch -t "$timestomp" "$item"
+        touch -t "$(generate_random_date)" "$item"
         # Also make it owned by root for extra stealth and only root has perms
         chown root:root "$item"
         chmod 700 "$item"
     done
 
     # Finally, update the timestamp of the directory itself
-    touch -t "$timestomp" "$dir"
+    touch -t "$(generate_random_date)" "$dir"
     # Also make it owned by root for extra stealth and accessible only by root
     chown root:root "$dir"
     chmod 700 "$dir"
