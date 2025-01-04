@@ -119,20 +119,22 @@
 - name: Update the package cache and all packages (Debian/Ubuntu)
   ansible.builtin.apt:
     update_cache: yes # Equivalent of "apt-get update"
-    name: "*"
-    state: latest # Update all packages to their latest version
+    # name: "*"
+    # state: latest # Update all packages to their latest version
   when: ansible_facts['os_family'] == 'Debian'
 
 - name: Upgrade all packages (RHEL/CentOS)
   ansible.builtin.dnf:
-    name: "*"
-    state: latest
+    update_cache: true
+    # name: "*"
+    # state: latest
   when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Upgrade all packages (SUSE)
   community.general.zypper:
-    name: "*"
-    state: latest
+    update_cache: true
+    # name: "*"
+    # state: latest
   when: ansible_facts['os_family'] == 'Suse'
 
 - name: Install Common Packages
