@@ -1,0 +1,96 @@
+---
+
+- name: "3.1.1 | PATCH | Ensure IPv6 status is identified"
+  when:
+    - not ipv6_required
+  block:
+    - name: "3.1.1 | Replace ipv6.disable if it exists"
+      when: ipv6_disable == 'grub'
+      ansible.builtin.replace:
+        path: /etc/default/grub
+        regexp: '^(GRUB_CMDLINE_LINUX=.*)\bipv6\.disable=\d\b(.*$)'
+        replace: '\1ipv6.disable=1\2'
+      register: discovered_ipv6disable_replaced
+      notify: Grub update
+
+    - name: "3.1.1 | Check grub cmdline linux"
+      ansible.builtin.shell: grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | cut -f2 -d'"'
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_grub_cmdline_settings
+
+    - name: "3.1.1 | Insert ipv6.disable if it doesn't exist"
+      when:
+        - ipv6_disable == 'grub'
+        - discovered_ipv6disable_replaced is not changed
+        - "'ipv6.disable' not in discovered_grub_cmdline_settings.stdout"
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^(GRUB_CMDLINE_LINUX=".*)"$'
+        line: '\1 ipv6.disable=1"'
+        backrefs: true
+      notify: Grub update
+
+    - name: "3.1.1 | PATCH | Ensure IPv6 status is identified | Remove net.ipv6.conf.all.disable_ipv6"
+      when: ipv6_disable == 'sysctl'
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/{{ item }}"
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+      notify: Flush ipv6 route table
+      loop:
+        - etc/sysctl.d/60-disable_ipv6.conf
+
+- name: "3.1.2 | PATCH | Ensure wireless interfaces are disabled"
+  when:
+    - prelim_wireless_adapters_exist
+  block:
+    - name: "3.1.2 | Check for network-manager tool"
+      when: "'network-manager' in ansible_facts.packages"
+      ansible.builtin.command: nmcli radio wifi
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_wifi_status
+
+    - name: "3.1.2 | Disable wireless if network-manager installed"
+      when:
+        - "'network-manager' in ansible_facts.packages"
+        - "'enabled' in discovered_wifi_status.stdout"
+      ansible.builtin.command: nmcli radio all off
+      changed_when: discovered_nmcli_radio_off.rc == 0
+      register: discovered_nmcli_radio_off
+
+    - name: "3.1.2 | Warn about wireless if network-manager not installed"
+      when: "'network-manager' not in ansible_facts.packages"
+      ansible.builtin.debug:
+        msg: "Warning!! You need to disable wireless interfaces manually since network-manager is not installed"
+
+    - name: "3.1.2 | Set warning count"
+      when: "'network-manager' not in ansible_facts.packages"
+      ansible.builtin.import_tasks:
+        file: warning_facts.yml
+
+- name: "3.1.3 | PATCH | Ensure bluetooth services are not in use"
+  block:
+    - name: "3.1.3 | pkg"
+      when:
+        - not bluetooth_service
+        - not bluetooth_mask
+      ansible.builtin.package:
+        name: bluez
+        state: absent
+
+    - name: "3.1.3 | mask"
+      when:
+        - not bluetooth_service
+        - bluetooth_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: bluetooth.service
+        enabled: false
+        state: stopped
+        masked: true
