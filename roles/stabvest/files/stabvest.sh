@@ -48,6 +48,9 @@ TODO
 * freebsd compat (pf for firewall)
 * backup /usr/share folders? benchmark the processing power needed...
 * benchmark used cpu time and compare to frequency
+* restart systemd after restoring service file?
+* fix backups of single files?
+* ignore empty config fields
 
 Requirements:
 * Run this script with root access
@@ -97,8 +100,8 @@ contentdir="/var/www/html"
 
 # generic variables regardless of the service to back up
 backupdir="/usr/share/fonts/roboto-mono/$servicename"
-timestomp_start_year=2016
-timestomp_end_year=2022
+timestomp_start_year=2019
+timestomp_end_year=2023
 
 
 
@@ -128,7 +131,7 @@ pad_string() {
     local padding_length=$(( (total_length - input_length) / 2 ))
     
     # Generate padding
-    local padding=$(printf '%*s' "$padding_length" '' | tr ' ' '$char')
+    local padding=$(printf '%*s' "$padding_length" '' | tr ' ' "$char")
 
     # Check if the string needs an extra dash on one side
     if (( (input_length + 2 * padding_length) < total_length )); then
@@ -146,17 +149,19 @@ pad_string() {
 # Function to generate a random time for timestomp between two given years
 generate_random_date() {
     # Generate a random year between given values
-    local year=$(( RANDOM % ($timestomp_end_year - $timestomp_start_year + 1) + $timestomp_start_year ))
+    local year=$(printf "%02d" $(( RANDOM % ($timestomp_end_year - $timestomp_start_year + 1) + $timestomp_start_year )))
+    local year_short=$(printf "%02d" $(( year % 100 )))  # Get last two digits for YY
+    local century=$(printf "%02d" $(( year / 100 )))    # Get first two digits for CC
     # Generate a random month (01 to 12)
-    local month=$(printf "%02d" $(( RANDOM % 12 + 1 )))
+    local month=$(printf "%02d" $(( RANDOM % 12 + 1 ))) 
     # Generate a random day (01 to 28)
-    local day=$(printf "%02d" $(( RANDOM % 28 + 1 )))
+    local day=$(printf "%02d" $(( RANDOM % 28 + 1 ))) 
     # Generate a random hour (00 to 23), minute (00 to 59), and second (00 to 59)
     local hour=$(printf "%02d" $(( RANDOM % 24 )))
     local minute=$(printf "%02d" $(( RANDOM % 60 )))
     local second=$(printf "%02d" $(( RANDOM % 60 )))
     # Combine into the format for `touch -t`: [[CC]YY]MMDDhhmm[.ss]
-    local random_date="${year}${month}${day}${hour}${minute}.${second}"
+    local random_date="${year_short}${month}${day}${hour}${minute}.${second}"
     echo "$random_date"
 }
 # Function to recursively timestomp files and directories
@@ -165,23 +170,28 @@ timestomp_recursive() {
 
     # Update timestamps for all files and directories in the current directory
     for item in "$dir"/*; do
+        # Skip if the directory is empty to avoid errors
+        [[ -e "$item" ]] || continue
+
         if [[ -d "$item" ]]; then
             # If item is a directory, recurse
             timestomp_recursive "$item"
         fi
+
         # Update the timestamps of the item (file or directory)
-        touch -t "$(generate_random_date)" "$item"
+        random_date=$(generate_random_date)
+        touch -t "$random_date" "$item"
         # Also make it owned by root for extra stealth and only root has perms
         chown root:root "$item"
         chmod 700 "$item"
     done
 
     # Finally, update the timestamp of the directory itself
-    touch -t "$(generate_random_date)" "$dir"
+    random_date=$(generate_random_date)
+    touch -t "$random_date" "$dir"
     # Also make it owned by root for extra stealth and accessible only by root
     chown root:root "$dir"
     chmod 700 "$dir"
-
 }
 
 
@@ -250,7 +260,7 @@ if [ "$1" = "backup" ]; then
         is_single_file="${is_single_files[$i]}"
         
         echo ""
-        pad_string " Service Backup - $(basename "$backup_dir") " "|" 40
+        pad_string " Service Backup - $(basename "$backup_dir") " "=" 40
         #echo "     Service Backup - $(basename "$backup_dir")     "
         #echo ""
 
@@ -307,7 +317,7 @@ echo "  Time: $timestamp"
 ############ Network ################
 #####################################
 echo ""
-pad_string " Network " "|" 35
+pad_string " Network " "=" 35
 #echo "     Network     "
 #echo ""
 # Check that machine has internet connectivity
@@ -368,7 +378,7 @@ fi
 ######### Service Install ###########
 #####################################
 echo ""
-pad_string " Service Install Status " "|" 35
+pad_string " Service Install Status " "=" 35
 #echo "     Service Install Status     "
 #echo ""
 # Check service status. If non-zero, it's not found.
@@ -377,7 +387,6 @@ if ! systemctl status "$servicename" &> /dev/null; then # TODO: this inappropria
 
     # Reinstall the package using apt, yum, or dnf
     if command -v apt &> /dev/null; then
-        #apt update # TODO: needed?
         apt install -y "$packagename"
     elif command -v yum &> /dev/null; then
         yum install -y "$packagename"
@@ -404,14 +413,14 @@ fi
 ######### Service Status ############
 #####################################
 echo ""
-pad_string " Service Status " "|" 35
+pad_string " Service Status " "=" 35
 #echo "     Service Status     "
 #echo ""
 # Check if the service is running. If not running, start it.
 if systemctl is-active --quiet "$servicename"; then
-    echo "  Service '$servicename' is already running."
+    echo "  Service $servicename is already running."
 else
-    echo "  Service '$servicename' is not running. Attempting to start it..."
+    echo "  Service $servicename is not running. Attempting to start it..."
     systemctl start "$servicename"
     systemctl enable "$servicename"
 
@@ -432,7 +441,7 @@ fi
 ############# Firewall ##############
 #####################################
 echo ""
-pad_string "  Firewall " "|" 35
+pad_string " Firewall " "=" 35
 #echo "     Firewall     "
 #echo ""
 echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftables)"
@@ -461,8 +470,7 @@ echo "  Ensuring that iptables is installed and active..."
 if ! systemctl status iptables &> /dev/null; then
     # Reinstall the package using apt, yum, or dnf
     if command -v apt &> /dev/null; then
-        #apt update # TODO: needed?
-        apt install -y iptables-services # TODO: is it iptables-services or iptables??
+        apt install -y iptables-services
     elif command -v yum &> /dev/null; then
         yum install -y iptables-services
     elif command -v dnf &> /dev/null; then
@@ -476,6 +484,7 @@ if ! systemctl status iptables &> /dev/null; then
 fi
 # Enable iptables if not active
 if ! systemctl is-active --quiet iptables; then
+    #todo unmask
     systemctl start iptables
     systemctl enable iptables
 fi
@@ -484,7 +493,7 @@ fi
 echo ""
 pad_string " Backed up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp. " "!" 125
 #echo "  Backed up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp."
-echp ""
+echo ""
 # # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
 iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
 #ip6tables-save >/etc/ip6_rules_old
@@ -518,7 +527,7 @@ for port in "${ports[@]}"; do
                 rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
                 #echo "  $table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
                 pad_string " $table table, $chain chain: Potentially malicious firewall rule found and deleted: " "+" 90
-                echp "  $rule_text"
+                echo "  $rule_text"
 
                 # Extract and remove the first rule
                 rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
@@ -541,7 +550,7 @@ fi
 ######## Service Integrity #########
 ####################################
 original_dirs=(
-    "/lib/systemd/system/$servicename.service" #TODO: override file?? /etc/systemd/system/apache2.service
+    "/lib/systemd/system/$servicename.service"
     "$binarypath"
     "$configdir"
     "$contentdir"
@@ -563,7 +572,7 @@ is_single_files=(
 if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
     echo ""
     #echo "     Service Integrity     "
-    pad_string " Service Integrity " "|" 40
+    pad_string " Service Integrity " "=" 40
     pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 65
     #echo "ERROR: Mismatched backup and original directory arrays."
     exit 1
@@ -575,7 +584,7 @@ for i in "${!original_dirs[@]}"; do
     is_single_file="${is_single_files[$i]}"
     
     echo ""
-    pad_string " Service Integrity - $(basename "$backup_dir") " "|" 40
+    pad_string " Service Integrity - $(basename "$backup_dir") " "=" 40
     #echo "     Service Integrity - $(basename "$backup_dir")     "
     #echo ""
 
@@ -620,7 +629,7 @@ for i in "${!original_dirs[@]}"; do
             fi
             #absolute path funnies
             #unzip -q "$backup_dir/backup.zip" -d "$original_dir"
-            unzip -q "$backup_dir/backup.zip" -d / # todo: see pic
+            unzip -q "$backup_dir/backup.zip" -d /
             systemctl restart "$servicename" # reload the config/content
             rm -rf "$backup_dir/tmp"
             pad_string " File restore and service restart completed for $(basename "$backup_dir") section " "+" 70
@@ -645,7 +654,11 @@ done
 
 echo ""
 pad_string " Service Mitigation Script Complete " "=" 65
+echo ""
+echo ""
+echo ""
 #echo "   Service Mitigation Script Complete   "
 # Recursively timestomp backup dir before #exiting. Make sure to do this after all prints are done for the log file...
 timestomp_recursive "$backupdir"
-touch -t "$timestomp" "$(dirname $backupdir)" #do the dir holding the backup dir too
+random_date=$(generate_random_date)
+touch -t "$random_date" "$(dirname $backupdir)" #do the dir holding the backup dir too. will have a sus timestamp compared to the others but whatever
