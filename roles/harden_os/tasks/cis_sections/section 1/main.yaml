@@ -1,12 +1,5 @@
 ---
 
-- name: PRELIM | AUDIT | Discover dconf systemdb
-  ansible.builtin.shell: grep system-db /etc/dconf/profile/user | cut -d ':' -f2
-  changed_when: false
-  failed_when: prelim_dconf_system_db.rc not in [ 0, 1 ]
-  register: prelim_dconf_system_db
-
-
 - name: "SECTION | 1.2 | Configure Package Repositories and Updated"
   ansible.builtin.import_tasks:
     file: 1.2.yaml

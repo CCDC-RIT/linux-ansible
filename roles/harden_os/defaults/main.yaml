@@ -1,0 +1,11 @@
+#for section 1.7
+#if a desktop is required set this as true, then security settings will be applied to secure GDM
+#if a desktop is not required set this as false, then GDM will be removed
+desktop_required: true
+
+ipv6_required: false
+
+#for 3.1
+bluetooth_service:
+
+bluetooth_mask:

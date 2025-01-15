@@ -1,8 +1,9 @@
 ---
 
-- name: PRELIM | AUDIT | Interactive User accounts home directories
-  tags: always
-  ansible.builtin.shell: >
-    grep -E -v '^(root|halt|sync|shutdown)' /etc/passwd | awk -F: '(!index($7, "sbin/nologin") && $7 != "/bin/nologin" && $7 != "/bin/false" && $7 != "/dev/null") { print $6 }'
-  changed_when: false
-  register: prelim_interactive_users_home
+- name: "SECTION | 7.1 | System File Permissions"
+  ansible.builtin.import_tasks:
+    file: 7.1.yaml
+
+- name: "SECTION | 7.2 | Local User and Group Settings"
+  ansible.builtin.import_tasks:
+    file: 7.2.yaml
