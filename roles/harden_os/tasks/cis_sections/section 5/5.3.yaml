@@ -340,9 +340,9 @@
     - name: "5.3.3.3.1 | Ensure remember is set"
       when: discovered_pwhistory_remember.stdout | length > 0
       ansible.builtin.lineinfile:
-        path: "/usr/share/pam-configs/{{ ubtu22cis_pam_pwhistory_file }}"
+        path: '/usr/share/pam-configs/pwhistory'
         regexp: ^(password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+)(.*)(remember=\d+)
-        line: '\1\2\3 remember={{ ubtu22cis_pamd_pwhistory_remember }}'
+        line: '\1\2\3 remember=24'
         backrefs: true
       notify: Pam_auth_update_pwhistory
 
@@ -359,7 +359,7 @@
     - name: "5.3.3.3.2 | Ensure remember is set"
       when: discovered_pwhistory_remember.stdout | length > 0
       ansible.builtin.lineinfile:
-        path: "/usr/share/pam-configs/{{ ubtu22cis_pam_pwhistory_file }}"
+        path: '/usr/share/pam-configs/pwhistory'
         regexp: ^(password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+)(.*)(enforce_for_root)
         line: '\1\2\3 enforce_for_root'
         backrefs: true
@@ -378,7 +378,7 @@
     - name: "5.3.3.3.3 | Ensure remember is set"
       when: discovered_pwhistory_use_authtok.stdout | length > 0
       ansible.builtin.lineinfile:
-        path: "/usr/share/pam-configs/{{ ubtu22cis_pam_pwhistory_file }}"
+        path: '/usr/share/pam-configs/pwhistory'
         regexp: ^(password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+)(.*)(use_authtok)
         line: '\1\2\3 use_authtok'
         backrefs: true

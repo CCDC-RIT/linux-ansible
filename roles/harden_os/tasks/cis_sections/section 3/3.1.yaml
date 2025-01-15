@@ -75,22 +75,6 @@
         file: warning_facts.yml
 
 - name: "3.1.3 | PATCH | Ensure bluetooth services are not in use"
-  block:
-    - name: "3.1.3 | pkg"
-      when:
-        - not bluetooth_service
-        - not bluetooth_mask
-      ansible.builtin.package:
-        name: bluez
-        state: absent
-
-    - name: "3.1.3 | mask"
-      when:
-        - not bluetooth_service
-        - bluetooth_mask
-      notify: Systemd_daemon_reload
-      ansible.builtin.systemd:
-        name: bluetooth.service
-        enabled: false
-        state: stopped
-        masked: true
+  ansible.builtin.package:
+    name: bluez
+    state: absent

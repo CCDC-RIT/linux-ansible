@@ -32,7 +32,7 @@ when:
       loop:
         - { regexp: "\\[org\\/gnome\\/login-screen\\]", line: "[org/gnome/login-screen]", insertafter: EOF }
         - { regexp: "banner-message-enable", line: "banner-message-enable=true", insertafter: "\\[org\\/gnome\\/login-screen\\]" }
-        - { regexp: "banner-message-text", line: "banner-message-text='{{ ubtu22cis_warning_banner | regex_replace('\n', ' ') | trim }}'", insertafter: "banner-message-enable" }
+        - { regexp: "banner-message-text", line: "banner-message-text='{{ warning_banner | regex_replace('\n', ' ') | trim }}'", insertafter: "banner-message-enable" }
       notify: Update dconf
 
 - name: "1.7.3 | PATCH | Ensure GDM disable-user-list option is enabled"

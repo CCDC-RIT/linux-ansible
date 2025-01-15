@@ -1,11 +1,51 @@
-#for section 1.7
-#if a desktop is required set this as true, then security settings will be applied to secure GDM
-#if a desktop is not required set this as false, then GDM will be removed
+# for section 1.7
+# if a desktop is required set this as true, then security settings will be applied to secure GDM
+# if a desktop is not required set this as false, then GDM will be removed
 desktop_required: true
 
+# for 1.7
+# specifies the warning banner displayed to the user
+ubtu22cis_warning_banner: Authorized uses only. All activity may be monitored and reported.
+
+# for section 3.1
+# true ipv6 is required
+# flase ipv6 is not required and will be removed
 ipv6_required: false
 
-#for 3.1
-bluetooth_service:
+# for section 3.3
+# this variable governs the mechanism of how the disabling of IPV6 is carried out.
+# its possible values are `grub` and `sysctl`.
+ipv6_disable: 'sysctl'
 
-bluetooth_mask:
+# for 5.3/5.4
+# this variable governs whether tasks of a potentially disruptive nature on your system
+# (e.g., removing .forward and .netrc files for interactive users) are carried out.
+# if you set this variable to "true", the role will carry such tasks; if you set it to
+# "false", these tasks will be skipped.
+disruption_high: true
+
+# for 5.3
+# allow pam-auth-update --enable pam_unix to run
+pam_auth_unix: true
+
+# for 5.3
+# should NOT be enabled if allowing custom config that enabled pam_faillock
+pam_create_pamunix_file: flase
+
+# for 5.3
+# Allow pam-auth-update --enable faillock
+# and
+# Allow pam-auth-update --enable faillock_notify
+pam_auth_faillock: true
+
+# for 5.3
+# allow new file to be created or overwrite existing with same name
+pam_create_faillock_files: true
+
+# for 5.3
+# allow new file to be created or overwrite existing with same name
+pam_create_pwquality_files: true
+
+# for 5.3
+# allow new file to be created or overwrite existing with same name
+pam_create_pwhistory_files: true

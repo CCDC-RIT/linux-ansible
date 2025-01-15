@@ -48,7 +48,7 @@
       ansible.builtin.lineinfile:
         path: /etc/sudoers
         regexp: '^\s*Defaults/s+timestamp_timeout='
-        line: "Defaults        timestamp_timeout={{ ubtu22cis_sudo_timestamp_timeout }}"
+        line: 'Defaults        timestamp_timeout=15'
         insertafter: '^\s*Defaults'
         validate: '/usr/sbin/visudo -cf %s'
 
@@ -57,7 +57,7 @@
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'timestamp_timeout=(\d+)'
-        replace: "timestamp_timeout={{ ubtu22cis_sudo_timestamp_timeout }}"
+        replace: 'timestamp_timeout=15'
         validate: '/usr/sbin/visudo -cf %s'
       loop: "{{ discovered_timeout_files.stdout_lines }}"
 

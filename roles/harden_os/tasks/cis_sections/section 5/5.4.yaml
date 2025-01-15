@@ -137,7 +137,7 @@
 
     - name: "5.4.1.6 | Lock accounts with future PW changed dates"
       when:
-        - ubtu22cis_disruption_high
+        - disruption_high
         - discovered_passwd_future_user_list.stdout | length > 0
       ansible.builtin.command: passwd --expire {{ item }}
       failed_when: false
