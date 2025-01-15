@@ -1,9 +1,4 @@
 ---
-- name: PRELIM | AUDIT | Discover dconf systemdb
-  ansible.builtin.shell: grep system-db /etc/dconf/profile/user | cut -d ':' -f2
-  changed_when: false
-  failed_when: prelim_dconf_system_db.rc not in [ 0, 1 ]
-  register: prelim_dconf_system_db
 
 - name: "1.7.1 | PATCH | Ensure GDM is removed"
 when:

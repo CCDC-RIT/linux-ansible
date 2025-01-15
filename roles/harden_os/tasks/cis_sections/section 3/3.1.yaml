@@ -32,7 +32,7 @@
         backrefs: true
       notify: Grub update
 
-    - name: "3.1.1 | PATCH | Ensure IPv6 status is identified | Remove net.ipv6.conf.all.disable_ipv6"
+    - name: "3.1.1 | Remove net.ipv6.conf.all.disable_ipv6"
       when: ipv6_disable == 'sysctl'
       ansible.builtin.template:
         src: "{{ item }}.j2"

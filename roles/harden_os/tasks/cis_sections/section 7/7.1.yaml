@@ -1,0 +1,180 @@
+---
+
+- name: "7.1.1 | PATCH | Ensure permissions on /etc/passwd are configured"
+  ansible.builtin.file:
+    path: /etc/passwd
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "7.1.2 | PATCH | Ensure permissions on /etc/passwd- are configured"
+  ansible.builtin.file:
+    path: /etc/passwd-
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  failed_when: discovered_password_hyphen_file_exists.state not in '[ file, absent ]'
+  register: discovered_password_hyphen_file_exists
+
+- name: "7.1.3 | PATCH | Ensure permissions on /etc/group are configured"
+  ansible.builtin.file:
+    path: /etc/group
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "7.1.4 | PATCH | Ensure permissions on /etc/group- are configured"
+  ansible.builtin.file:
+    path: /etc/group-
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  failed_when: discovered_group_hyphen_file_exists.state not in '[ file, absent ]'
+  register: discovered_group_hyphen_file_exists
+
+- name: "7.1.5 | PATCH | Ensure permissions on /etc/shadow are configured"
+  ansible.builtin.file:
+    path: /etc/shadow
+    owner: root
+    group: root
+    mode: 'u-x,g-wx,o-rwx'
+
+- name: "7.1.6 | PATCH | Ensure permissions on /etc/shadow- are configured"
+  ansible.builtin.file:
+    path: /etc/shadow-
+    owner: root
+    group: root
+    mode: 'u-x,g-wx,o-rwx'
+  failed_when: discovered_shadows_hyphen_file_exists.state not in '[ file, absent ]'
+  register: discovered_shadows_hyphen_file_exists
+
+- name: "7.1.7 | PATCH | Ensure permissions on /etc/gshadow are configured"
+  ansible.builtin.file:
+    path: /etc/gshadow
+    owner: root
+    group: root
+    mode: 'u-x,g-wx,o-rwx'
+
+- name: "7.1.8 | PATCH | Ensure permissions on /etc/gshadow- are configured"
+  ansible.builtin.file:
+    path: /etc/gshadow-
+    owner: root
+    group: root
+    mode: 'u-x,g-wx,o-rwx'
+  failed_when: discovered_gshadow_hyphen_file_exists.state not in '[ file, absent ]'
+  register: discovered_gshadow_hyphen_file_exists
+
+- name: "7.1.9 | PATCH | Ensure permissions on /etc/shells are configured"
+  ansible.builtin.file:
+    path: /etc/shells
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "7.1.10 | PATCH | Ensure permissions on /etc/security/opasswd are configured"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
+  failed_when: discovered_opasswd_file_exists.state not in '[ file, absent ]'
+  register: discovered_opasswd_file_exists
+  loop:
+    - /etc/security/opasswd
+    - /etc/security/opasswd.old
+
+- name: "7.1.11 | PATCH | Ensure world writable files and directories are secured"
+  block:
+    - name: "7.1.11 | Get list of world-writable files"
+      ansible.builtin.shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type f -perm -0002
+      failed_when: false
+      changed_when: false
+      register: discovered_worldwriteable_files
+
+#set to false for now justin says no
+    - name: "7.1.11 | Adjust world-writable files if they exist (Configurable)"
+      when:
+        - discovered_worldwriteable_files.stdout_lines is defined
+        - false
+      ansible.builtin.file:
+        path: '{{ item }}'
+        mode: 'o-w'
+        state: touch
+      loop: "{{ discovered_worldwriteable_files.stdout_lines }}"
+
+    - name: "7.1.11 | sticky bit set on world-writable directories"
+      ansible.builtin.shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type d -perm -0002 2>/dev/null | xargs chmod a+t
+      changed_when: false
+      failed_when: false
+
+- name: "7.1.12 | PATCH | Ensure no files or directories without an owner and a group exist"
+  block:
+    - name: "7.1.12 | Get list files or directories"
+      ansible.builtin.command: 'find (! -path "/run/user/*" -a ! -path "/proc/*" -a ! -path "*/containerd/*" -a ! -path "*/kubelet/pods/*" -a ! -path "*/kubelet/plugins/*" -a ! -path "/sys/fs/cgroup/memory/*" -a ! -path "/var/*/private/*") {{ item.mount }} -xdev \( -nouser -o -nogroup \) -not -fstype nfs'
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_unowned_files
+      loop: "{{ ansible_facts.mounts }}"
+      loop_control:
+        label: "{{ item.mount }}"
+
+    - name: "7.1.12 | Flatten no_user_items results for easier use"
+      ansible.builtin.set_fact:
+        discovered_unowned_files_flatten: "{{ discovered_unowned_files.results | map(attribute='stdout_lines') | flatten }}"
+
+    - name: "7.1.12 | Alert on unowned files and directories"
+      when:
+        - discovered_unowned_files_flatten | length > 0
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! You have unowned files and are configured to not auto-remediate for this task"
+          - "Please review the files/directories below and assign an owner"
+          - "{{ discovered_unowned_files_flatten }}"
+
+  #we will review these manually for now
+    - name: "7.1.12 | PATCH | Set files/directories to configured owner and group"
+      when:
+        - flase
+        - discovered_unowned_files_flatten | length > 0
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: 'root'
+        group: 'root'
+      with_items:
+        - "{{ discovered_unowned_files_flatten }}"
+
+- name: "7.1.13 | AUDIT | Ensure SUID and SGID files are reviewed"
+  block:
+    - name: "7.1.13 | Find SUID and SGID"
+      ansible.builtin.command: find {{ item.mount }} -xdev -type f -perm \( -02000 or -04000 \) -not -fstype nfs
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_suid_sgid_files
+      loop: "{{ ansible_facts.mounts }}"
+      loop_control:
+        label: "{{ item.mount }}"
+
+    - name: "7.1.13 | Flatten suid_executables results for easier use"
+      ansible.builtin.set_fact:
+        discovered_suid_sgid_files_flatten: "{{ discovered_suid_sgid_files.results | map(attribute='stdout_lines') | flatten }}"
+
+    - name: "7.1.13 | Alert SUID executables exist"
+      when:
+        - discovered_suid_sgid_files_flatten | length > 0
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! You have SUID executables"
+          - "The files are listed below, please confirm the integrity of these binaries"
+          - "{{ discovered_suid_sgid_files_flatten }}"
+
+  #we will review these manually
+    - name: "7.1.13 | PATCH | Audit SUID executables | Remove SUID bit"
+      when:
+        - false
+        - discovered_suid_sgid_files_flatten | length > 0
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'u-s'
+      loop: "{{ discovered_suid_sgid_files_flatten }}"
