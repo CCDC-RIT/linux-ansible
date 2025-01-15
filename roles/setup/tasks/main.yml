@@ -87,6 +87,7 @@
     owner: root
     group: root
     mode: 0644
+    backup: true
   when: ansible_facts['os_family'] == 'Debian'
 
 # in RHEL, each repo is its own file in /etc/yum.repos.d/
