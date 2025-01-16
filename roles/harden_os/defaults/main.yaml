@@ -5,7 +5,7 @@ desktop_required: true
 
 # for 1.7
 # specifies the warning banner displayed to the user
-ubtu22cis_warning_banner: Authorized uses only. All activity may be monitored and reported.
+warning_banner: Authorized uses only. All activity may be monitored and reported.
 
 # for section 3.1
 # true ipv6 is required
@@ -49,3 +49,17 @@ pam_create_pwquality_files: true
 # for 5.3
 # allow new file to be created or overwrite existing with same name
 pam_create_pwhistory_files: true
+
+# for pam password complexity
+passwd_minlen_value: 14 # minlen = minimum password length
+passwd_difok_value: 2 # difok = the minimum number of characters that must be different from the old password
+passwd_minclass: 3  # minclass = the minimum number of character types that must be used (i.e., uppercase, lowercase, digits, other)
+passwd_dcredit: -1  # dcredit = maximum number of digits that will generate a credit
+passwd_ucredit: -2  # ucredit = maximum number of uppercase characters that will generate a credit
+passwd_ocredit: 0  # ocredit = maximum number of other characters that will generate a credit
+passwd_lcredit: -2  # lcredit = maximum number of lowercase characters that will generate a credit
+passwd_maxrepeat_value: 3 # maxrepeat = the maximum number of times a single character may be repeated
+passwd_maxsequence_value: 3
+passwd_dictcheck_value: 1 # dictcheck = whether to check for the words from the cracklib dictionary (enabled if the value is not 0)
+passwd_quality_enforce_value: 1 # enforcing = new password is rejected if it fails the check and the value is not 0
+passwd_quality_enforce_root_value: enforce_for_root # enforce_for_root: This ensures that the password policies are adhered to even if its the root user configuring the passwords.

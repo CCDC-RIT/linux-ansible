@@ -5,7 +5,7 @@
     name: kernel.randomize_va_space
     value: '2'
     state: present
-    sysctl_file: /etc/sysctl.d/98_cis_kernel.conf
+    sysctl_file: /etc/sysctl.d/98_kernel.conf
     reload: true
     sysctl_set: true
     ignoreerrors: true
@@ -15,7 +15,7 @@
     name: kernel.yama.ptrace_scope
     value: '1'
     state: present
-    sysctl_file: /etc/sysctl.d/98_cis_kernel.conf
+    sysctl_file: /etc/sysctl.d/98_kernel.conf
     reload: true
     sysctl_set: true
     ignoreerrors: true
@@ -27,7 +27,7 @@
         name: fs.suid_dumpable
         value: '0'
         state: present
-        sysctl_file: /etc/sysctl.d/98_cis_kernel.conf
+        sysctl_file: /etc/sysctl.d/98_kernel.conf
         reload: true
         sysctl_set: true
         ignoreerrors: true
