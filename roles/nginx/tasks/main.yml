@@ -1,0 +1,121 @@
+---
+- name: Verify NGINX package installed
+  ansible.builtin.package:
+    name: nginx
+    state: present
+
+- name: Disable server tokens
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: ^\s*server_tokens
+    line: "   server_tokens off;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: Lower client body buffer size
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: ^\s*client_body_buffer_size
+    line: "   client_body_buffer_size 1k;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: Lower client header buffer size
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: ^\s*client_header_buffer_size
+    line: "   client_header_buffer_size 1k;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: Lower client max body size
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: ^\s*client_max_body_size
+    line: "   client_max_body_size 1k;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: Lower large client header buffers
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: ^\s*large_client_header_buffers
+    line: "   large_client_header_buffers 2 1k;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: Prevent clickjacking attacks
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: '^\s*add_header X-Frame-Options'
+    line: "   add_header X-Frame-Options \"SAMEORIGIN\";"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: Prevent XSS and other Data Injection
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: '^\s*add_header Content-Security-Policy'
+    line: "   add_header X-Frame-Options \"default-src 'self' http: data: blob: 'unsafe-inline'\" always;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: Force secure SSL protocols
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: ^\s*ssl_protocols
+    line: "   ssl_protocols TLSv1.2 TLSv1.3;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+- name: SSL prefer server ciphers
+  ansible.builtin.lineinfile:
+    dest: "/etc/nginx/nginx.conf"
+    regexp: ^\s*ssl_prefer_server_ciphers
+    line: "   ssl_prefer_server_ciphers on;"
+    insertafter: "http {"
+    mode: '0640'
+    owner: "root"
+    group: "root"
+  notify: Restart NGINX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
