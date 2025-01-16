@@ -30,3 +30,11 @@ reinstall core services (pam, ssh, etc.)
 - name: ClamAV
   ansible.builtin.import_tasks: 
     file: clamav.yml
+
+- name: SSH
+  ansible.builtin.import_tasks:
+    file: ssh.yaml
+
+- name: AIDE
+  ansible.builtin.import_tasks:
+    file: aide.yaml

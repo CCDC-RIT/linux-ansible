@@ -63,3 +63,12 @@ passwd_maxsequence_value: 3
 passwd_dictcheck_value: 1 # dictcheck = whether to check for the words from the cracklib dictionary (enabled if the value is not 0)
 passwd_quality_enforce_value: 1 # enforcing = new password is rejected if it fails the check and the value is not 0
 passwd_quality_enforce_root_value: enforce_for_root # enforce_for_root: This ensures that the password policies are adhered to even if its the root user configuring the passwords.
+
+## AIDE
+aide_enabled: yes
+aide_reinit_enabled: no # reinit db every time this role is deployed
+security_aide_exclude_dirs:
+  - /dev
+  - /run
+  - /var/log
+  - /proc
