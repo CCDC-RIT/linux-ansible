@@ -1,0 +1,15 @@
+---
+
+# for 1.5
+- name: "PRELIM | AUDIT | Check systemd coredump"
+  ansible.builtin.stat:
+    path: /etc/systemd/coredump.conf
+  register: prelim_systemd_coredump
+
+# for 1.8
+- name: "PRELIM | Discover Gnome Desktop Environment"
+  tags:
+    - always
+  ansible.builtin.stat:
+    path: /usr/share/gnome/gnome-version.xml
+  register: prelim_gnome_present

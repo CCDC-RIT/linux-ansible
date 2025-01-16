@@ -1,0 +1,4 @@
+# This is a subpolicy to disable weak ciphers
+# for the SSH protocol (libssh and OpenSSH)
+# Carried out as part of CIS Benchmark rules combined 1.6.6 and 5.1.4
+cipher@SSH = -CHACHA20-POLY1305 -3DES-CBC -AES-128-CBC -AES-192-CBC -AES-256-CBC

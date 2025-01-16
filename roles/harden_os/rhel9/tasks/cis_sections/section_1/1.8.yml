@@ -2,32 +2,17 @@
 
 - name: "1.8.1 | PATCH | Ensure GNOME Display Manager is removed"
   when:
-    - rhel9cis_rule_1_8_1
     - "'gdm' in ansible_facts.packages"
-    - not rhel9cis_gui
-  tags:
-    - level2-server
-    - patch
-    - gui
-    - gdm
-    - rule_1.8.1
+    - not gui
   ansible.builtin.package:
     name: gdm
     state: absent
 
 - name: "1.8.2 | PATCH | Ensure GDM login banner is configured"
   when:
-    - rhel9cis_rule_1_8_2
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
     - gui
-    - gdm
-    - rule_1.8.2
   block:
-    - name: "1.8.2 | PATCH | Ensure GDM login banner is configured | gdm profile"
+    - name: "1.8.2 | gdm profile"
       ansible.builtin.lineinfile:
         path: /etc/dconf/profile/gdm
         regexp: "{{ item.regexp }}"
@@ -42,7 +27,7 @@
         - { regexp: 'system-db', line: 'system-db:gdm' }
         - { regexp: 'file-db', line: 'file-db:/usr/share/gdm/greeter-dconf-defaults' }
 
-    - name: "1.8.2 | PATCH | Ensure GDM login banner is configured | gdm profile"
+    - name: "1.8.2 | gdm profile"
       ansible.builtin.template:
         src: etc/dconf/db/gdm.d/01-banner-message.j2
         dest: /etc/dconf/db/gdm.d/01-banner-message
@@ -53,14 +38,7 @@
 
 - name: "1.8.3 | PATCH | Ensure GDM disable-user-list option is enabled"
   when:
-    - rhel9cis_rule_1_8_3
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
     - gui
-    - rule_1.8.3
   ansible.builtin.lineinfile:
     path: "{{ item.file }}"
     regexp: "{{ item.regexp }}"
@@ -79,16 +57,9 @@
 
 - name: "1.8.4 | PATCH | Ensure GDM screen locks when the user is idle"
   when:
-    - rhel9cis_rule_1_8_4
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
     - gui
-    - rule_1.8.4
   block:
-    - name: "1.8.4 | PATCH | Ensure GDM screen locks when the user is idle | User profile"
+    - name: "1.8.4 | User profile"
       ansible.builtin.lineinfile:
         path: /etc/dconf/profile/user
         regexp: "{{ item.regexp }}"
@@ -101,18 +72,18 @@
         - { regexp: '^user-db', line: 'user-db:user' }
         - { regexp: '^system-db', line: 'system-db:local' }
 
-    - name: "1.8.4 | PATCH | Ensure GDM screen locks when the user is idle | Make db directory"
+    - name: "1.8.4 | Make db directory"
       ansible.builtin.file:
-        path: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d"
+        path: "/etc/dconf/db/{{ dconf_db_name }}.d"
         owner: root
         group: root
         mode: 'go-w'
         state: directory
 
-    - name: "1.8.4 | PATCH | Ensure GDM screen locks when the user is idle | Make conf file"
+    - name: "1.8.4 | Make conf file"
       ansible.builtin.template:
         src: etc/dconf/db/00-screensaver.j2
-        dest: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/00-screensaver"
+        dest: "/etc/dconf/db/{{ dconf_db_name }}.d/00-screensaver"
         owner: root
         group: root
         mode: 'go-wx'
@@ -120,27 +91,20 @@
 
 - name: "1.8.5 | PATCH | Ensure GDM screen locks cannot be overridden"
   when:
-    - rhel9cis_rule_1_8_5
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
     - gui
-    - rule_1.8.5
   block:
-    - name: "1.8.5 | PATCH | Ensure GDM screen locks cannot be overridden | Make lock directory"
+    - name: "1.8.5 | Make lock directory"
       ansible.builtin.file:
-        path: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/locks"
+        path: "/etc/dconf/db/{{ dconf_db_name }}.d/locks"
         owner: root
         group: root
         mode: 'go-w'
         state: directory
 
-    - name: "1.8.5 | PATCH | Ensure GDM screen locks cannot be overridden | Make lock file"
+    - name: "1.8.5 | Make lock file"
       ansible.builtin.template:
         src: etc/dconf/db/00-screensaver_lock.j2
-        dest: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/locks/00-screensaver_lock"
+        dest: "/etc/dconf/db/{{ dconf_db_name }}.d/locks/00-screensaver_lock"
         owner: root
         group: root
         mode: 'go-wx'
@@ -148,17 +112,10 @@
 
 - name: "1.8.6 | PATCH | Ensure GDM automatic mounting of removable media is disabled"
   when:
-    - rhel9cis_rule_1_8_6
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level2-workstation
-    - patch
     - gui
-    - rule_1.8.6
   ansible.builtin.template:
     src: etc/dconf/db/00-media-automount.j2
-    dest: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/00-media-automount"
+    dest: "/etc/dconf/db/{{ dconf_db_name }}.d/00-media-automount"
     owner: root
     group: root
     mode: 'go-wx'
@@ -166,27 +123,20 @@
 
 - name: "1.8.7 | PATCH | Ensure GDM disabling automatic mounting of removable media is not overridden"
   when:
-    - rhel9cis_rule_1_8_7
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level2-workstation
-    - patch
     - gui
-    - rule_1.8.7
   block:
-    - name: "1.8.7 | PATCH | Ensure GDM disabling automatic mounting of removable media is not overridden | Make lock directory"
+    - name: "1.8.7 | Make lock directory"
       ansible.builtin.file:
-        path: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/locks"
+        path: "/etc/dconf/db/{{ dconf_db_name }}.d/locks"
         owner: root
         group: root
         mode: 'go-w'
         state: directory
 
-    - name: "1.8.7 | PATCH | Ensure GDM disabling automatic mounting of removable media is not overridden | Make lock file"
+    - name: "1.8.7 | Make lock file"
       ansible.builtin.template:
         src: etc/dconf/db/00-automount_lock.j2
-        dest: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/locks/00-automount_lock"
+        dest: "/etc/dconf/db/{{ dconf_db_name }}.d/locks/00-automount_lock"
         owner: root
         group: root
         mode: 'go-wx'
@@ -194,27 +144,20 @@
 
 - name: "1.8.8 | PATCH | Ensure GDM autorun-never is enabled"
   when:
-    - rhel9cis_rule_1_8_8
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level2-workstation
-    - patch
     - gui
-    - rule_1.8.8
   block:
-    - name: "1.8.8 | PATCH | Ensure GDM autorun-never is enabled | Make directory"
+    - name: "1.8.8 | Make directory"
       ansible.builtin.file:
-        path: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d"
+        path: "/etc/dconf/db/{{ dconf_db_name }}.d"
         owner: root
         group: root
         mode: 'go-w'
         state: directory
 
-    - name: "1.8.8 | PATCH | Ensure GDM autorun-never is enabled | Make conf file"
+    - name: "1.8.8 | Make conf file"
       ansible.builtin.template:
         src: etc/dconf/db/00-media-autorun.j2
-        dest: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/00-media-autorun"
+        dest: "/etc/dconf/db/{{ dconf_db_name }}.d/00-media-autorun"
         owner: root
         group: root
         mode: 'go-wx'
@@ -222,27 +165,20 @@
 
 - name: "1.8.9 | PATCH | Ensure GDM autorun-never is not overridden"
   when:
-    - rhel9cis_rule_1_8_9
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level2-workstation
-    - patch
     - gui
-    - rule_1.8.9
   block:
-    - name: "1.8.9 | PATCH | Ensure GDM autorun-never is not overridden | Make lock directory"
+    - name: "1.8.9 | Make lock directory"
       ansible.builtin.file:
-        path: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/locks"
+        path: "/etc/dconf/db/{{ dconf_db_name }}.d/locks"
         owner: root
         group: root
         mode: 'go-w'
         state: directory
 
-    - name: "1.8.9 | PATCH | Ensure GDM autorun-never is not overridden | Make lockfile"
+    - name: "1.8.9 | Make lockfile"
       ansible.builtin.template:
         src: etc/dconf/db/00-autorun_lock.j2
-        dest: "/etc/dconf/db/{{ rhel9cis_dconf_db_name }}.d/locks/00-autorun_lock"
+        dest: "/etc/dconf/db/{{ dconf_db_name }}.d/locks/00-autorun_lock"
         owner: root
         group: root
         mode: 'go-wx'
@@ -250,14 +186,7 @@
 
 - name: "1.8.10 | PATCH | Ensure XDMCP is not enabled"
   when:
-    - rhel9cis_rule_1_8_10
-    - rhel9cis_gui
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
     - gui
-    - rule_1.8.10
   ansible.builtin.lineinfile:
     path: /etc/gdm/custom.conf
     regexp: 'Enable=true'

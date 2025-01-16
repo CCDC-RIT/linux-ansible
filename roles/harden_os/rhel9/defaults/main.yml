@@ -1,1 +1,43 @@
 ---
+
+# for 1.2
+# when installing RHEL from authorized Red Hat source, RHEL will come with default YUM repository. NOT having a default YUM
+# repo ('rhel_default_repo' set as 'false'), in conjunction with 'rule_enable_repogpg' set as 'True', will enable the tasks
+# which check the GPG signatures for all the individual YUM repositories.
+rhel_default_repo: true
+
+# for 1.2
+# when 'rule_enable_repogpg' is set to 'true'(in conjunction with 'rhel_default_repo':'false'), conditions are met for
+# enabling the GPG signatures-check for all the individual YUM repositories. If GPG signatures-check is enabled on repositories which do not
+# support it(like RedHat), installation of packages will fail.
+rule_enable_repogpg: true
+
+# for 1.6
+# this variable contains the value to be set as the system-wide crypto policy. Current rule enforces NOT USING
+# 'LEGACY' value(as it is less secure, it just ensures compatibility with legacy systems), therefore
+# possible values for this variable are, as explained by RedHat docs:
+#  -'DEFAULT': reasonable default policy for today's standards (balances usability and security)
+#  -'FUTURE': conservative security level that is believed to withstand any near-term future attacks
+#  -'FIPS': A level that conforms to the FIPS140-2 requirements
+crypto_policy: 'DEFAULT'
+
+# for 1.6
+# this variable contains the value of the crypto policy module(combinations of policies and
+# sub-policies) to be allowed as default setting. Allowed options are defined in 'vars/main.yml' file,
+# using 'allowed_crypto_policies_modules' variable.
+crypto_policy_module: ''
+
+# for 1.7
+# specifies the warning banner displayed to the user
+warning_banner: Authorized uses only. All activity may be monitored and reported.
+
+# for 1.8
+# determines if a gui is needed/used
+gui: "{{ prelim_gnome_present.stat.exists | default(false) }}"
+
+# for 1.8
+# this variable specifies the GNOME configuration database file to which configurations are written.
+# (See "https://help.gnome.org/admin/system-admin-guide/stable/dconf-keyfiles.html.en")
+# The default database is 'local'.
+dconf_db_name: local
+

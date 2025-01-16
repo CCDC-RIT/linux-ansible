@@ -1,0 +1,20 @@
+---
+
+allowed_crypto_policies:
+  - 'DEFAULT'
+  - 'FUTURE'
+  - 'FIPS'
+
+allowed_crypto_policies_modules:
+  - 'OSPP'
+  - 'AD-SUPPORT'
+  - 'AD-SUPPORT-LEGACY'
+  - 'NO-SHA1'
+  - 'NO-SSHCBC'
+  - 'NO-SSHETM'
+  - 'NO-SSHWEAKCIPHER'
+  - 'NO-SSHWEAKMAC'
+  - 'NO-WEAKMAC'
+
+# system_is_ec2 toggle will disable tasks that fail on Amazon EC2 instances. Set true to skip and false to run tasks
+system_is_ec2: false
