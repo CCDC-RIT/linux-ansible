@@ -49,8 +49,9 @@ TODO
 * backup /usr/share folders? benchmark the processing power needed...
 * benchmark used cpu time and compare to frequency
 * restart systemd after restoring service file?
-* fix backups of single files?
+* fix backups of single files
 * ignore empty config fields
+* fix reinstall criteria
 
 Requirements:
 * Run this script with root access
@@ -100,8 +101,8 @@ contentdir="/var/www/html"
 
 # generic variables regardless of the service to back up
 backupdir="/usr/share/$servicename"
-timestomp_start_year=2019
-timestomp_end_year=2023
+timestomp_start_year=2000
+timestomp_end_year=2005
 
 
 
@@ -377,12 +378,24 @@ fi
 #####################################
 ######### Service Install ###########
 #####################################
+# TODO: do we even need this? we already handle most parts of it by backing up the service file, binary, config, and data.
+: '
 echo ""
 pad_string " Service Install Status " "=" 35
 #echo "     Service Install Status     "
 #echo ""
-# Check service status. If non-zero, it's not found.
-if ! systemctl status "$servicename" &> /dev/null; then # TODO: this inappropriately triggers when service is #exiting with error (such as missing binary)
+# Check service status. If non-zero, its not found.
+installed="false"
+if command -v dpkg &> /dev/null; then
+    if dpkg -l | grep -q "^ii  $packagename"; then
+        installed="true"
+    fi
+elif command -v rpm &> /dev/null; then
+    if rpm -q $packagename &>/dev/null; then
+        installed="true"
+    fi
+fi
+if $installed == "false"; then
     echo "  Service $servicename is not installed or unavailable. Reinstalling $packagename..."
 
     # Reinstall the package using apt, yum, or dnf
@@ -408,6 +421,7 @@ if ! systemctl status "$servicename" &> /dev/null; then # TODO: this inappropria
 else
     echo "  Service $servicename is already installed and active."
 fi
+'
 
 #####################################
 ######### Service Status ############
