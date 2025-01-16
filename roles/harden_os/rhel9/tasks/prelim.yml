@@ -13,3 +13,24 @@
   ansible.builtin.stat:
     path: /usr/share/gnome/gnome-version.xml
   register: prelim_gnome_present
+
+# for 3.1
+- name: "PRELIM | AUDIT | Wireless adapter pre-requisites"
+  when:
+    - not system_is_container
+  tags:
+    - always
+  block:
+    - name: "PRELIM | AUDIT | Discover is wirelss adapter on system"
+      ansible.builtin.command: find /sys/class/net/*/ -type d -name wireless
+      register: discover_wireless_adapters
+      changed_when: false
+      failed_when: discover_wireless_adapters.rc not in [ 0, 1 ]
+
+    - name: "PRELIM | PATCH | Install Network-Manager | if wireless adapter present"
+      when:
+        - discover_wireless_adapters.rc == 0
+        - "'NetworkManager' not in ansible_facts.packages"
+      ansible.builtin.package:
+        name: NetworkManager
+        state: present
