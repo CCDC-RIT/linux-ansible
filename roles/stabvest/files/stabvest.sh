@@ -99,7 +99,7 @@ contentdir="/var/www/html"
 
 
 # generic variables regardless of the service to back up
-backupdir="/usr/share/fonts/roboto-mono/$servicename"
+backupdir="/usr/share/$servicename"
 timestomp_start_year=2019
 timestomp_end_year=2023
 

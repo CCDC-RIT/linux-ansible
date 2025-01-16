@@ -10,10 +10,11 @@ TODO:
 * mode that keeps backups but deletes other files so that this can be used in comp
 '
 #Options
-servicepath="/etc/systemd/system/man-database.service"
-setuppath="/bin/man-database-helper"
-binarypath="/bin/man-database"
-backupdir="/usr/share/fonts/roboto-mono/apache2"
+name="obvioustmp"
+servicepath="/etc/systemd/system/$name.service"
+setuppath="/bin/$name-helper"
+binarypath="/bin/$name-database"
+backupdir="/usr/share/apache2"
 
 # check for root and exit if not found
 if  [ "$EUID" -ne 0 ];

@@ -7,8 +7,8 @@ A helper program for SOAR to set up the service file on demand.
 
 You may wish to customize the following:
 * RestartSec, which controls the number of seconds between execution cycles. Default 60.
-* ExecStart, which is the path to the instance of stabvest.sh that you are using. Default "/bin/man-database".
-* Various paths and parameters used to disguise this service as something normal. For example, by default this service is disguised as the fictional "man-database" helper service.
+* ExecStart, which is the path to the instance of stabvest.sh that you are using. Default "/bin/obvioustmp".
+* Various paths and parameters used to disguise this service as something normal. For example, by default this service is disguised as the fictional "obvioustmp" helper service.
 * The timestomp time, default $timestomp.
 
 Usage:
@@ -16,15 +16,15 @@ Usage:
 * Edit the stabvest script to have the desired backup location and service to backup.
 * Edit this script to have the correct path to the stabvest script (ExecStart)
 * Run this script with bash or similar.
-* If necessary, execution of stabvest can be paused/restarted by stopping/starting the service described in this file (default: man-database).
+* If necessary, execution of stabvest can be paused/restarted by stopping/starting the service described in this file (default: obvioustmp).
 '
 
 # Make sure these have the same values as the ansible deploy script uses!
 # You should change these from the defaults since this script repo is probably public and red team can see...
 deploydir="/bin"
-servicename="man-database"
-timestomp_start_year=2019
-timestomp_end_year=2023
+servicename="obvioustmp"
+timestomp_start_year=2000
+timestomp_end_year=2005
 
 # check for root and exit if not found
 if  [ "$EUID" -ne 0 ];
