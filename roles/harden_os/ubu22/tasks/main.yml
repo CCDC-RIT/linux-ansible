@@ -5,27 +5,27 @@ reinstall core services (pam, ssh, etc.)
 
 - name: "CIS Benchmark | prelims"
   ansible.builtin.import_tasks:
-    file: prelim.yaml
+    file: prelim.yml
 
 - name: "CIS Benchmark | section 1"
   ansible.builtin.import_tasks:
-    file: section1/main.yaml
+    file: cis_sections/section_1/main.yml
 
 - name: "CIS Benchmark | section 3"
   ansible.builtin.import_tasks:
-    file: section3/main.yaml
+    file: cis_sections/section_3/main.yml
 
 - name: "CIS Benchmark | section 5"
   ansible.builtin.import_tasks:
-    file: section5/main.yaml
+    file: cis_sections/section_5/main.yml
 
 - name: "CIS Benchmark | section 6"
   ansible.builtin.import_tasks:
-    file: section6/main.yaml
+    file: cis_sections/section_6/main.yml
 
 - name: "CIS Benchmark | section 7"
   ansible.builtin.import_tasks:
-    file: section7/main.yaml
+    file: cis_sections/section_7/main.yml
 
 - name: ClamAV
   ansible.builtin.import_tasks: 
@@ -33,8 +33,8 @@ reinstall core services (pam, ssh, etc.)
 
 - name: SSH
   ansible.builtin.import_tasks:
-    file: ssh.yaml
+    file: ssh.yml
 
 - name: AIDE
   ansible.builtin.import_tasks:
-    file: aide.yaml
+    file: aide.yml

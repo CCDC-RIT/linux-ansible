@@ -2,16 +2,16 @@
 
 - name: "SECTION | 1.2 | Configure Package Repositories and Updated"
   ansible.builtin.import_tasks:
-    file: 1.2.yaml
+    file: 1.2.yml
 
 - name: "SECTION | 1.5 | Configure Additional Process Hardening"
   ansible.builtin.import_tasks:
-    file: 1.5.yaml
+    file: 1.5.yml
 
 - name: "SECTION | 1.6 | Command Line Warning Banners"
   ansible.builtin.import_tasks:
-    file: 1.6.yaml
+    file: 1.6.yml
 
 - name: "SECTION | 1.7 | Configure GNOME Display Manager"
   ansible.builtin.import_tasks:
-    file: 1.7.yaml
+    file: 1.7.yml
