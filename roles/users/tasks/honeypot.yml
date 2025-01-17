@@ -9,5 +9,3 @@
 
 - name: Run honeypot setup script and delete it
   ansible.builtin.shell: bash /home/blueteam/gouda.sh && rm /home/blueteam/gouda.sh
-
-# TODO : change all user shells
