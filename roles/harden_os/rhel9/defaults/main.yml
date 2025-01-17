@@ -44,3 +44,257 @@ dconf_db_name: local
 # for 3.1, 3.3
 # this variable governs whether ipv6 is enabled or disabled.
 ipv6_required: true
+
+# for 5.1
+# this variable, if specified, configures a list of USER name patterns, separated by spaces, to allow SSH
+# access for users whose user name matches one of the patterns. This is done
+# by setting the value of `AllowUsers` option in `/etc/ssh/sshd_config` file.
+# If an USER@HOST format will be used, the specified user will be allowed only on that particular host.
+sshd_allowusers: "{% if ansible_facts.user_id != 'root' %}{{ ansible_facts.user_id }}{% elif ansible_env.SUDO_USER is defined %}{{ ansible_env.SUDO_USER }}{% endif %}"
+
+# for 5.1
+# (String) this variable, if specified, configures a list of GROUP name patterns, separated by spaces, to allow SSH access
+# for users whose primary group or supplementary group list matches one of the patterns. This is done
+# by setting the value of `AllowGroups` option in `/etc/ssh/sshd_config` file.
+sshd_allowgroups: ""
+
+
+# for 5.1
+# this value, containing the absolute filepath of the produced 'sshd' config file, allows usage of
+# drop-in files('/etc/ssh/ssh_config.d/{ssh_drop_in_name}.conf', supported by RHEL9) when CIS adopts them.
+# Otherwise, the default value is '/etc/ssh/ssh_config'.
+sshd_config_file: /etc/ssh/sshd_config
+
+#for 5.1
+# this variable, if specified, configures a list of USER name patterns, separated by spaces, to prevent SSH access
+# for users whose user name matches one of the patterns. This is done
+# by setting the value of `DenyUsers` option in `/etc/ssh/sshd_config` file.
+# If an USER@HOST format will be used, the specified user will be restricted only on that particular host.
+sshd_denyusers: "nobody"
+
+# for 5.1
+# this variable, if specified, configures a list of GROUP name patterns, separated by spaces,
+# to prevent SSH access for users whose primary group or supplementary group list matches one of the patterns. This is done
+# by setting the value of `DenyGroups` option in `/etc/ssh/sshd_config` file.
+sshd_denygroups: ""
+
+# for 5.1
+# this variable sets the time interval in seconds between sending "keep-alive"
+# messages from the server to the client. These types of messages are intended to
+# keep the connection alive and prevent it being terminated due to inactivity.
+sshd_clientaliveinterval: 15
+
+# for 5.1
+# this variable sets the maximum number of unresponsive "keep-alive" messages
+# that can be sent from the server to the client before the connection is considered
+# inactive and thus, closed.
+sshd_clientalivecountmax: 3
+
+# for 5.1
+# by Default this will also disablex11 forwarding
+# set 'yes' if x11 is required this can be changed to run in /etc/ssh/ssh_config.d/50-redhat.conf
+sshd_x11forwarding: 'no'
+
+# for 5.1
+# this variable specifies the amount of seconds allowed for successful authentication to
+# the SSH server.
+sshd_logingracetime: 60
+
+# for 5.1
+# This variable is used to control the verbosity of the logging produced by the SSH server.
+# The options for setting it are as follows:
+# - `QUIET`: Minimal logging;
+# - `FATAL`: logs only fatal errors;
+# - `ERROR`: logs error messages;
+# - `INFO`: logs informational messages in addition to errors;
+# - `VERBOSE`: logs a higher level of detail, including login attempts and key exchanges;
+# - `DEBUG`: generates very detailed debugging information including sensitive information.
+# - `DEBUG(x)`: Whereas x = debug level 1 to 3, DEBUG=DEBUG1.
+ssh_loglevel: INFO
+
+# for 5.1
+# the MaxAuthTries parameter specifies the maximum number of authentication
+# attempts permitted per connection. When the login failure count reaches half the
+# number, error messages will be written to the syslog file detailing the login failure.
+ssh_maxauthtries: '4'
+
+# for 5.1
+# the MaxStartups parameter specifies the maximum number of concurrent unauthenticated connections to the SSH daemon.
+ssh_maxstartups: '10:30:60'
+
+# for 5.1
+# this variable value specifies the maximum number of open sessions that are permitted from
+# a given location
+ssh_maxsessions: 4
+
+# for 5.2
+# by default, sudo logs through syslog(3). However, to specify a custom log file, the
+# 'logfile' parameter will be used, setting it with current variable's value.
+# This variable defines the path and file name of the sudo log file.
+sudolog_location: "/var/log/sudo.log"
+
+# for 5.2
+# This will leave NOPASSWD intact for these users
+sudoers_exclude_nopasswd_list:
+  - ec2-user
+  - vagrant
+
+# for 5.2
+# this variable sets the duration (in minutes) during which a user's authentication credentials
+# are cached after successfully authenticating using "sudo". This allows the user to execute
+# multiple commands with elevated privileges without needing to re-enter their password for each
+# command within the specified time period. CIS requires a value of at most 15 minutes.
+sudo_timestamp_timeout: 15
+
+# for 5.2
+# This variable determines the name of the group of users that are allowed to use the su command.
+# CIS requires that such a group be CREATED(named according to site policy) and be kept EMPTY.
+sugroup: sugroup
+
+# for 5.3
+# fo not use authselect if:
+# your host is part of Linux Identity Management.
+# joining your host to an IdM domain with the ipa-client-install command automatically configures SSSD authentication on your host.
+# your host is part of Active Directory via SSSD.
+# calling the realm join command to join your host to an Active Directory domain automatically configures SSSD authentication on your host.
+allow_authselect_updates: true
+##
+authselect_pkg_update: false  # NOTE the risks if system is using SSSD or using ipa-client-install
+
+# for 5.3
+# run tests that are considered higher risk and could have a system impact if not properly tested
+# default false
+# will be fine if clean new unconfigured build
+disruption_high: false
+
+# for 5.3
+# this variable configures the name of the custom profile to be created and selected.
+# to be changed from default - cis_example_profile
+authselect_custom_profile_name: she_cc_on_my_till_i_dc
+# name of the existing authselect profile to copy - options can be found with
+# ```authselect list``` on the host to be configured
+authselect_default_profile_to_copy: "sssd --symlink-meta"
+
+# for 5.3
+# this variable sets the amount of tries a password can be entered, before a user is locked.
+pam_faillock_deny: 5
+
+# for 5.3
+# this variable sets the amount of time a user will be unlocked after the max amount of
+#   password failures.
+pam_faillock_unlock_time: 900
+
+# for 5.3
+# pamroot_lock_option options are
+# even_deny_root
+# root_unlock_time = {{ root_unlock_time }}
+root_unlock_time: 60
+pamroot_lock_option: even_deny_root
+# pamroot_lock_option: "root_unlock_time = {{ root_unlock_time }}"
+
+# for 5.3
+passwd_difok_file: etc/security/pwquality.conf.d/50-pwdifok.conf  # pragma: allowlist secret
+passwd_difok_value: 2
+
+# for 5.3
+passwd_minlen_file: etc/security/pwquality.conf.d/50-pwlength.conf  # pragma: allowlist secret
+passwd_minlen_value: 14
+
+#for 5.3
+passwd_complex_file: etc/security/pwquality.conf.d/50-pwcomplexity.conf  # pragma: allowlist secret
+# choose if using minclass or credits options
+# options are: minclass or credits
+# ensure only one is selected
+passwd_complex_option: minclass  # pragma: allowlist secret
+passwd_minclass: 3
+# passwd_complex: credits
+passwd_dcredit: -1
+passwd_ucredit: -2
+passwd_ocredit: 0
+passwd_lcredit: -2
+
+# for 5.3
+passwd_maxrepeat_file: etc/security/pwquality.conf.d/50-pwrepeat.conf  # pragma: allowlist secret
+passwd_maxrepeat_value: 3
+
+# for 5.3
+passwd_maxsequence_file: etc/security/pwquality.conf.d/50-pwmaxsequence.conf  # pragma: allowlist secret
+passwd_maxsequence_value: 3
+
+# for 5.3
+passwd_dictcheck_file: etc/security/pwquality.conf.d/50-pwdictcheck.conf  # pragma: allowlist secret
+passwd_dictcheck_value: 1
+
+# for 5.3
+passwd_quality_enforce_root_file: etc/security/pwquality.conf.d/50-pwroot.conf  # pragma: allowlist secret
+passwd_quality_enforce_root_value: enforce_for_root  # pragma: allowlist secret
+
+# for 5.3
+# pamd_pwhistory_remember: <N> -  <N> is the number of old passwords to remember
+pamd_pwhistory_remember: 24
+
+# for 5.3
+# name of file for the pam history file
+pam_pwhistory_file: 'pwhistory'
+
+# for 5.3
+# path to find templates and where to put file for pam-auth
+pam_confd_dir: 'usr/share/pam-configs/'
+
+# for 5.3
+passwd_hash_algo: sha512  # pragma: allowlist secret
+
+# for 5.4
+pass:
+  max_age: 365
+  min_age: 7
+  warn_age: 7
+# this variable governs after how many days a password expires.
+# CIS requires a value of 365 or less.
+pass_max_days: 365
+# this variable specifies the minimum number of days allowed between changing
+# passwords. CIS requires a value of at least 1.
+pass_min_days: 7
+# this variable governs, how many days before a password expires, the user will be warned.
+# CIS requires a value of at least 7.
+pass_warn_age: 7
+
+# for 5.4
+# this can break current connecting user access
+force_user_mindays: false
+# this can break current connecting user access
+force_user_warnage: false
+
+# for 5.4
+inactivelock:
+  # this variable specifies the number of days of inactivity before an account will be locked.
+  # CIS requires a value of 30 days or less.
+  lock_days: 30
+
+# for 5.4
+# allow ansible to expire password for account with a last changed date in the future. Setting it
+# to 'false' will just display users in violation, while 'true' will expire those users passwords.
+futurepwchgdate_autofix: true
+
+# for 5.4
+root_umask: '0027'  # 0027 or more restrictive
+bash_umask: '0027' # 0027 or more restrictive
+
+# for 5.4
+# The system users on this list are allowed to have a shell (e.g. applications
+# that require a shell to function)
+system_users_shell: []
+
+# for 5.4
+# this dictionary is related to ensuring the rule about user shell timeout
+# this variable represents the amount of seconds a command or process is allowed to
+# run before being forcefully terminated.
+# CIS requires a value of at most 900 seconds.
+shell_session_timeout: 900
+# this variable specifies the path of the timeout setting file.
+# (TMOUT setting can be set in multiple files, but only one is required for the
+# rule to pass. Options are:
+# - a file in `/etc/profile.d/` ending in `.s`,
+# - `/etc/profile`, or
+# - `/etc/bash.bashrc`.
+shell_session_file: /etc/profile.d/tmout.sh

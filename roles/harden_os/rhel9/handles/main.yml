@@ -25,3 +25,7 @@
 - name: Change_requires_reboot
   ansible.builtin.set_fact:
     change_requires_reboot: true
+
+- name: Authselect update
+  ansible.builtin.command: authselect apply-changes
+  changed_when: true

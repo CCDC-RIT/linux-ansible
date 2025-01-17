@@ -4,7 +4,7 @@
   block:
     - name: "1.5.1"
       ansible.builtin.set_fact:
-        rhel9cis_sysctl_update: true
+        sysctl_update: true
 
     - name: "1.5.1"
       ansible.builtin.debug:
@@ -14,7 +14,7 @@
   block:
     - name: "1.5.2"
       ansible.builtin.set_fact:
-        rhel9cis_sysctl_update: true
+        sysctl_update: true
 
     - name: "1.5.2"
       ansible.builtin.debug:
