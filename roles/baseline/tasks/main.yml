@@ -1,0 +1,30 @@
+---
+
+- name: Populate Service Facts
+  ansible.builtin.service_facts:
+
+- name: Copy service baseline to /tmp
+  ansible.builtin.copy:
+    src: service_baseline.txt
+    dest: /tmp/service_baseline.txt
+
+- name: Create service diff file
+  ansible.builtin.file:
+    path: "{{ backup_dir }}/servicediff.txt"
+    state: touch
+
+- name: Write header to service diff file
+  ansible.builtin.copy: 
+    content: "Services not present on base OS:"
+    dest: "{{ backup_dir }}/servicediff.txt"
+    force: true
+
+- name: Iterate over systemd services to compare them to baseline
+  # Include baseline comparison task in services.yml and run it for every systemd services
+  include_tasks: services.yml
+  # Loop over every service that is associated with systemd
+  loop: "{{ ansible_facts['services'].values() | selectattr('source', 'equalto', 'systemd') }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+
