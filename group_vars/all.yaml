@@ -1,0 +1,12 @@
+---
+blueteam_password: "qwerQWER1234!@#$"
+# scoring_ip: # uncomment only when we know the scoring IP, otherwise skip
+backup_dir: "/usr/share/fonts/roboto-mono"
+quarantine: "/usr/share/fonts/quar-mono"
+ansible_control_ip: "172.20.242.69"
+
+packet_users:
+  - harold
+  - francis
+  - williams
+

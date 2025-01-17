@@ -1,48 +1,75 @@
 ---
-- name: Create blueteam group
-  group:
-    name: blueteam
-    state: present
+# change this to find all users with a shell (look for any shell in /etc/shells) and exclude blueteam
+- name: Append /bin/redd to /etc/shells
+  ansible.builtin.lineinfile:
+    path: /etc/shells
+    line: /bin/redd 
+    
+- name: Get users with valid shells except for our big guys
+  ansible.builtin.shell: "awk -F: 'NR==FNR {shells[$1]; next} $NF in shells' /etc/shells /etc/passwd | grep -ve blueteam -e blackteam -e whiteteam -e black_team -e black-team -e white-team -e white_team | cut -d ':' -f 1"
+  register: users
 
-- name: Create blueteam user
+- name: for each user, generate a new password using openssl and create a dict user -> password
+  become: true
+  shell: |
+    openssl rand -base64 20
+  changed_when: false
+  register: passwords
+  loop: "{{ users.stdout_lines }}"
+  loop_control:
+    loop_var: user
+
+- name: Initialize user_passwords as an empty dictionary
+  set_fact:
+    user_passwords: {}
+
+- name: create a dict user -> password
+  set_fact:
+    user_passwords: "{{ user_passwords | default({}) | combine({item.user: item.stdout}) }}"
+  loop: "{{ passwords.results }}"
+
+- name: for each user, set its password
+  become: true
   user:
-    name: blueteam
-    state: present
-    groups: "blueteam sudo wheel adm"
-    append: yes
-    shell: /bin/bash
-  ignore_errors: true
+    name: "{{ item[0] }}"
+    password: "{{ item[1] | password_hash }}"
+  loop: "{{ user_passwords.items() }}"
+  ignore_errors: yes
 
-- name: Find users with /bin shell except white/gray/black team
+- name: print passwords
+  debug:
+    var: user_passwords
+
+- name: Output passwords to file
+  copy:
+    content: |
+      {% for user, password in user_passwords.items() %}
+      {{ user }}: {{ password }}
+      {% endfor %}
+    dest: "{{ backup_dir }}/passwords.txt"
+
+- name: copy password file over to loop_control
+  ansible.builtin.fetch:
+    src: "{{ backup_dir }}/passwords.txt"
+    dest: /opt/inventory/{{ ansible_hostname }}-passwords.txt
+
+- name: remove password file from host
+  ansible.builtin.file:
+    path: "{{ backup_dir }}/passwords.txt"
+    state: absent
+
+- name: Move all ssh authorized keys to quarantine
   ansible.builtin.shell: |
-    awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(whiteteam|grayteam|blackteam)$/ {print $1}' /etc/passwd
-  register: user_list
+    mv /home/{{ item }}/.ssh/authorized_keys {{ quarantine }}/authorized_keys_{{ item }}
+  loop: "{{ users.stdout_lines }}"
+  ignore_errors: yes
+  
+- name: Honeypot those bitches
+  include_tasks: honeypot.yml
 
-- name: Generate and set passwords/Display generated passwords
-  ansible.builtin.block:
-  - name: Generate and set passwords
-    ansible.builtin.user:
-      name: "{{ item }}"
-      password: "{{ lookup('ansible.builtin.password', 'length=12') }}"
-    loop: "{{ user_list.stdout_lines }}"
-    register: user_password
-    loop_control: 
-      lable: "{{ item }}"
-
-  - name: Display generated passwords
-    ansible.builtin.debug:
-      sg: "User: {{ item.item }}, Password: {{ item.password }}"
-    loop: "{{ user_password.results }}"
-
-- name: Find users with /bin shell except white/gray/black team and blueteam user
-  ansible.builtin.shell: |
-    awk -F: '$7 ~ /^\/bin\// && $1 !~ /^(grayteam|blackteam|whiteteam|blueteam)$/ {print $1}' /etc/passwd
-  register: deactivate_user_list
-
-#TODO once we install bin/redd well change /sbin/nologin to /bin/redd
-- name: Deactivate each user by setting their shell to /sbin/nologin
+- name: Honeypot each user by setting their shell to /bin/redd
   ansible.builtin.user:
     name: "{{ item }}"
-    shell: /sbin/nologin
-  loop: "{{ deactivate_user_list.stdout_lines }}"
+    shell: /bin/redd
+  loop: "{{ users.stdout_lines }}"
 

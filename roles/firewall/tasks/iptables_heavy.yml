@@ -1,0 +1,64 @@
+---
+# workstations likely only need to allow ssh from us
+# TODO fill these out
+- name: Backup Rules
+  ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4.pre_heavy"
+
+- name: Accept policies
+  iptables:
+    chain: "{{ item }}"
+    policy: ACCEPT
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
+
+- name: Flush rules
+  iptables:
+    flush: yes
+    chain: "{{ item }}"
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
+
+- name: Allow scoring (INPUT, Source IP)
+  iptables:
+    chain: "INPUT"
+    source: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ scoring_ip }}"
+  ignore_errors: true
+
+- name: Allow scoring (OUTPUT, Destination IP)
+  iptables:
+    chain: "OUTPUT"
+    destination: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ scoring_ip }}"
+  ignore_errors: true
+
+- name: Allow SSH from Ansible Control
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    source: "{{ ansible_control_ip }}"
+    jump: ACCEPT
+
+- name: Allow SSH to Ansible Control
+  iptables:
+    chain: OUTPUT
+    protocol: tcp
+    source_port: 22
+    destination: "{{ ansible_control_ip }}"
+    jump: ACCEPT
+
+- name: Block everything else
+  iptables:
+    chain: "{{ item }}"
+    policy: DROP
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
+
+- name: Save Rules
+  ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4"

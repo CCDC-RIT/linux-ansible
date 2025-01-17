@@ -1,0 +1,8 @@
+## AIDE
+aide_enabled: yes
+aide_reinit_enabled: no # reinit db every time this role is deployed
+security_aide_exclude_dirs:
+  - /dev
+  - /run
+  - /var/log
+  - /proc

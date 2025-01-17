@@ -1,12 +1,8 @@
 ---
-- task: Backup Current IPTables Configuration
-  command: iptables-save > /etc/iptables/rules.v4
+- name: Secure that shit (lite)
+  include_tasks: iptables_lite.yml
+  when: scoring_ip is not defined
 
-- include: ubuntu.yml
-  when: ansible_os_family == 'Debian' or ansible_os_family == 'Ubuntu'
-
-- task: Block everything except scoring
-  iptables:
-    chain: INPUT
-    source: "{{ scoring_ip }}"
-    jump: ACCEPT
+- name: Secure that shit (heavy)
+  include_tasks: iptables_heavy.yml
+  when: scoring_ip is defined

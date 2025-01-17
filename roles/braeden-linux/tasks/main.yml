@@ -1,0 +1,44 @@
+- name: Make sure python3 is installed
+  ansible.builtin.package:
+    name: python3
+    state: present
+  ignore_errors: true
+
+- name: Make sure pip is installed
+  ansible.builtin.package:
+    name: python3-pip
+    state: present
+  ignore_errors: true
+
+- name: Install psutil required library with pip
+  ansible.builtin.pip:
+    name: psutil
+    state: present
+    executable: pip3
+  ignore_errors: true
+
+- name: Copy over connmon script
+  ansible.builtin.copy:
+    src: files/connmon.py
+    dest: /usr/local/bin/connmon
+    mode: '0755'
+
+- name: Timestomp connmon
+  ansible.builtin.file:
+    path: /usr/local/bin/connmon
+    modification_time: '202301011234.51'
+    access_time: '202301011234.51'
+
+- name: Copy over pquery script
+  ansible.builtin.copy:
+    src: files/pquery.py
+    dest: /usr/local/bin/pquery
+    mode: '0755'
+
+- name: Timestomp pquery
+  ansible.builtin.file:
+    path: /usr/local/bin/pquery
+    modification_time: '202301011234.51'
+    access_time: '202301011234.51'
+
+  

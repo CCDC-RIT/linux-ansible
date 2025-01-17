@@ -1,0 +1,90 @@
+---
+- name: Assert Variables
+  hosts: all
+  tasks:
+    - name: Assert Variables
+      fail:
+        msg: "You must define ansible_control_ip in group_vars/main.yaml"
+      when: ansible_control_ip is not defined
+  tags:
+    - never
+    - initial
+    - setup
+
+- name: Initial Run
+  hosts: all
+  become: yes
+  roles: 
+    - setup # create blue user, adds key to user, creates backup directory, installs common packages
+  tags:
+    - never
+    - initial
+    - setup
+
+# CHANGE USER TO BLUETEAM
+- name: Change user to blueteam
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Set Blueteam user
+      set_fact:
+        ansible_user: blueteam
+
+- name: Setup Firewall
+  hosts: all
+  become: yes
+  roles:
+    - firewall # copy current firewall rules, run lite if no scoring ip, otherwise harden that shit
+  tags:
+    - never
+    - initial
+    - firewall
+
+- name: Modify Users
+  hosts: all
+  become: yes
+  roles:
+    - users # finds all users with a shell (look for any shell in /etc/shells), creates passwords from them all, deactivate them all, remove their ssh authorized keys
+  tags:
+    - never
+    - initial
+    - users
+
+- name: Audit System
+  hosts: all
+  become: yes
+  roles: 
+    - audit 
+  tags:
+    - never
+    - initial
+    - audit
+
+- name: Harden OS
+  hosts: all
+  become: yes
+  roles:
+    - harden_os
+  tags:
+    - never
+    - initial
+    - harden
+
+- name: Install Braeden's Python scripts 
+  hosts: all
+  become: yes
+  roles:
+    - braeden-linux
+  tags:
+    - never
+    - initial
+    
+# Drop on all boxes, it doesn't auto-activate
+- name: Install StabVest SOAR scripts
+  hosts: all
+  become: yes
+  roles:
+    - stabvest
+  tags:
+    - never
+    - initial
