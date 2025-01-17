@@ -29,3 +29,8 @@
 - name: Authselect update
   ansible.builtin.command: authselect apply-changes
   changed_when: true
+
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted

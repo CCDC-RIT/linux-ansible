@@ -1,5 +1,80 @@
 ---
 
+## section 6.1
+rule_6_1_1: true
+# dont run on an ec2
+rule_6_1_2: true
+# dont run on an ec2
+rule_6_1_3: true
+
+## section 6.2
+rule_6_2_1_1: true
+rule_6_2_1_2: true
+rule_6_2_1_3: true
+rule_6_2_1_4: true
+# dont run on 'log server'
+rule_6_2_2_1_1: true
+# dont run on 'log server'
+rule_6_2_2_1_2: true
+# dont run on 'log server'
+rule_6_2_2_1_3: true
+# dont run on 'log server'
+rule_6_2_2_1_4: true
+rule_6_2_2_2: true
+rule_6_2_2_3: true
+rule_6_2_2_4: true
+rule_6_2_3_1: true
+rule_6_2_3_2: true
+rule_6_2_3_3: true
+rule_6_2_3_4: true
+rule_6_2_3_5: true
+rule_6_2_3_6: true
+rule_6_2_3_7: true
+rule_6_2_3_8: true
+rule_6_2_4_1: true
+
+
+# section 6.3
+rule_6_3_1_1: true
+rule_6_3_1_2: true
+rule_6_3_1_3: true
+rule_6_3_1_4: true
+rule_6_3_2_1: true
+rule_6_3_2_2: true
+rule_6_3_2_3: true
+rule_6_3_2_4: true
+rule_6_3_3_1: true
+rule_6_3_3_2: true
+rule_6_3_3_3: true
+rule_6_3_3_4: true
+rule_6_3_3_5: true
+rule_6_3_3_6: true
+rule_6_3_3_7: true
+rule_6_3_3_8: true
+rule_6_3_3_9: true
+rule_6_3_3_10: true
+rule_6_3_3_11: true
+rule_6_3_3_12: true
+rule_6_3_3_13: true
+rule_6_3_3_14: true
+rule_6_3_3_15: true
+rule_6_3_3_16: true
+rule_6_3_3_17: true
+rule_6_3_3_18: true
+rule_6_3_3_19: true
+rule_6_3_3_20: true
+rule_6_3_3_21: true
+rule_6_3_4_1: true
+rule_6_3_4_2: true
+rule_6_3_4_3: true
+rule_6_3_4_4: true
+rule_6_3_4_5: true
+rule_6_3_4_6: true
+rule_6_3_4_7: true
+rule_6_3_4_8: true
+rule_6_3_4_9: true
+rule_6_3_4_10: true
+
 # for 1.2
 # when installing RHEL from authorized Red Hat source, RHEL will come with default YUM repository. NOT having a default YUM
 # repo ('rhel_default_repo' set as 'false'), in conjunction with 'rule_enable_repogpg' set as 'True', will enable the tasks
@@ -298,3 +373,181 @@ shell_session_timeout: 900
 # - `/etc/profile`, or
 # - `/etc/bash.bashrc`.
 shell_session_file: /etc/profile.d/tmout.sh
+
+# for 6.1
+# AIDE is a file integrity checking tool, similar in nature to Tripwire.
+# while it cannot prevent intrusions, it can detect unauthorized changes
+# to configuration files by alerting when the files are changed. Review
+# the AIDE quick start guide and AIDE documentation before proceeding.
+# by setting this variable to `true`, all of the settings related to AIDE will be applied!
+config_aide: true
+# allows to change db file, not config need to be adjusted too
+aide_db_file: /var/lib/aide/aide.db.gz
+# if DB file older than below will automatically rebuild DB
+# e.g. options:1w = 1 week, 1d = 1day 1h = 1 hour
+aide_db_file_age: 1w
+# if aide already setup this forces a new DB to be created
+aide_db_recreate: false
+# how the aide schedule is run either cron or timer
+aide_scan: cron
+
+aide_cron:
+  # This variable represents the user account under which the cron job for AIDE will run.
+  cron_user: root
+  # This variable represents the path to the AIDE crontab file.
+  cron_file: /etc/cron.d/aide_cron
+  # This variable represents the actual command or script that the cron job
+  # will execute for running AIDE.
+  aide_job: '/usr/sbin/aide --check'
+  # These variables define the schedule for the cron job
+  # This variable governs the minute of the time of day when the AIDE cronjob is run.
+  # It must be in the range `0-59`.
+  aide_minute: 0
+  # This variable governs the hour of the time of day when the AIDE cronjob is run.
+  # It must be in the range `0-23`.
+  aide_hour: 5
+  # This variable governs the day of the month when the AIDE cronjob is run.
+  # `*` signifies that the job is run on all days; furthermore, specific days
+  # can be given in the range `1-31`; several days can be concatenated with a comma.
+  # The specified day(s) can must be in the range  `1-31`.
+  aide_day: '*'
+  # This variable governs months when the AIDE cronjob is run.
+  # `*` signifies that the job is run in every month; furthermore, specific months
+  # can be given in the range `1-12`; several months can be concatenated with commas.
+  # The specified month(s) can must be in the range  `1-12`.
+  aide_month: '*'
+  # This variable governs the weekdays, when the AIDE cronjob is run.
+  # `*` signifies that the job is run on all weekdays; furthermore, specific weekdays
+  # can be given in the range `0-7` (both `0` and `7` represent Sunday); several weekdays
+  # can be concatenated with commas.
+  aide_weekday: '*'
+
+# for 6.2
+# rreferred method of logging
+# whether rsyslog or journald preferred method for local logging
+# configure rsyslog
+# configure journald
+# this variable governs which logging service should be used, choosing between 'rsyslog'(CIS recommendation)
+# or 'journald'(only one is implemented) will trigger the execution of the associated subsection, as the-best
+# practices are written wholly independent of each other.
+syslog: journald
+
+# for 6.2
+# this variable governs if 'rsyslog' service should be automatically configured to forward messages to a
+# remote log server. If set to 'false', the configuration of the 'omfwd' plugin, used to provide forwarding
+# over UDP or TCP, will not be performed.
+remote_log_server: false
+# this variable specifies the path to the private key file used by the remote journal
+# server to authenticate itself to the client. This key is used alongside the server's
+# public certificate to establish secure communication.
+journal_upload_serverkeyfile: "/etc/ssl/private/journal-upload.pem"
+# This variable specifies the path to the public certificate file of the remote journal
+# server. This certificate is used to verify the authenticity of the remote server.
+journal_servercertificatefile: "/etc/ssl/certs/journal-upload.pem"
+# This variable specifies the path to a file containing one or more public certificates
+# of certificate authorities (CAs) that the client trusts. These trusted certificates are used
+# to validate the authenticity of the remote server's certificate.
+journal_trustedcertificatefile: "/etc/ssl/ca/trusted.pem"
+# ATTENTION: Uncomment the keyword below when values are set!
+
+# for 6.2
+# this variable governs if current Ansible role should manage syslog settings
+# in /etc/rsyslog.conf file, namely mail, news and misc(warn, messages)
+rsyslog_ansiblemanaged: true
+
+# for 6.2
+# this variable governs if 'rsyslog' service should be automatically configured to forward messages to a
+# remote log server. If set to 'false', the configuration of the 'omfwd' plugin, used to provide forwarding
+# over UDP or TCP, will not be performed.
+remote_log_server: false
+# this variable configures the value of the 'target' parameter to be configured when enabling
+# forwarding syslog messages to a remote log server, thus configuring the actual FQDN/IP address of the
+# destination server. For this value to be reflected in the configuration, the variable which enables the
+# automatic configuration of rsyslog forwarding must be enabled('remote_log_server: true').
+remote_log_host: logagg.example.com
+# this variable configures the value of the 'port' parameter to be configured when enabling
+# forwarding syslog messages to a remote log server. The default value for this destination port is 514.
+# For this value to be reflected in the configuration, the variable which enables the
+# automatic configuration of rsyslog forwarding must be enabled('remote_log_server: true').
+remote_log_port: 514
+## Control 6.2.3.6 - Ensure rsyslog is configured to send logs to a remote log host
+# This variable configures the value("TCP"/"UDP") of the 'protocol' parameter to be configured when enabling
+# forwarding syslog messages to a remote log server. The default value for the 'omfwd' plug-in is UDP.
+# For this value to be reflected in the configuration, the variable which enables the
+# automatic configuration of rsyslog forwarding must be enabled('remote_log_server: true').
+remote_log_protocol: tcp
+## Control 6.2.3.6 - Ensure rsyslog is configured to send logs to a remote log host
+# This variable governs how often an action is retried(value is passed to 'action.resumeRetryCount' parameter) before
+# it is considered to have failed(that roughly translates to discarded messages). The default value is 0, but
+# when set to "-1"(eternal), this setting would prevent rsyslog from dropping messages when retrying to connect
+# if server is not responding. For this value to be reflected in the configuration, the variable which enables the
+# automatic configuration of rsyslog forwarding must be enabled('remote_log_server: true').
+remote_log_retrycount: 100
+## Control 6.2.3.6 - Ensure rsyslog is configured to send logs to a remote log host
+# This variable configures the maximum number of messages that can be hold(value is passed to 'queue.size' parameter).
+# For this value to be reflected in the configuration, the variable which enables the automatic configuration
+# of rsyslog forwarding must be enabled('remote_log_server: true').
+remote_log_queuesize: 1000
+
+# for 6.3
+# this variable represents the audit backlog limit, i.e., the maximum number of audit records that the
+# system can buffer in memory, if the audit subsystem is unable to process them in real-time.
+# buffering in memory is useful in situations, where the audit system is overwhelmed
+# with incoming audit events, and needs to temporarily store them until they can be processed.
+# this variable should be set to a sufficient value. The CIS baseline recommends at least `8192` as value.
+audit_back_log_limit: 8192
+
+# for 6.3
+# this variable specifies the maximum size in MB that an audit log file can reach
+# before it is archived or deleted to make space for the new audit data.
+# this should be set based on your sites policy. CIS does not provide a specific value.
+auditd_max_log_file_size: 10
+
+# for 6.3
+# this variable determines what action the audit system should take when the maximum
+# size of a log file is reached.
+# the options for setting this variable are as follows:
+# - `ignore`: the system does nothing when the size of a log file is full;
+# - `syslog`: a message is sent to the system log indicating the problem;
+# - `suspend`: the system suspends recording audit events until the log file is cleared or rotated;
+# - `rotate`: the log file is rotated (archived) and a new empty log file is created;
+# - `keep_logs`: the system attempts to keep as many logs as possible without violating disk space constraints.
+# CIS prescribes the value `keep_logs`.
+auditd_max_log_file_action: keep_logs
+
+# for 6.3
+# this variable determines how the system should act in case of issues with disk
+# the disk_full_action parameter tells the system what action to take when no free space is available on the partition that holds the audit log files.
+# valid values are ignore, syslog, rotate, exec, suspend, single, and halt.
+#
+# the disk_error_action parameter tells the system what action to take when an error is detected on the partition that holds the audit log files.
+# valid values are ignore, syslog, exec, suspend, single, and halt.
+#
+# CIS prescribes
+# disk_full_action parameter:
+# set to halt - the auditd daemon will shutdown the system when the disk partition containing the audit logs becomes full.
+# set to single - the auditd daemon will put the computer system in single user mode when the disk partition containing the audit logs becomes full.
+#
+# disk_error_action parameter:
+# set to halt - the auditd daemon will shutdown the system when an error is detected on the partition that holds the audit log files.
+# set to single - the auditd daemon will put the computer system in single user mode when an error is detected on the partition that holds the audit log files.
+# set to syslog - the auditd daemon will issue no more than 5 consecutive warnings to syslog when an error is detected on the partition that holds the audit log files.
+auditd_disk_full_action: halt
+auditd_disk_error_action: syslog
+
+# for 6.3
+# Wait to do when space left is low.
+# The space_left_action parameter tells the system what action to take when the system has detected that it is starting to get low on disk space.
+# Valid values are ignore, syslog, rotate, email, exec, suspend, single, and halt.
+# The admin_space_left_action parameter tells the system what action to take when the system has detected that it is low on disk space.
+# Valid values are ignore, syslog, rotate, email, exec, suspend, single, and halt.
+auditd_space_left_action: email
+auditd_admin_space_left_action: halt
+
+# for 6.3
+# this can be used to configure other keys in auditd.conf
+# example:
+auditd_extra_conf:
+  admin_space_left: '10%'
+# this value governs if the below extra-vars for auditd should be used by the role
+auditd_extra_conf_usage: false

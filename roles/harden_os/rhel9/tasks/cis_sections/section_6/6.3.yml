@@ -1,48 +1,31 @@
 ---
 
 - name: "6.3.1.1 | PATCH | Ensure auditd is installed"
-  when: rhel9cis_rule_6_3_1_1
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.1.1
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_1_1
   block:
-    - name: "6.3.1.1 | PATCH | Ensure auditd is installed | Install auditd packages"
+    - name: "6.3.1.1 | Install auditd packages"
       when: '"auditd" not in ansible_facts.packages'
       ansible.builtin.package:
         name: audit
         state: present
 
-    - name: "6.3.1.1 | PATCH | Ensure auditd is installed | Install auditd-lib packages"
+    - name: "6.3.1.1 | Install auditd-lib packages"
       when: '"auditd-lib" not in ansible_facts.packages'
       ansible.builtin.package:
         name: audit-libs
         state: present
 
 - name: "6.3.1.2 | PATCH | Ensure auditing for processes that start prior to auditd is enabled"
-  when: rhel9cis_rule_6_3_1_2
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - grub
-    - rule_6.3.1.2
+  when: rule_6_3_1_2
   block:
-    - name: "6.3.1.2 | PATCH | Ensure auditing for processes that start prior to auditd is enabled | Grubby existence of current value"
+    - name: "6.3.1.2 | Grubby existence of current value"
       ansible.builtin.shell: grubby --info=ALL | grep args | sed -n 's/.*audit=\([[:alnum:]]\+\).*/\1/p'
       changed_when: false
       failed_when: false
       check_mode: false
       register: discovered_grubby_curr_value_audit_linux
 
-    - name: "6.3.1.2 | PATCH | Ensure auditing for processes that start prior to auditd is enabled | Grubby update, if needed"
+    - name: "6.3.1.2 | Grubby update, if needed"
       when:
         - discovered_grubby_curr_value_audit_linux.stdout == '' or
           '0' in discovered_grubby_curr_value_audit_linux.stdout or
@@ -51,19 +34,9 @@
       changed_when: true
 
 - name: "6.3.1.3 | PATCH | Ensure audit_backlog_limit is sufficient"
-  when: rhel9cis_rule_6_3_1_3
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - grub
-    - rule_6.3.1.3
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_1_3
   block:
-    - name: "6.3.1.3 | AUDIT | Ensure audit_backlog_limit is sufficient | Grubby existence of current value"
+    - name: "6.3.1.3 | Grubby existence of current value"
       ansible.builtin.shell:
         cmd: 'grubby --info=ALL | grep args | grep -o -E "audit_backlog_limit=([[:digit:]])+" | grep -o -E "([[:digit:]])+"'
       changed_when: false
@@ -71,45 +44,34 @@
       check_mode: false
       register: discovered_grubby_curr_value_backlog_linux
 
-    - name: "6.3.1.3 | AUDIT | Check to see if limits are set"
+    - name: "6.3.1.3 | Check to see if limits are set"
       when:
         - discovered_grubby_curr_value_backlog_linux is not defined or
           discovered_grubby_curr_value_backlog_linux.stdout_lines == []
       ansible.builtin.set_fact:
         discovered_reset_backlog_limits: true
 
-    - name: "6.3.1.3 | AUDIT | Check to see if any limits are too low"
-      when: (item | int < rhel9cis_audit_back_log_limit)
+    - name: "6.3.1.3 | Check to see if any limits are too low"
+      when: (item | int < audit_back_log_limit)
       ansible.builtin.set_fact:
         discovered_reset_backlog_limits: true
       loop: "{{ discovered_grubby_curr_value_backlog_linux.stdout_lines }}"
 
-    - name: "6.3.1.3 | AUDIT | Ensure audit_backlog_limit is sufficient | Grubby update applied"
+    - name: "6.3.1.3 | Grubby update applied"
       when: discovered_reset_backlog_limits is defined
       ansible.builtin.command:
-        cmd: 'grubby --update-kernel=ALL --args="audit_backlog_limit={{ rhel9cis_audit_back_log_limit }}"'
+        cmd: 'grubby --update-kernel=ALL --args="audit_backlog_limit={{ audit_back_log_limit }}"'
       changed_when: true
 
 - name: "6.3.1.4 | PATCH | Ensure auditd service is enabled and active"
-  when: rhel9cis_rule_6_3_1_4
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.1.4
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_1_4
   ansible.builtin.systemd:
     name: auditd
     state: started
     enabled: true
 
----
-
 - name: "6.3.2.1 | PATCH | Ensure audit log storage size is configured"
-  when: rhel9cis_rule_6_3_2_1
+  when: rule_6_3_2_1
   tags:
     - level2-server
     - level2-workstation
@@ -120,383 +82,183 @@
   ansible.builtin.lineinfile:
     path: /etc/audit/auditd.conf
     regexp: "^max_log_file( |=)"
-    line: "max_log_file = {{ rhel9cis_auditd_max_log_file_size }}"
+    line: "max_log_file = {{ auditd_max_log_file_size }}"
   notify: Restart auditd
 
 - name: "6.3.2.2 | PATCH | Ensure audit logs are not automatically deleted"
-  when: rhel9cis_rule_6_3_2_2
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.2.2
-    - NIST800-53R5_AU-8
+  when: rule_6_3_2_2
   ansible.builtin.lineinfile:
     path: /etc/audit/auditd.conf
     regexp: "^max_log_file_action"
-    line: "max_log_file_action = {{ rhel9cis_auditd_max_log_file_action }}"
+    line: "max_log_file_action = {{ auditd_max_log_file_action }}"
   notify: Restart auditd
 
 - name: "6.3.2.3 | PATCH | Ensure system is disabled when audit logs are full"
-  when: rhel9cis_rule_6_3_2_3
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.2.3
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-8
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_2_3
   ansible.builtin.lineinfile:
     path: /etc/audit/auditd.conf
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   notify: Restart auditd
   loop:
-    - { regexp: '^disk_full_action', line: 'disk_full_action = {{ rhel9cis_auditd_disk_full_action }}' }
-    - { regexp: '^disk_error_action', line: 'disk_error_action = {{ rhel9cis_auditd_disk_error_action }}' }
+    - { regexp: '^disk_full_action', line: 'disk_full_action = {{ auditd_disk_full_action }}' }
+    - { regexp: '^disk_error_action', line: 'disk_error_action = {{ auditd_disk_error_action }}' }
 
 - name: "6.3.2.4 | PATCH | Ensure system warns when audit logs are low on space"
-  when: rhel9cis_rule_6_3_2_4
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.2.4
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-8
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_2_4
   ansible.builtin.lineinfile:
     path: /etc/audit/auditd.conf
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   notify: Restart auditd
   loop:
-    - { regexp: '^space_left_action', line: 'space_left_action = {{ rhel9cis_auditd_space_left_action }}' }
-    - { regexp: '^admin_space_left_action', line: 'admin_space_left_action = {{ rhel9cis_auditd_admin_space_left_action }}' }
+    - { regexp: '^space_left_action', line: 'space_left_action = {{ auditd_space_left_action }}' }
+    - { regexp: '^admin_space_left_action', line: 'admin_space_left_action = {{ auditd_admin_space_left_action }}' }
 
 - name: "PATCH | Configure other keys for auditd.conf"
   when:
-    - rhel9cis_auditd_extra_conf.keys() | length > 0
-    - rhel9cis_auditd_extra_conf_usage
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-8
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+    - auditd_extra_conf.keys() | length > 0
+    - auditd_extra_conf_usage
   ansible.builtin.lineinfile:
     path: /etc/audit/auditd.conf
     regexp: "^{{ item }}( |=)"
-    line: "{{ item }} = {{ rhel9cis_auditd_extra_conf[item] }}"
-  loop: "{{ rhel9cis_auditd_extra_conf.keys() }}"
+    line: "{{ item }} = {{ auditd_extra_conf[item] }}"
+  loop: "{{ auditd_extra_conf.keys() }}"
   notify: Restart auditd
-
----
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.1 | PATCH | Ensure changes to system administration scope (sudoers) is collected"
-  when: rhel9cis_rule_6_3_3_1
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.1
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_1
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.2 | PATCH | Ensure actions as another user are always logged"
-  when: rhel9cis_rule_6_3_3_2
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.2
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_2
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.3 | PATCH | Ensure events that modify the sudo log file are collected"
-  when: rhel9cis_rule_6_3_3_3
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.3
+  when: rule_6_3_3_3
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.4 | PATCH | Ensure events that modify date and time information are collected"
-  when: rhel9cis_rule_6_3_3_4
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.4
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_CM-6
+  when: rule_6_3_3_4
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.5 | PATCH | Ensure events that modify the system's network environment are collected"
-  when: rhel9cis_rule_6_3_3_5
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.5
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_CM-6
+  when: rule_6_3_3_5
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.6 | PATCH | Ensure use of privileged commands is collected"
-  when: rhel9cis_rule_6_3_3_6
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.6
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_6
   block:
-    - name: "6.3.3.6 | PATCH | Ensure use of privileged commands is collected"
+    - name: "6.3.3.6"
       ansible.builtin.shell: for i in  $(df | grep '^/dev' | awk '{ print $NF }'); do find $i -xdev -type f -perm /6000 2>/dev/null; done
       changed_when: false
       failed_when: false
       check_mode: false
       register: discovered_priv_procs
 
-    - name: "6.3.3.6 | PATCH | Ensure use of privileged commands is collected"
+    - name: "6.3.3.6"
       ansible.builtin.set_fact:
         update_audit_template: true
       notify: update auditd
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.7 | PATCH | Ensure unsuccessful file access attempts are collected"
-  when: rhel9cis_rule_6_3_3_7
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.7
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_7
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.8 | PATCH | Ensure events that modify user/group information are collected"
-  when: rhel9cis_rule_6_3_3_8
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.8
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_8
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.9 | PATCH | Ensure discretionary access control permission modification events are collected"
-  when: rhel9cis_rule_6_3_3_9
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.9
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_CM-6
+  when: rule_6_3_3_9
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.10 | PATCH | Ensure successful file system mounts are collected"
-  when: rhel9cis_rule_6_3_3_10
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.10
-    - NIST800-53R5_CM-6
+  when: rule_6_3_3_10
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.11 | PATCH | Ensure session initiation information is collected"
-  when: rhel9cis_rule_6_3_3_11
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.11
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_11
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.12 | PATCH | Ensure login and logout events are collected"
-  when: rhel9cis_rule_6_3_3_12
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.12
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_12
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.13 | PATCH | Ensure file deletion events by users are collected"
-  when: rhel9cis_rule_6_3_3_13
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.13
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SC-7
+  when: rule_6_3_3_13
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.14 | PATCH | Ensure events that modify the system's Mandatory Access Controls are collected"
-  when: rhel9cis_rule_6_3_3_14
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.14
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_CM-6
+  when: rule_6_3_3_14
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.15 | PATCH | Ensure successful and unsuccessful attempts to use the chcon command are recorded"
-  when: rhel9cis_rule_6_3_3_15
-  tags:
-    - level2-server
-    - level2- workstation
-    - patch
-    - auditd
-    - rule_6.3.3.15
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_3_15
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.16 | PATCH | Ensure successful and unsuccessful attempts to use the setfacl command are recorded"
-  when: rhel9cis_rule_6_3_3_16
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.16
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_3_16
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.17 | PATCH | Ensure successful and unsuccessful attempts to use the chacl command are recorded"
-  when: rhel9cis_rule_6_3_3_17
+  when: rule_6_3_3_17
   tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.17
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.18 | PATCH | Ensure successful and unsuccessful attempts to use the usermod command are recorded"
-  when: rhel9cis_rule_6_3_3_18
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.18
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_SI-5
+  when: rule_6_3_3_18
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.19 | PATCH | Ensure kernel module loading and unloading and modification is collected"
-  when: rhel9cis_rule_6_3_3_19
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.19
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_CM-6
+  when: rule_6_3_3_19
   ansible.builtin.set_fact:
     update_audit_template: true
 
 # All changes selected are managed by the POST audit and handlers to update
 - name: "6.3.3.20 | PATCH | Ensure the audit configuration is immutable"
-  when: rhel9cis_rule_6_3_3_20
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.3.20
-    - NIST800-53R5_AC-3
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_MP-2
+  when: rule_6_3_3_20
   ansible.builtin.set_fact:
     update_audit_template: true
 
 - name: "6.3.3.21 | AUDIT | Ensure the running and on disk configuration is the same"
-  when: rhel9cis_rule_6_3_3_21
-  tags:
-    - level2-server
-    - level2-workstation
-    - manual
-    - patch
-    - auditd
-    - rule_6.3.3.21
-    - NIST800-53R5_AU-3
+  when: rule_6_3_3_21
   ansible.builtin.debug:
     msg:
       - "Please run augenrules --load if you suspect there is a configuration that is not active"
@@ -507,17 +269,8 @@
     msg: "Auditd Controls handled in POST using template - updating /etc/auditd/rules.d/99_auditd.rules"
   changed_when: false
 
----
-
 - name: "6.3.4.1 | PATCH | Ensure the audit log file directory mode is configured"
-  when: rhel9cis_rule_6_3_4_1
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.1
-    - NIST800-53R5_AU-3
+  when: rule_6_3_4_1
   ansible.builtin.file:
     path: "{{ prelim_auditd_logfile.stdout | dirname }}"
     state: directory
@@ -528,18 +281,9 @@
     "6.3.4.3 | PATCH | Ensure audit log files owner is configured"
     "6.3.4.4 | PATCH | Ensure only authorized groups are assigned ownership of audit log files"
   when:
-    - rhel9cis_rule_6_3_4_2 or
-      rhel9cis_rule_6_3_4_3 or
-      rhel9cis_rule_6_3_4_4
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.1
-    - rule_6.3.4.2
-    - rule_6.3.4.3
-    - NIST800-53R5_AU-3
+    - rule_6_3_4_2 or
+      rule_6_3_4_3 or
+      rule_6_3_4_4
   ansible.builtin.file:
     path: "{{ prelim_auditd_logfile.stdout }}"
     mode: 'o-x,g-wx,o-rwx'
@@ -547,13 +291,7 @@
     group: root
 
 - name: "6.3.4.5 | PATCH | Ensure audit configuration files mode is configured"
-  when: rhel9cis_rule_6_3_4_5
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.5
+  when: rule_6_3_4_5
   ansible.builtin.file:
     path: "{{ item.path }}"
     mode: 'u-x,g-wx,o-rwx'
@@ -564,13 +302,7 @@
     label: "{{ item.path }}"
 
 - name: "6.3.4.6 | PATCH | Ensure audit configuration files owner is configured"
-  when: rhel9cis_rule_6_3_4_6
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.6
+  when: rule_6_3_4_6
   ansible.builtin.file:
     path: "{{ item.path }}"
     owner: root
@@ -581,13 +313,7 @@
     label: "{{ item.path }}"
 
 - name: "6.3.4.7 | PATCH | Ensure audit configuration files group owner is configured"
-  when: rhel9cis_rule_6_3_4_7
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.7
+  when: rule_6_3_4_7
   ansible.builtin.file:
     path: "{{ item.path }}"
     group: root
@@ -598,27 +324,14 @@
     label: "{{ item.path }}"
 
 - name: "6.3.4.8 | PATCH | Ensure audit tools mode is configured"
-  when: rhel9cis_rule_6_3_4_8
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.8
-    - NIST800-53R5_AU-3
+  when: rule_6_3_4_8
   ansible.builtin.file:
     path: "{{ item }}"
     mode: 'go-w'
   loop: "{{ audit_bins }}"
 
 - name: "6.3.4.9 | PATCH | Ensure audit tools owner is configured"
-  when: rhel9cis_rule_6_3_4_9
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.9
+  when: rule_6_3_4_9
   ansible.builtin.file:
     path: "{{ item }}"
     owner: root
@@ -626,14 +339,7 @@
   loop: "{{ audit_bins }}"
 
 - name: "6.3.4.10 | PATCH | Ensure audit tools group owner is configured"
-  when: rhel9cis_rule_6_3_4_10
-  tags:
-    - level2-server
-    - level2-workstation
-    - patch
-    - auditd
-    - rule_6.3.4.10
-    - NIST800-53R5_AU-3
+  when: rule_6_3_4_10
   ansible.builtin.file:
     path: "{{ item }}"
     group: root

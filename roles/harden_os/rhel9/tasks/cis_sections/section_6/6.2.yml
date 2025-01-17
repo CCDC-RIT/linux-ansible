@@ -1,71 +1,44 @@
 ---
 
 - name: "6.2.1.1 | PATCH | Ensure journald service is enabled and active"
-  when: rhel9cis_rule_6_2_1_1
-  tags:
-    - level1-server
-    - level1-workstation
-    - audit
-    - journald
-    - rule_6.2.1.1
+  when: rule_6_2_1_1
   ansible.builtin.systemd:
     name: systemd-journald.service
     masked: false
     state: started
 
 - name: "6.2.1.2 | PATCH | Ensure journald log file access is configured"
-  when: rhel9cis_rule_6_2_1_2
-  tags:
-    - level1-server
-    - level1-workstation
-    - audit
-    - journald
-    - rule_6.2.1.2
+  when: rule_6_2_1_2
   block:
-    - name: "6.2.1.2 | PATCH | Ensure journald log file access is configured | Default file permissions"
+    - name: "6.2.1.2 | Default file permissions"
       ansible.builtin.file:
         path: /usr/lib/tmpfiles.d/systemd.conf
         mode: 'g-wx,o-rwx'
 
-    - name: "6.2.1.2 | AUDIT | Ensure journald log file access is configured | Check for override file"
+    - name: "6.2.1.2 | Check for override file"
       ansible.builtin.stat:
         path: /etc/tmpfiles.d/systemd.conf
       register: discovered_tmpfile_override
 
-    - name: "6.2.1.2 | AUDIT | Ensure journald log file access is configured | If override file check for journal"
+    - name: "6.2.1.2 | If override file check for journal"
       when: discovered_tmpfile_override.stat.exists
       ansible.builtin.shell: grep -E 'z /var/log/journal/%m/system.journal \d*' /usr/lib/tmpfiles.d/systemd.conf
       register: discovered_journald_fileperms_override
       changed_when: false
       failed_when: discovered_journald_fileperms_override.rc not in [ 0, 1 ]
 
-    - name: "6.2.1.2 | AUDIT | Ensure journald log file access is configured | Warning if override found"
+    - name: "6.2.1.2 | Warning if override found"
       when:
         - discovered_tmpfile_override.stat.exists
         - discovered_journald_fileperms_override.stdout | length > 0
       ansible.builtin.debug:
         msg: "Warning!! - tmpfiles override found /usr/lib/tmpfiles.d/systemd.conf affecting journald files please confirm matches site policy"
 
-    - name: "6.2.1.2 | AUDIT | Ensure journald log file access is configured | Warning if override found"
-      when:
-        - discovered_tmpfile_override.stat.exists
-        - discovered_journald_fileperms_override.stdout | length > 0
-      ansible.builtin.import_tasks:
-        file: warning_facts.yml
-      vars:
-        warn_control_id: '6.2.1.2'
-
 - name: "6.2.1.3 | PATCH | Ensure journald log file rotation is configured"
-  when: rhel9cis_rule_6_2_1_3
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - rule_6.2.1.3
+  when: rule_6_2_1_3
   notify: Restart journald
   block:
-    - name: "6.2.1.3 | PATCH | Ensure journald log file rotation is configured | Add file"
+    - name: "6.2.1.3 | Add file"
       ansible.builtin.template:
         src: etc/systemd/journald.conf.d/rotation.conf.j2
         dest: /etc/systemd/journald.conf.d/rotation.conf
@@ -73,7 +46,7 @@
         group: root
         mode: 'g-wx,o-rwx'
 
-    - name: "6.2.1.3 | PATCH | Ensure journald log file rotation is configured | comment out current entries"
+    - name: "6.2.1.3 | comment out current entries"
       ansible.builtin.replace:
         path: /etc/systemd/journald.conf
         regexp: "{{ item }}"
@@ -86,83 +59,46 @@
         - '^(\s*MaxFileSec\s*=.*)'
 
 - name: "6.2.1.4 | PATCH | Ensure only one logging system is in use"
-  when: rhel9cis_rule_6_2_1_4
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - syslog
-    - rule_6.2.1.4
+  when: rule_6_2_1_4
   block:
-    - name: "6.2.1.4 | PATCH | Ensure only one logging system is in use | when rsyslog"
-      when: rhel9cis_syslog == "rsyslog"
+    - name: "6.2.1.4 | when rsyslog"
+      when: syslog == "rsyslog"
       ansible.builtin.systemd:
         name: systemd-journald
         state: stopped
         enabled: false
 
-    - name: "6.2.1.4 | PATCH | Ensure only one logging system is in use | when journald"
-      when: rhel9cis_syslog == "journald"
+    - name: "6.2.1.4 | when journald"
+      when: syslog == "journald"
       ansible.builtin.systemd:
         name: rsyslog
         state: stopped
         enabled: false
 
----
-
 - name: "6.2.2.1.1 | PATCH | Ensure systemd-journal-remote is installed"
   when:
-    - rhel9cis_rule_6_2_2_1_1
-    - not rhel9cis_system_is_log_server
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - rule_6.2.2.1.1
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-7
-    - NIST800-53R5_AU-12
+    - rule_6_2_2_1_1
   ansible.builtin.package:
     name: systemd-journal-remote
     state: present
 
 - name: "6.2.2.1.2 | PATCH | Ensure systemd-journal-remote authentication is configured"
   when:
-    - rhel9cis_rule_6_2_2_1_2
-    - not rhel9cis_system_is_log_server
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - rule_6.2.2.1.2
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
+    - rule_6_2_2_1_2
   notify: Restart journald
   ansible.builtin.lineinfile:
     path: /etc/systemd/journal-upload.conf
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   loop:
-    - { regexp: 'URL=', line: 'URL={{ rhel9cis_remote_log_server }}'}
-    - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ rhel9cis_journal_upload_serverkeyfile }}'}
-    - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ rhel9cis_journal_servercertificatefile }}'}
-    - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ rhel9cis_journal_trustedcertificatefile }}'}
+    - { regexp: 'URL=', line: 'URL={{ remote_log_server }}'}
+    - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
+    - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
+    - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
 
 - name: "6.2.2.1.3 | PATCH | Ensure systemd-journal-remote is enabled and active"
   when:
-    - not rhel9cis_system_is_log_server
-    - rhel9cis_rule_6_2_2_1_3
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - rule_6.2.2.1.3
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-12
+    - rule_6_2_2_1_3
   ansible.builtin.systemd:
     name: systemd-journal-upload
     masked: false
@@ -170,17 +106,7 @@
 
 - name: "6.2.2.1.4 | PATCH | Ensure systemd-journal-remote service is not in use"
   when:
-    - not rhel9cis_system_is_log_server
-    - rhel9cis_rule_6_2_2_1_4
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - rule_6.2.2.1.4
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-7
-    - NIST800-53R5_AU-12
+    - rule_6_2_2_1_4
   ansible.builtin.systemd:
     name: "{{ item }}"
     state: stopped
@@ -190,23 +116,11 @@
     - systemd-journal-remote.socket
     - systemd-journal-remote.service
 
----
-
 - name: "6.2.2.2 | PATCH | Ensure journald ForwardToSyslog is disabled"
-  when: rhel9cis_rule_6_2_2_2
-  tags:
-    - level1-server
-    - level2-workstation
-    - patch
-    - journald
-    - rule_6.2.2.2
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-6
-    - NIST800-53R5_AU-7
-    - NIST800-53R5_AU-12
+  when: rule_6_2_2_2
   notify: Restart journald
   block:
-    - name: "6.2.2.2 | PATCH | Ensure journald ForwardToSyslog is disabled | Add file"
+    - name: "6.2.2.2 | Add file"
       ansible.builtin.template:
         src: etc/systemd/journald.conf.d/forwardtosyslog.conf.j2
         dest: /etc/systemd/journald.conf.d/forwardtosyslog.conf
@@ -214,24 +128,17 @@
         group: root
         mode: 'g-wx,o-rwx'
 
-    - name: "6.2.2.2 | PATCH | Ensure journald ForwardToSyslog is disabled | comment out current entries"
+    - name: "6.2.2.2 | comment out current entries"
       ansible.builtin.replace:
         path: /etc/systemd/journald.conf
         regexp: ^(\s*ForwardToSyslog)
         replace: '#\1'
 
 - name: "6.2.2.3 | PATCH | Ensure journald Compress is configured"
-  when: rhel9cis_rule_6_2_2_3
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - rule_6.2.2.3
-    - NIST800-53R5_AU-4
+  when: rule_6_2_2_3
   notify: Restart journald
   block:
-    - name: "6.2.2.3 | PATCH | Ensure journald Compress is configured | Add file"
+    - name: "6.2.2.3 | Add file"
       ansible.builtin.template:
         src: etc/systemd/journald.conf.d/storage.conf.j2  # Added to the same file as 6.2.1.1.4
         dest: /etc/systemd/journald.conf.d/storage.conf
@@ -239,25 +146,17 @@
         group: root
         mode: 'g-wx,o-rwx'
 
-    - name: "6.2.2.3 | PATCH | Ensure journald Compress is configured | comment out current entries"
+    - name: "6.2.2.3 | comment out current entries"
       ansible.builtin.replace:
         path: /etc/systemd/journald.conf
         regexp: ^(?i)(\s*compress=)
         replace: '#\1'
 
 - name: "6.2.2.4 | PATCH | Ensure journald Storage is configured"
-  when: rhel9cis_rule_6_2_2_4
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - journald
-    - rule_6.2.2.4
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_AU-12
+  when: rule_6_2_2_4
   notify: Restart journald
   block:
-    - name: "6.2.2.4 | PATCH | Ensure journald Storage is configured | Add file"
+    - name: "6.2.2.4 | Add file"
       ansible.builtin.template:
         src: etc/systemd/journald.conf.d/storage.conf.j2
         dest: /etc/systemd/journald.conf.d/storage.conf
@@ -265,59 +164,29 @@
         group: root
         mode: 'g-wx,o-rwx'
 
-    - name: "6.2.2.4 | PATCH | Ensure journald Storage is configured | comment out current entries"
+    - name: "6.2.2.4 | comment out current entries"
       ansible.builtin.replace:
         path: /etc/systemd/journald.conf
         regexp: ^(?i)(\s*storage=)
         replace: '#\1'
 
----
-
 - name: "6.2.3.1 | PATCH | Ensure rsyslog installed"
   when:
     - "'rsyslog' not in ansible_facts.packages"
-    - rhel9cis_rule_6_2_3_1
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - rsyslog
-    - rule_6.2.3.1
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_AU-12
+    - rule_6_2_3_1
   ansible.builtin.package:
     name: rsyslog
     state: present
 
 - name: "6.2.3.2 | PATCH | Ensure rsyslog Service is enabled and active"
-  when: rhel9cis_rule_6_2_3_2
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - rsyslog
-    - rule_6.2.3.2
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-3
-    - NIST800-53R5_AU-12
+  when: rule_6_2_3_2
   ansible.builtin.systemd:
     name: rsyslog
     enabled: true
     state: started
 
 - name: "6.2.3.3 | PATCH | Ensure journald is configured to send logs to rsyslog"
-  when: rhel9cis_rule_6_2_3_3
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - rule_6.2.3.3
-    - NIST800-53R5_AC-3
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-4
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_MP-2
+  when: rule_6_2_3_3
   ansible.builtin.lineinfile:
     path: /etc/systemd/journald.conf
     regexp: "^#ForwardToSyslog=|^ForwardToSyslog="
@@ -325,16 +194,7 @@
   notify: Restart rsyslog
 
 - name: "6.2.3.4 | PATCH | Ensure rsyslog log file creation mode is configured"
-  when: rhel9cis_rule_6_2_3_4
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - rsyslog
-    - rule_6.2.3.4
-    - NIST800-53R5_AC-3
-    - NIST800-53R5_AC-6
-    - NIST800-53R5_MP-2
+  when: rule_6_2_3_4
   ansible.builtin.lineinfile:
     path: /etc/rsyslog.conf
     regexp: '^\$FileCreateMode'
@@ -342,32 +202,23 @@
   notify: Restart rsyslog
 
 - name: "6.2.3.5 | PATCH | Ensure logging is configured"
-  when: rhel9cis_rule_6_2_3_5
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - rsyslog
-    - rule_6.2.3.5
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-7
-    - NIST800-53R5_AU-12
+  when: rule_6_2_3_5
   block:
-    - name: "6.2.3.5 | AUDIT | Ensure logging is configured | rsyslog current config message out"
+    - name: "6.2.3.5 | rsyslog current config message out"
       ansible.builtin.shell: cat /etc/rsyslog.conf | grep -Ev "^#|^$"
       changed_when: false
       failed_when: false
       check_mode: false
       register: discovered_configured_rsyslog
 
-    - name: "6.2.3.5 | AUDIT | Ensure logging is configured | rsyslog current config message out"
+    - name: "6.2.3.5 | rsyslog current config message out"
       ansible.builtin.debug:
         msg:
           - "These are the current logging configurations for rsyslog, please review:"
           - "{{ discovered_configured_rsyslog.stdout_lines }}"
 
-    - name: "6.2.3.5 | PATCH | Ensure logging is configured | mail.* log setting"
-      when: rhel9cis_rsyslog_ansiblemanaged
+    - name: "6.2.3.5 | mail.* log setting"
+      when: rsyslog_ansiblemanaged
       ansible.builtin.blockinfile:
         path: /etc/rsyslog.conf
         marker: "# {mark} MAIL LOG SETTINGS - CIS benchmark - Ansible-lockdown"
@@ -380,8 +231,8 @@
         insertafter: '# Log all the mail messages in one place.'
       notify: Restart rsyslog
 
-    - name: "6.2.3.5 | PATCH | Ensure logging is configured | news.crit log setting"
-      when: rhel9cis_rsyslog_ansiblemanaged
+    - name: "6.2.3.5 | news.crit log setting"
+      when: rsyslog_ansiblemanaged
       ansible.builtin.blockinfile:
         path: /etc/rsyslog.conf
         state: present
@@ -393,8 +244,8 @@
         insertafter: '# Save news errors of level crit and higher in a special file.'
       notify: Restart rsyslog
 
-    - name: "6.2.3.5 | PATCH | Ensure logging is configured | Misc. log setting"
-      when: rhel9cis_rsyslog_ansiblemanaged
+    - name: "6.2.3.5 | Misc. log setting"
+      when: rsyslog_ansiblemanaged
       ansible.builtin.blockinfile:
         path: /etc/rsyslog.conf
         state: present
@@ -407,7 +258,7 @@
         insertafter: '#### RULES ####'
       notify: Restart rsyslog
 
-    - name: "6.2.3.5 | PATCH | Ensure logging is configured | Local log settings"
+    - name: "6.2.3.5 | Local log settings"
       ansible.builtin.blockinfile:
         path: /etc/rsyslog.conf
         state: present
@@ -422,7 +273,7 @@
         insertafter: '#### RULES ####'
       notify: Restart rsyslog
 
-    - name: "6.2.3.5 | PATCH | Ensure logging is configured | Auth Settings"
+    - name: "6.2.3.5 | Auth Settings"
       ansible.builtin.blockinfile:
         path: /etc/rsyslog.conf
         state: present
@@ -433,7 +284,7 @@
         insertafter: '#### RULES ####'
       notify: Restart rsyslog
 
-    - name: "6.2.3.5 | PATCH | Ensure logging is configured | Cron Settings"
+    - name: "6.2.3.5 | Cron Settings"
       ansible.builtin.blockinfile:
         path: /etc/rsyslog.conf
         state: present
@@ -446,21 +297,14 @@
 
 - name: "6.2.3.6 | PATCH | Ensure rsyslog is configured to send logs to a remote log host"
   when:
-    - rhel9cis_rule_6_2_3_6
-    - rhel9cis_remote_log_server
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - rsyslog
-    - rule_6.2.3.6
-    - NIST800-53R5_AU-6
+    - rule_6_2_3_6
+    - remote_log_server
   ansible.builtin.blockinfile:
     path: /etc/rsyslog.conf
     state: present
     block: |
       # target can be IP or FQDN
-      *.* action(type="omfwd" target="{{ rhel9cis_remote_log_host }}" port="{{ rhel9cis_remote_log_port }}" protocol="{{ rhel9cis_remote_log_protocol }}" action.resumeRetryCount="{{ rhel9cis_remote_log_retrycount }}" queue.type="LinkedList" queue.size="{{ rhel9cis_remote_log_queuesize }}")
+      *.* action(type="omfwd" target="{{ remote_log_host }}" port="{{ remote_log_port }}" protocol="{{ remote_log_protocol }}" action.resumeRetryCount="{{ remote_log_retrycount }}" queue.type="LinkedList" queue.size="{{ remote_log_queuesize }}")
     insertafter: EOF
   failed_when:
     - discovered_rsyslog_remote_host is failed
@@ -469,20 +313,10 @@
   notify: Restart rsyslog
 
 - name: "6.2.3.7 | PATCH | Ensure rsyslog is not configured to recieve logs from a remote client"
-  when: rhel9cis_rule_6_2_3_7
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - rsyslog
-    - rule_6.2.3.7
-    - NIST800-53R5_AU-2
-    - NIST800-53R5_AU-7
-    - NIST800-53R5_AU-12
-    - NIST800-53R5_CM-6
+  when: rule_6_2_3_7
   block:
-    - name: "6.2.3.7 | PATCH | Ensure rsyslog is not configured to recieve logs from a remote client. | When not log host"
-      when: not rhel9cis_system_is_log_server
+    - name: "6.2.3.7 | When not log host"
+      when: not system_is_log_server
       ansible.builtin.replace:
         path: /etc/rsyslog.conf
         regexp: '{{ item }}'
@@ -494,8 +328,8 @@
         - '^(module\(load="imtcp"\))'
         - '^(input\(type="imtcp")'
 
-    - name: "6.2.3.7 | PATCH | Ensure rsyslog is not configured to recieve logs from a remote clients. | When log host"
-      when: rhel9cis_system_is_log_server
+    - name: "6.2.3.7 | When log host"
+      when: system_is_log_server
       ansible.builtin.replace:
         path: /etc/rsyslog.conf
         regexp: '^#(.*{{ item }}.*)'
@@ -506,28 +340,20 @@
         - 'InputTCPServerRun'
 
 - name: "6.2.3.8 | PATCH | Ensure rsyslog logrotate is configured"
-  when: rhel9cis_rule_6_2_3_8
-  tags:
-    - level1-server
-    - level1-workstation
-    - manual
-    - patch
-    - logrotate
-    - rule_6.2.3.8
-    - NIST800-53R5_AU-8
+  when: rule_6_2_3_8
   block:
-    - name: "6.2.3.8 | PATCH | Ensure rsyslog logrotate is configured | installed"
+    - name: "6.2.3.8 | installed"
       ansible.builtin.package:
         name: rsyslog-logrotate
         state: present
 
-    - name: "6.2.3.8 | PATCH | Ensure rsyslog logrotate is configured | scheduled"
+    - name: "6.2.3.8 | scheduled"
       ansible.builtin.systemd:
         name: logrotate.timer
         state: started
         enabled: true
 
-    - name: "6.2.3.8 | PATCH | Ensure logrotate is configured | set rsyslog conf"
+    - name: "6.2.3.8 | set rsyslog conf"
       ansible.builtin.template:
         src: etc/logrotate.d/rsyslog.conf.j2
         dest: /etc/logrotate.d/rsyslog.conf
@@ -535,24 +361,16 @@
         group: root
         mode: 'g-wx,o-rwx'
 
----
-
 - name: "6.2.4.1 | PATCH | Ensure access to all logfiles has been configured"
-  when: rhel9cis_rule_6_2_4_1
-  tags:
-    - level1-server
-    - level1-workstation
-    - patch
-    - logfiles
-    - rule_6.2.4.1
+  when: rule_6_2_4_1
   block:
-    - name: "6.2.4.1 | AUDIT | Ensure access to all logfiles has been configured | find log files"
+    - name: "6.2.4.1 | find log files"
       ansible.builtin.shell: find /var/log/ -type f -exec ls {} \;
       changed_when: false
       failed_when: false
       register: discovered_logfiles
 
-    - name: "6.2.4.1 | PATCH | Ensure access to all logfiles has been configured | change permissions"
+    - name: "6.2.4.1 | change permissions"
       when:
         - discovered_logfiles.stdout_lines | length > 0
         - ('audit.log' in item or 'journal' in item) or
@@ -567,7 +385,7 @@
       register: discovered_logfile_list
       loop: "{{ discovered_logfiles.stdout_lines }}"
 
-    - name: "6.2.4.1 | PATCH | Ensure access to all logfiles has been configured | change permissions"
+    - name: "6.2.4.1 | change permissions"
       when:
         - discovered_logfiles.stdout_lines | length > 0
         - ('anaconda' in item or 'dnf' in item or 'secure' in item  or 'messages' in item or 'hawkey' in item)
@@ -578,7 +396,7 @@
       register: discovered_logfile_list
       loop: "{{ discovered_logfiles.stdout_lines }}"
 
-    - name: "6.2.4.1 | PATCH | Ensure access to all logfiles has been configured | change permissions"
+    - name: "6.2.4.1 | change permissions"
       when:
         - discovered_logfiles.stdout_lines | length > 0
         - ('sssd' in item or 'lastlog' in item) or
