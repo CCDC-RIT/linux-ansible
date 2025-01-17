@@ -29,6 +29,7 @@ create_rule() {
     local application="$7"
     local action="$8"
     
+    echo "Creating rule $rule_name"
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
         --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules" \
         --data-urlencode "element=<entry name='$rule_name'>
@@ -46,6 +47,7 @@ change_rule_status() {
     local rule_name="$1"
     local action="$2"
 
+    echo "Changing status of $rule_name to $action"
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
     --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules" \
     --data-urlencode "/entry[@name=$rule_name]&element=<disabled>$action</disabled>"
@@ -78,17 +80,20 @@ inital() {
 }
 
 if [ "$1" = "init" ]; then
-    initial()
-elif [ "$1" = "fix" ]
-    fixes()
-elif [ $# -gt 1 || $# -eq 0 ]
-    echo "only one parameter allowed"
+    echo "Running initial configuration"
+    initial
+elif [ "$1" = "fix" ]; then
+    echo "Running fixes"
+    fixes
+elif [ $# -gt 1 -o $# -eq 0 ]; then
+    echo "Only one parameter allowed!"
     exit
 else
-    echo "invalid parameter, use 'init' or 'fix'"
+    echo "Invalid parameter, use 'init' or 'fix'"
     exit
 fi
 
+echo "Committing changes"
 curl -k -X POST "https://$FIREWALL_IP/api/?type=commit&key=$API_KEY" \
 	--data-urlencode "cmd=<commit><description>blue4life</description></commit>"
 
