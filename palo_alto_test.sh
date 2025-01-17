@@ -77,11 +77,11 @@ inital() {
     create_rule "test" "any" "any" "any" "any" "service-http" "any" "allow"
 }
 
-if [ "$1" -eq "init" ]; then
+if [ "$1" = "init" ]; then
     initial()
-elif [ "$1" -eq "fix" ]; then
+elif [ "$1" = "fix" ]
     fixes()
-elif [ $# -gt 1 || $# -eq 0]; then
+elif [ $# -gt 1 || $# -eq 0 ]
     echo "only one parameter allowed"
     exit
 else
