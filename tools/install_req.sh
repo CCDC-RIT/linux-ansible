@@ -19,3 +19,5 @@ mkdir -p /opt/inventory
 ssh-keygen -t ed25519 -C "ansible@rit-ccdc" -f /opt/inventory/id_ed25519 -N ""
 cp /opt/inventory/id_ed25519 $HOME/.ssh/id_ed25519
 cp /opt/inventory/id_ed25519.pub $HOME/.ssh/id_ed25519.pub
+
+echo 'Ensure that you source ~/.bashrc! Or just run this: export PATH=$HOME/.local/bin:\$PATH'
