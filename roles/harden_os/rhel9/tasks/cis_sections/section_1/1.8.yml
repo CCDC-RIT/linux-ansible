@@ -2,6 +2,7 @@
 
 - name: "1.8.1 | PATCH | Ensure GNOME Display Manager is removed"
   when:
+    - rule_1_8_1
     - "'gdm' in ansible_facts.packages"
     - not gui
   ansible.builtin.package:
@@ -10,6 +11,7 @@
 
 - name: "1.8.2 | PATCH | Ensure GDM login banner is configured"
   when:
+    - rule_1_8_2
     - gui
   block:
     - name: "1.8.2 | gdm profile"
@@ -38,6 +40,7 @@
 
 - name: "1.8.3 | PATCH | Ensure GDM disable-user-list option is enabled"
   when:
+    - rule_1_8_3
     - gui
   ansible.builtin.lineinfile:
     path: "{{ item.file }}"
@@ -57,6 +60,7 @@
 
 - name: "1.8.4 | PATCH | Ensure GDM screen locks when the user is idle"
   when:
+    rule_1_8_4
     - gui
   block:
     - name: "1.8.4 | User profile"
@@ -91,6 +95,7 @@
 
 - name: "1.8.5 | PATCH | Ensure GDM screen locks cannot be overridden"
   when:
+    - rule_1_8_5
     - gui
   block:
     - name: "1.8.5 | Make lock directory"
@@ -112,6 +117,7 @@
 
 - name: "1.8.6 | PATCH | Ensure GDM automatic mounting of removable media is disabled"
   when:
+    - rule_1_8_6
     - gui
   ansible.builtin.template:
     src: etc/dconf/db/00-media-automount.j2
@@ -123,6 +129,7 @@
 
 - name: "1.8.7 | PATCH | Ensure GDM disabling automatic mounting of removable media is not overridden"
   when:
+    - rule_1_8_7
     - gui
   block:
     - name: "1.8.7 | Make lock directory"
@@ -144,6 +151,7 @@
 
 - name: "1.8.8 | PATCH | Ensure GDM autorun-never is enabled"
   when:
+    - rule_1_8_8
     - gui
   block:
     - name: "1.8.8 | Make directory"
@@ -165,6 +173,7 @@
 
 - name: "1.8.9 | PATCH | Ensure GDM autorun-never is not overridden"
   when:
+    - rule_1_8_9
     - gui
   block:
     - name: "1.8.9 | Make lock directory"
@@ -186,6 +195,7 @@
 
 - name: "1.8.10 | PATCH | Ensure XDMCP is not enabled"
   when:
+    - rule_1_8_10
     - gui
   ansible.builtin.lineinfile:
     path: /etc/gdm/custom.conf

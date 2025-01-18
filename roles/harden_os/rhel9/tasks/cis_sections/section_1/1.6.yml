@@ -1,6 +1,7 @@
 ---
 
 - name: "1.6.1 | AUDIT | Ensure system-wide crypto policy is not legacy"
+  when: rule_1_6_1
   ansible.builtin.debug:
     msg: "Captured in prelim to ensure not LEGACY. Runs handler to update"
   notify:
@@ -8,6 +9,7 @@
     - Set Crypto Policy
 
 - name: "1.6.2 | PATCH | Ensure system wide crypto policy is not set in sshd configuration"
+  when: rule_1_6_2
   ansible.builtin.lineinfile:
     path: /etc/sysconfig/sshd
     regexp: ^CRYPTO_POLICY\s*=
@@ -16,6 +18,7 @@
 
 - name: "1.6.3 | PATCH | Ensure system wide crypto policy disables sha1 hash and signature support | Add submodule exclusion"
   when:
+    - rule_1_6_3
     - "'NO-SHA1' not in crypto_policy_module"
   block:
     - name: "1.6.3"
@@ -37,6 +40,7 @@
 
 - name: "1.6.4 | PATCH | Ensure system wide crypto policy disables macs less than 128 bits"
   when:
+    - rule_1_6_4
     - "'NO-WEAKMAC' not in crypto_policy_module"
   block:
     - name: "1.6.4 | Add submodule exclusion"
@@ -58,6 +62,7 @@
 
 - name: "1.6.5 | PATCH | Ensure system wide crypto policy disables cbc for ssh"
   when:
+    - rule_1_6_5
     - "'NO-SSHCBC' not in crypto_policy_module"
   block:
     - name: "1.6.5 | Add submodule exclusion"
@@ -79,6 +84,7 @@
 
 - name: "1.6.6 | PATCH | Ensure system wide crypto policy disables chacha20-poly1305 for ssh"
   when:
+    - rule_1_6_6
     - "'NO-SSHWEAKCIPHERS' not in crypto_policy_module"
   block:
     - name: "1.6.6 | Add submodule exclusion"
@@ -100,6 +106,7 @@
 
 - name: "1.6.7 | PATCH | Ensure system wide crypto policy disables EtM for ssh"
   when:
+    - rule_1_6_7
     - "'NO-SSHETM' not in crypto_policy_module"
   block:
     - name: "1.6.7 | Add submodule exclusion"

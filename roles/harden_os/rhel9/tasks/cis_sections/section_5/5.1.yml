@@ -1,6 +1,7 @@
 ---
 
 - name: "5.1.1 | PATCH | Ensure permissions on /etc/ssh/sshd_config are configured"
+  when: rule_5_1_1
   ansible.builtin.file:
     path: "/etc/ssh/sshd_config"
     owner: root
@@ -8,6 +9,7 @@
     mode: 'go-rwx'
 
 - name: "5.1.2 | PATCH | Ensure permissions on SSH private host key files are configured"
+  when: rule_5_1_2
   block:
     - name: "5.1.2 | Find the SSH private host keys"
       ansible.builtin.find:
@@ -28,6 +30,7 @@
         label: "{{ item.path }}"
 
 - name: "5.1.3 | PATCH | Ensure permissions on SSH public host key files are configured"
+  when: rule_5_1_3
   block:
     - name: "5.1.3 | Find the SSH public host keys"
       ansible.builtin.find:
@@ -49,6 +52,7 @@
 
 - name: "5.1.4 | PATCH | Ensure sshd Ciphers are configured"
   when:
+    - rule_5_1_4
     - "'NO-SSHWEAKCIPHERS' not in crypto_policy_module"
   block:
     - name: "5.1.4 | Add submodule exclusion"
@@ -68,6 +72,7 @@
 
 - name: "5.1.5 | PATCH | Ensure sshd KexAlgorithms is configured"
   when:
+    - rule_5_1_5
     - "'NO-SHA1' not in crypto_policy_module"
   block:
     - name: "5.1.5 | Add submodule exclusion"
@@ -87,6 +92,7 @@
 
 - name: "5.1.6 | PATCH | Ensure sshd KexAlgorithms is configured"
   when:
+    - rule_5_1_6
     - "'NO-SSHWEAKMACS' not in crypto_policy_module"
   block:
     - name: "5.1.6 | Add submodule exclusion"
@@ -105,6 +111,7 @@
         crypto_policy_module: "{{ crypto_policy_module + ':' + 'NO-SSHWEAKMACS' }}"
 
 - name: "5.1.7 | PATCH | Ensure sshd access is configured"
+  - when: rule_5_1_7
   block:
     - name: "5.1.7 | Add line to sshd_config for allowusers"
       when: "sshd_allowusers | length > 0"
@@ -143,12 +150,14 @@
       notify: Restart sshd
 
 - name: "5.1.8 | PATCH | Ensure sshd Banner is configured"
+  when: rule_5_1_8
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: '^Banner'
     line: 'Banner /etc/issue.net'
 
 - name: "5.1.9 | PATCH | Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured"
+  when: rule_5_1_9
   block:
     - name: "5.1.9 | Add line in sshd_config for ClientAliveInterval"
       ansible.builtin.lineinfile:
@@ -167,6 +176,7 @@
       notify: Restart sshd
 
 - name: "5.1.10 | PATCH | Ensure sshd DisableForwarding is enabled"
+  when: rule_5_1_10
   block:
     - name: "5.1.10 | config file"
       ansible.builtin.lineinfile:
@@ -185,6 +195,7 @@
       notify: Restart sshd
 
 - name: "5.1.11 | PATCH | Ensure sshd GSSAPIAuthentication is disabled"
+  when: rule_5_1_11
   block:
     - name: "5.1.11 | redhat file"
       ansible.builtin.lineinfile:
@@ -203,6 +214,7 @@
       notify: Restart sshd
 
 - name: "5.1.12 | PATCH | Ensure sshd HostbasedAuthentication is disabled"
+  when: rule_5_1_12
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*HostbasedAuthentication
@@ -211,6 +223,7 @@
   notify: Restart sshd
 
 - name: "5.1.13 | PATCH | Ensure sshd IgnoreRhosts is enabled"
+  when: rule_5_1_13
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*IgnoreRhosts
@@ -219,6 +232,7 @@
   notify: Restart sshd
 
 - name: "5.1.14 | PATCH | Ensure sshd LoginGraceTime is set to one minute or less"
+  when: rule_5_1_14
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*LoginGraceTime
@@ -227,6 +241,7 @@
   notify: Restart sshd
 
 - name: "5.1.15 | PATCH | Ensure sshd LogLevel is appropriate"
+  when: rule_5_1_15
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*LogLevel
@@ -235,6 +250,7 @@
   notify: Restart sshd
 
 - name: "5.1.16 | PATCH | Ensure sshd MaxAuthTries is set to 4 or less"
+  when: rule_5_1_16
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: '^(#)?MaxAuthTries \d'
@@ -243,6 +259,7 @@
   notify: Restart sshd
 
 - name: "5.1.17 | PATCH | Ensure sshd MaxStartups is configured"
+  when: rule_5_1_17
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*MaxStartups
@@ -251,6 +268,7 @@
   notify: Restart sshd
 
 - name: "5.1.18 | PATCH | Ensure SSH MaxSessions is set to 10 or less"
+  when: rule_5_1_18
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*MaxSessions
@@ -259,6 +277,7 @@
   notify: Restart sshd
 
 - name: "5.1.19 | PATCH | Ensure sshd PermitEmptyPasswords is disabled"
+  when: rule_5_1_19
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*PermitEmptyPasswords
@@ -267,6 +286,7 @@
   notify: Restart sshd
 
 - name: "5.1.20 | PATCH | Ensure sshd PermitRootLogin is disabled"
+  when: rule_5_1_20
   block:
     - name: "5.1.20 | config file"
       ansible.builtin.lineinfile:
@@ -283,6 +303,7 @@
       notify: Restart sshd
 
 - name: "5.1.21 | PATCH | Ensure sshd PermitUserEnvironment is disabled"
+  when: rule_5_1_21
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*PermitUserEnvironment
@@ -291,6 +312,7 @@
   notify: Restart sshd
 
 - name: "5.1.22 | PATCH | Ensure SSH PAM is enabled"
+  when: rule_5_1_22
   ansible.builtin.lineinfile:
     path: "{{ sshd_config_file }}"
     regexp: ^(?i)(#|)\s*UsePAM

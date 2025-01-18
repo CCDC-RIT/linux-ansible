@@ -1,5 +1,163 @@
 ---
 
+## section 1.2
+rule_1_2_1_1: true
+rule_1_2_1_2: true
+rule_1_2_1_3: true
+rule_1_2_1_4: true
+# dont run on an ec2
+rule_1_2_2_1: true
+
+## section 1.5
+rule_1_5_1: true
+rule_1_5_2: true
+rule_1_5_3: true
+rule_1_5_4: true
+
+## section 1.6
+rule_1_6_1: true
+rule_1_6_2: true
+rule_1_6_3: true
+rule_1_6_4: true
+rule_1_6_5: true
+rule_1_6_6: true
+rule_1_6_7: true
+
+## section 1.7
+rule_1_7_1: true
+rule_1_7_2: true
+rule_1_7_3: true
+rule_1_7_4: true
+rule_1_7_5: true
+rule_1_7_6: true
+
+## section 1.8
+rule_1_8_1: true
+rule_1_8_2: true
+rule_1_8_3: true
+rule_1_8_4: true
+rule_1_8_5: true
+rule_1_8_6: true
+rule_1_8_7: true
+rule_1_8_8: true
+rule_1_8_9: true
+rule_1_8_10: true
+
+## section 2.4
+rule_2_4_1_1: true
+rule_2_4_1_2: true
+rule_2_4_1_3: true
+rule_2_4_1_4: true
+rule_2_4_1_5: true
+rule_2_4_1_6: true
+rule_2_4_1_7: true
+rule_2_4_1_8: true
+rule_2_4_2_1: true
+
+## section 3.1
+rule_3_1_1: true
+rule_3_1_2: true
+rule_3_1_3: true
+
+## section 3.2
+rule_3_2_1: true
+rule_3_2_2: true
+rule_3_2_3: true
+rule_3_2_4: true
+
+##section 3.3
+rule_3_3_1: true
+rule_3_3_2: true
+rule_3_3_3: true
+rule_3_3_4: true
+rule_3_3_5: true
+rule_3_3_6: true
+rule_3_3_7: true
+rule_3_3_8: true
+rule_3_3_9: true
+rule_3_3_10: true
+rule_3_3_11: true
+
+## section 5.1
+rule_5_1_1: true
+rule_5_1_2: true
+rule_5_1_3: true
+rule_5_1_4: true
+rule_5_1_5: true
+rule_5_1_6: true
+rule_5_1_7: true
+rule_5_1_8: true
+rule_5_1_9: true
+rule_5_1_10: true
+rule_5_1_11: true
+rule_5_1_12: true
+rule_5_1_13: true
+rule_5_1_14: true
+rule_5_1_15: true
+rule_5_1_16: true
+rule_5_1_17: true
+rule_5_1_18: true
+rule_5_1_19: true
+rule_5_1_20: true
+rule_5_1_21: true
+rule_5_1_22: true
+
+## section 5.2
+rule_5_2_1: true
+rule_5_2_2: true
+rule_5_2_3: true
+rule_5_2_4: true
+rule_5_2_5: true
+rule_5_2_6: true
+rule_5_2_7: true
+
+## section 5.3
+rule_5_3_1_1: true
+rule_5_3_1_2: true
+rule_5_3_1_3: true
+rule_5_3_2_1: true
+rule_5_3_2_2: true
+rule_5_3_2_3: true
+rule_5_3_2_4: true
+rule_5_3_2_5: true
+rule_5_3_3_1_1: true
+rule_5_3_3_1_2: true
+rule_5_3_3_1_3: true
+rule_5_3_3_2_1: true
+rule_5_3_3_2_2: true
+rule_5_3_3_2_3: true
+rule_5_3_3_2_4: true
+rule_5_3_3_2_5: true
+rule_5_3_3_2_6: true
+rule_5_3_3_2_7: true
+rule_5_3_3_3_1: true
+rule_5_3_3_3_2: true
+rule_5_3_3_3_3: true
+rule_5_3_3_4_1: true
+rule_5_3_3_4_2: true
+rule_5_3_3_4_3: true
+rule_5_3_3_4_4: true
+
+## section 5.4
+rule_5_4_1_1: true
+rule_5_4_1_2: true
+rule_5_4_1_3: true
+rule_5_4_1_4: true
+rule_5_4_1_5: true
+rule_5_4_1_6: true
+rule_5_4_2_1: true
+rule_5_4_2_2: true
+rule_5_4_2_3: true
+rule_5_4_2_4: true
+rule_5_4_2_5: true
+rule_5_4_2_5: true
+rule_5_4_2_6: true
+rule_5_4_2_7: true
+rule_5_4_2_8: true
+rule_5_4_3_1: true
+rule_5_4_3_2: true
+rule_5_4_3_3: true
+
 ## section 6.1
 rule_6_1_1: true
 # dont run on an ec2
@@ -74,6 +232,32 @@ rule_6_3_4_7: true
 rule_6_3_4_8: true
 rule_6_3_4_9: true
 rule_6_3_4_10: true
+
+## section 7.1
+rule_7_1_1: true
+rule_7_1_2: true
+rule_7_1_3: true
+rule_7_1_4: true
+rule_7_1_5: true
+rule_7_1_6: true
+rule_7_1_7: true
+rule_7_1_8: true
+rule_7_1_9: true
+rule_7_1_10: true
+rule_7_1_11: true
+rule_7_1_12: true
+rule_7_1_13: true
+
+## section 7.2
+rule_7_2_1: true
+rule_7_2_2: true
+rule_7_2_3: true
+rule_7_2_4: true
+rule_7_2_5: true
+rule_7_2_6: true
+rule_7_2_7: true
+rule_7_2_8: true
+rule_7_2_9: true
 
 # for 1.2
 # when installing RHEL from authorized Red Hat source, RHEL will come with default YUM repository. NOT having a default YUM
@@ -551,3 +735,24 @@ auditd_extra_conf:
   admin_space_left: '10%'
 # this value governs if the below extra-vars for auditd should be used by the role
 auditd_extra_conf_usage: false
+
+# for 7.1
+# allow ansible to adjust world-writable files. False will just display world-writable files, True will remove world-writable.
+no_world_write_adjust: true
+
+# for 7.1
+# ensure no files or directories without an owner and a group exist
+exclude_unowned_search_path: (! -path "/run/user/*" -a ! -path "/proc/*" -a ! -path "*/containerd/*" -a ! -path "*/kubelet/pods/*" -a ! -path "*/kubelet/plugins/*" -a ! -path "/sys/fs/cgroup/memory/*" -a ! -path "/var/*/private/*")
+
+# for 7.1
+# this variable is a toggle for enabling/disabling the automated
+# setting of an owner (specified in variable `unowned_owner`)
+# for all unowned files and directories.
+# possible values are `true` and `false`.
+ownership_adjust: true
+
+# for 7.1
+# This variable is a toggle for enabling/disabling the automated removal
+# of the SUID bit from all files on all mounts.
+# Possible values are `true` and `false`.
+suid_sgid_adjust: false

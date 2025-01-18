@@ -1,6 +1,7 @@
 ---
 
 - name: "3.3.1 | PATCH | Ensure IP forwarding is disabled"
+  when: rule_3_3_1
   block:
     - name: "3.3.1 | Disable IPv4 forwarding | Set Fact"
       ansible.builtin.set_fact:
@@ -23,6 +24,7 @@
             msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv6_sysctl.conf"
 
 - name: "3.3.2 | PATCH | Ensure packet redirect sending is disabled"
+  when: rule_3_3_2
   block:
     - name: "3.3.2 | Set Fact"
       ansible.builtin.set_fact:
@@ -33,6 +35,7 @@
         msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv4_sysctl.conf"
 
 - name: "3.3.3 | PATCH | Ensure bogus ICMP responses are ignored"
+  when: rule_3_3_3
   block:
     - name: "3.3.3 | Set Fact"
       ansible.builtin.set_fact:
@@ -44,6 +47,7 @@
         msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv4_sysctl.conf"
 
 - name: "3.3.4 | PATCH | Ensure broadcast ICMP requests are ignored"
+  when: rule_3_3_4
   block:
     - name: "3.3.4 | Set Fact"
       ansible.builtin.set_fact:
@@ -55,6 +59,7 @@
         msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv4_sysctl.conf"
 
 - name: "3.3.5 | PATCH | Ensure ICMP redirects are not accepted"
+  when: rule_3_3_5
   block:
     - name: "3.3.5 | Set Fact"
       ansible.builtin.set_fact:
@@ -77,6 +82,7 @@
             msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv6_sysctl.conf"
 
 - name: "3.3.6 | PATCH | Ensure secure ICMP redirects are not accepted"
+  when: rule_3_3_6
   block:
     - name: "3.3.6 | IPv4 | Set Fact"
       ansible.builtin.set_fact:
@@ -99,6 +105,7 @@
             msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv6_sysctl.conf"
 
 - name: "3.3.7 | PATCH | Ensure Reverse Path Filtering is enabled"
+  when: rule_3_3_7
   block:
     - name: "3.3.7 | Set Fact"
       ansible.builtin.set_fact:
@@ -110,6 +117,7 @@
         msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv4_sysctl.conf"
 
 - name: "3.3.8 | PATCH | Ensure source routed packets are not accepted"
+  when: rule_3_3_8
   block:
     - name: "3.3.8 | IPv4 | Set Fact"
       ansible.builtin.set_fact:
@@ -131,6 +139,7 @@
             msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv6_sysctl.conf"
 
 - name: "3.3.9 | PATCH | Ensure suspicious packets are logged"
+  when: rule_3_3_9
   block:
     - name: "3.3.4 | Set Fact"
       ansible.builtin.set_fact:
@@ -142,6 +151,7 @@
         msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv4_sysctl.conf"
 
 - name: "3.3.10 | PATCH | Ensure TCP SYN Cookies is enabled"
+  when: rule_3_3_10
   block:
     - name: "3.3.10 | Set Fact"
       ansible.builtin.set_fact:
@@ -154,6 +164,7 @@
 
 - name: "3.3.11 | PATCH | Ensure IPv6 router advertisements are not accepted"
   when:
+    - rule_3_3_11
     - ipv6_required
   block:
     - name: "3.3.11 | IPv6 | Set Fact"
