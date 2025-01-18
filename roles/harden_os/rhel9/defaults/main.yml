@@ -5,15 +5,12 @@ rule_1_2_1_1: true
 rule_1_2_1_2: true
 rule_1_2_1_3: true
 rule_1_2_1_4: true
-# dont run on an ec2
 rule_1_2_2_1: true
-
 ## section 1.5
 rule_1_5_1: true
 rule_1_5_2: true
 rule_1_5_3: true
 rule_1_5_4: true
-
 ## section 1.6
 rule_1_6_1: true
 rule_1_6_2: true
@@ -22,7 +19,6 @@ rule_1_6_4: true
 rule_1_6_5: true
 rule_1_6_6: true
 rule_1_6_7: true
-
 ## section 1.7
 rule_1_7_1: true
 rule_1_7_2: true
@@ -30,7 +26,6 @@ rule_1_7_3: true
 rule_1_7_4: true
 rule_1_7_5: true
 rule_1_7_6: true
-
 ## section 1.8
 rule_1_8_1: true
 rule_1_8_2: true
@@ -58,13 +53,11 @@ rule_2_4_2_1: true
 rule_3_1_1: true
 rule_3_1_2: true
 rule_3_1_3: true
-
 ## section 3.2
 rule_3_2_1: true
 rule_3_2_2: true
 rule_3_2_3: true
 rule_3_2_4: true
-
 ##section 3.3
 rule_3_3_1: true
 rule_3_3_2: true
@@ -101,7 +94,6 @@ rule_5_1_19: true
 rule_5_1_20: true
 rule_5_1_21: true
 rule_5_1_22: true
-
 ## section 5.2
 rule_5_2_1: true
 rule_5_2_2: true
@@ -110,7 +102,6 @@ rule_5_2_4: true
 rule_5_2_5: true
 rule_5_2_6: true
 rule_5_2_7: true
-
 ## section 5.3
 rule_5_3_1_1: true
 rule_5_3_1_2: true
@@ -137,7 +128,6 @@ rule_5_3_3_4_1: true
 rule_5_3_3_4_2: true
 rule_5_3_3_4_3: true
 rule_5_3_3_4_4: true
-
 ## section 5.4
 rule_5_4_1_1: true
 rule_5_4_1_2: true
@@ -160,23 +150,16 @@ rule_5_4_3_3: true
 
 ## section 6.1
 rule_6_1_1: true
-# dont run on an ec2
 rule_6_1_2: true
-# dont run on an ec2
 rule_6_1_3: true
-
 ## section 6.2
 rule_6_2_1_1: true
 rule_6_2_1_2: true
 rule_6_2_1_3: true
 rule_6_2_1_4: true
-# dont run on 'log server'
 rule_6_2_2_1_1: true
-# dont run on 'log server'
 rule_6_2_2_1_2: true
-# dont run on 'log server'
 rule_6_2_2_1_3: true
-# dont run on 'log server'
 rule_6_2_2_1_4: true
 rule_6_2_2_2: true
 rule_6_2_2_3: true
@@ -190,8 +173,6 @@ rule_6_2_3_6: true
 rule_6_2_3_7: true
 rule_6_2_3_8: true
 rule_6_2_4_1: true
-
-
 # section 6.3
 rule_6_3_1_1: true
 rule_6_3_1_2: true
@@ -247,7 +228,6 @@ rule_7_1_10: true
 rule_7_1_11: true
 rule_7_1_12: true
 rule_7_1_13: true
-
 ## section 7.2
 rule_7_2_1: true
 rule_7_2_2: true

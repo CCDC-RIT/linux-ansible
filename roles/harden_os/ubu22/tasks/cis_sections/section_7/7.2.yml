@@ -15,7 +15,6 @@
           - "Warning!! You have users that are not using a shadowed password. Please convert the below accounts to use a shadowed password"
           - "{{ discovered_nonshadowed_users.stdout_lines }}"
 
-
 - name: "7.2.2 | PATCH | Ensure /etc/shadow password fields are not empty"
   when: rule_7_2_2
   block:
@@ -76,7 +75,6 @@
       when: discovered_user_uid_check.stdout | length > 0
       ansible.builtin.debug:
         msg: "Warning!! The following users have UIDs that are duplicates: {{ discovered_user_uid_check.stdout_lines }}"
-
 
 - name: "7.2.6 | AUDIT | Ensure no duplicate GIDs exist"
   when: rule_7_2_6

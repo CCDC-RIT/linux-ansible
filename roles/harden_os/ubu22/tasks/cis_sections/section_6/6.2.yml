@@ -34,7 +34,6 @@
       ansible.builtin.debug:
         msg: "Warning!! - tmpfiles override found /usr/lib/tmpfiles.d/systemd.conf affecting journald files please confirm matches site policy"
 
-
 - name: "6.2.1.1.3 | PATCH | Ensure journald log file rotation is configured"
   when: rule_6_2_1_1_3
   block:

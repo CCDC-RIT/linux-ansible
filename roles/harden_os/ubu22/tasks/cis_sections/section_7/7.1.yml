@@ -102,7 +102,7 @@
       changed_when: false
       register: discovered_worldwriteable_files
 
-#set to false for now justin says no
+      #set to false for now justin says no
     - name: "7.1.11 | Adjust world-writable files if they exist (Configurable)"
       when:
         - false
@@ -144,7 +144,7 @@
           - "Please review the files/directories below and assign an owner"
           - "{{ discovered_unowned_files_flatten }}"
 
-  #we will review these manually for now
+      #we will review these manually for now
     - name: "7.1.12 | PATCH | Set files/directories to configured owner and group"
       when:
         - flase
@@ -182,7 +182,7 @@
           - "The files are listed below, please confirm the integrity of these binaries"
           - "{{ discovered_suid_sgid_files_flatten }}"
 
-  #we will review these manually
+      #we will review these manually
     - name: "7.1.13 | PATCH | Audit SUID executables | Remove SUID bit"
       when:
         - false
