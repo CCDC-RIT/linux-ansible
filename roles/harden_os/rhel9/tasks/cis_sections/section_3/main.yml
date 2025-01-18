@@ -9,5 +9,7 @@
     file: 3.2.yml
 
 - name: "SECTION | 3.3 | Configure Network Kernel Parameters"
+  when:
+    - not system_is_container
   ansible.builtin.import_tasks:
     file: 3.3.yml

@@ -60,7 +60,7 @@
 
 - name: "1.8.4 | PATCH | Ensure GDM screen locks when the user is idle"
   when:
-    rule_1_8_4
+    - rule_1_8_4
     - gui
   block:
     - name: "1.8.4 | User profile"

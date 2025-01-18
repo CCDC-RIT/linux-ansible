@@ -21,3 +21,9 @@ system_is_ec2: false
 
 # if the target is a container set this to true
 system_is_container: false
+
+# the filename of the existing yml file in role's  'vars/' sub-directory
+# to be used for managing the role-behavior when a container was detected:
+# (de)activating rules or for other tasks(e.g. disabling Selinux or a specific
+# firewall-type).
+container_vars_file: is_container.yml

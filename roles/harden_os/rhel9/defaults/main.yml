@@ -259,6 +259,13 @@ rule_7_2_7: true
 rule_7_2_8: true
 rule_7_2_9: true
 
+# for auditd
+# this variable governs if defining user exceptions for auditd logging is acceptable.
+allow_auditd_uid_user_exclusions: false
+# this variable contains a list of uids to be excluded(users whose actions are not logged by auditd)
+auditd_uid_exclude:
+  - 1999
+
 # for 1.2
 # when installing RHEL from authorized Red Hat source, RHEL will come with default YUM repository. NOT having a default YUM
 # repo ('rhel_default_repo' set as 'false'), in conjunction with 'rule_enable_repogpg' set as 'True', will enable the tasks
@@ -673,6 +680,32 @@ remote_log_retrycount: 100
 # of rsyslog forwarding must be enabled('remote_log_server: true').
 remote_log_queuesize: 1000
 
+# for 6.2
+# current variable configures the max amount of disk space the logs will use(thus, journal files
+# will not grow without bounds)
+# the variables below related to journald, please set these to your site specific values
+# these variable specifies how much disk space the journal may use up at most
+# specify values in bytes or use K, M, G, T, P, E as units for the specified sizes.
+# see https://www.freedesktop.org/software/systemd/man/journald.conf.html for more information.
+journald_systemmaxuse: 10M
+# Current variable configures the amount of disk space to keep free for other uses.
+journald_systemkeepfree: 100G
+# This variable configures how much disk space the journal may use up at most.
+# Similar with 'journald_systemmaxuse', but related to runtime space.
+journald_runtimemaxuse: 10M
+# this variable configures the actual amount of disk space to keep free
+# similar with 'journald_systemkeepfree', but related to runtime space.
+journald_runtimekeepfree: 100G
+# current variable governs the settings for log retention(how long the log files will be kept).
+# thus, it specifies the maximum time to store entries in a single journal
+# file before rotating to the next one. Set to 0 to turn off this feature.
+# the given values is interpreted as seconds, unless suffixed with the units
+# `year`, `month`, `week`, `day`, `h` or `m` to override the default time unit of seconds.
+# values are Xm, Xh, Xday, Xweek, Xmonth, Xyear, for example 2week is two weeks
+# ATTENTION: Uncomment the keyword below when values are set!
+journald_maxfilesec: 1month
+
+
 # for 6.3
 # this variable represents the audit backlog limit, i.e., the maximum number of audit records that the
 # system can buffer in memory, if the audit subsystem is unable to process them in real-time.
@@ -756,3 +789,24 @@ ownership_adjust: true
 # of the SUID bit from all files on all mounts.
 # Possible values are `true` and `false`.
 suid_sgid_adjust: false
+
+# for 7.2
+# UID settings for interactive users
+# these are discovered via logins.def if set true
+discover_int_uid: true
+# this variable sets the minimum number from which to search for UID
+# note that the value will be dynamically overwritten if variable `dicover_int_uid` has
+# been set to `true`.
+min_int_uid: 1000
+### Controls:
+# - Ensure local interactive user home directories exist
+# - Ensure local interactive users own their home directories
+# this variable sets the maximum number at which the search stops for UID
+# note that the value will be dynamically overwritten if variable `dicover_int_uid` has
+# been set to `true`.
+max_int_uid: 65533
+
+# for post
+# this variable governs if the task which updates sysctl(including sysctl reload) is executed.
+# NOTE: The current default value is likely to be overriden by other further tasks(via 'set_fact').
+sysctl_update: false

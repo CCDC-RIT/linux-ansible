@@ -1,7 +1,7 @@
-call each sections main here
-have this get executed by the main playbook
+#call each sections main here
+#have this get executed by the main playbook
 
-reinstall core services (pam, ssh, etc.)
+#reinstall core services (pam, ssh, etc.)
 
 - name: "CIS Benchmark | prelims"
   ansible.builtin.import_tasks:

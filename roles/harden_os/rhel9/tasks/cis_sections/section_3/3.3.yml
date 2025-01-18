@@ -1,7 +1,8 @@
 ---
 
 - name: "3.3.1 | PATCH | Ensure IP forwarding is disabled"
-  when: rule_3_3_1
+  when: 
+    - rule_3_3_1
   block:
     - name: "3.3.1 | Disable IPv4 forwarding | Set Fact"
       ansible.builtin.set_fact:
