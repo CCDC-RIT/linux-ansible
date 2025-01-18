@@ -6,22 +6,23 @@
     update_cache: yes
 
 - name: Get list of PAM-related packages
-  shell: "dpkg -S /etc/pam.d/* | cut -d ':' -f 1 | sort | uniq | grep -v 'openssh-server'"
+  shell: "dpkg -S /etc/pam.d/* | cut -d ':' -f 1 | sort | uniq"
   register: pam_packages
-  ignore_errors: yes
+  ignore_errors: true
 
-- name: Reinstall PAM-related packages (excluding openssh-server)
+- name: Reinstall PAM-related packages 
   shell: "apt-get reinstall {{ item }}"
   loop: "{{ pam_packages.stdout_lines }}"
   ignore_errors: true
 
-- name: Reinstall static packages (excluding openssh-server)
+- name: Reinstall static packages 
   shell: "apt-get reinstall {{ item }}"
   loop:
     - coreutils
     - passwd
     - git
     - vim
+    - openssh-server
   ignore_errors: true
 
 - name: Apt - Ensure debsums is installed

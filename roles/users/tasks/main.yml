@@ -9,6 +9,10 @@
   ansible.builtin.shell: "awk -F: 'NR==FNR {shells[$1]; next} $NF in shells' /etc/shells /etc/passwd | grep -ve blueteam -e blackteam -e whiteteam -e black_team -e black-team -e white-team -e white_team | cut -d ':' -f 1"
   register: users
 
+- name: Filter out packet_users from users with shells
+  set_fact:
+    non_packet_users: "{{ users_with_shells.stdout_lines | difference(packet_users) }}"
+
 - name: for each user, generate a new password using openssl and create a dict user -> password
   become: true
   shell: |
@@ -64,12 +68,18 @@
   loop: "{{ users.stdout_lines }}"
   ignore_errors: yes
   
-- name: Honeypot those bitches
+- name: Run honeypot script
   include_tasks: honeypot.yml
 
 - name: Honeypot each user by setting their shell to /bin/redd
   ansible.builtin.user:
     name: "{{ item }}"
     shell: /bin/redd
-  loop: "{{ users.stdout_lines }}"
+  loop: "{{ packet_users }}"
 
+- name: Block non-packet users
+  ansible.builtin.user:
+    name: "{{ item }}"
+    shell: /sbin/nologin
+  loop: "{{ non_packet_users }}"
+  ignore_errors: yes
