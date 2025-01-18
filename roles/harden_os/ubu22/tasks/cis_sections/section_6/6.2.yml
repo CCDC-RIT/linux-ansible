@@ -1,12 +1,14 @@
 ---
 
 - name: "6.2.1.1.1 | PATCH | Ensure journald service is enabled and active"
+  when: rule_6_2_1_1_1
   ansible.builtin.systemd:
     name: systemd-journald.service
     masked: false
     state: started
 
 - name: "6.2.1.1.2 | PATCH | Ensure journald log file access is configured"
+  when: rule_6_2_1_1_2
   block:
     - name: "6.2.1.1.2 | Default file permissions"
       ansible.builtin.file:
@@ -34,6 +36,7 @@
 
 
 - name: "6.2.1.1.3 | PATCH | Ensure journald log file rotation is configured"
+  when: rule_6_2_1_1_3
   block:
     - name: "6.2.1.1.3 | Add file"
       ansible.builtin.template:
@@ -58,6 +61,7 @@
       notify: Restart journald
 
 - name: "6.2.1.1.4 | PATCH | Ensure journald ForwardToSyslog is disabled"
+  when: rule_6_2_1_1_4
   block:
     - name: "6.2.1.1.4 | Add file"
       ansible.builtin.template:
@@ -76,6 +80,7 @@
       notify: Restart journald
 
 - name: "6.2.1.1.5 | PATCH | Ensure journald Storage is configured"
+  when: rule_6_2_1_1_5
   block:
     - name: "6.2.1.1.5 | Add file"
       ansible.builtin.template:
@@ -94,6 +99,7 @@
       notify: Restart journald
 
 - name: "6.2.1.1.6 | PATCH | Ensure journald Compress is configured"
+  when: rule_6_2_1_1_6
   block:
     - name: "6.2.1.1.6 | Add file"
       ansible.builtin.template:
@@ -112,6 +118,7 @@
       notify: Restart journald
 
 - name: "6.2.2.1 | PATCH | Ensure access to all logfiles has been configured"
+  when: rule_6_2_2_1
   block:
     - name: "6.2.2.1 | find files"
       ansible.builtin.shell: find /var/log/ -type f -exec ls {} \;

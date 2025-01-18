@@ -3,4 +3,4 @@ Default: yes
 Priority: 1024
 Password-Type: Primary
 Password:
-        requisite                       pam_pwhistory.so enforce_for_root try_first_pass remember=24 enforce_for_root use_authtok
+        requisite                       pam_pwhistory.so enforce_for_root try_first_pass{% if rule_5_3_3_3_1 %} remember={{ pamd_pwhistory_remember }}{% endif %}{% if rule_5_3_3_3_2 %} enforce_for_root{% endif %}{% if rule_5_3_3_3_3 %} use_authtok{% endif %}

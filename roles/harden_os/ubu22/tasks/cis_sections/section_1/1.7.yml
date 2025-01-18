@@ -2,13 +2,17 @@
 
 - name: "1.7.1 | PATCH | Ensure GDM is removed"
 when:
+  - rule_1_7_1
+  - disruption_high
   - not desktop_required
+  - "'gdm3' in ansible_facts.packages"
   ansible.builtin.package:
     name: gdm3
     state: absent
 
 - name: "1.7.2 | PATCH | Ensure GDM login banner is configured"
   when:
+    - rule_1_7_2
     - desktop_required
   block:
     - name: "1.7.2 | make directory"
@@ -37,6 +41,7 @@ when:
 
 - name: "1.7.3 | PATCH | Ensure GDM disable-user-list option is enabled"
   when:
+    - rule_1_7_3
     - desktop_required
   block:
     - name: "1.7.3 | make directories"
@@ -85,6 +90,7 @@ when:
 
 - name: "1.7.4 | PATCH | Ensure GDM screen locks when the user is idle"\
   when:
+    - rule_1_7_4
     - desktop_required
   block:
     - name: "1.7.4 | session profile"
@@ -121,6 +127,7 @@ when:
 
 - name: "1.7.5 | PATCH | Ensure GDM screen locks cannot be overridden"
   when:
+    - rule_1_7_5
     - desktop_required
   block:
     - name: "1.7.5 | make lock directory"
@@ -143,6 +150,7 @@ when:
 
 - name: "1.7.6 | PATCH | Ensure GDM automatic mounting of removable media is disabled"
   when:
+    - rule_1_7_6
     - desktop_required
   block:
     - name: "1.7.6 | make directory"
@@ -165,6 +173,7 @@ when:
 
 - name: "1.7.7 | PATCH | Ensure GDM disabling automatic mounting of removable media is not overridden"
   when:
+    - rule_1_7_7
     - desktop_required
   block:
     - name: "1.7.7 | make lock directory"
@@ -187,6 +196,7 @@ when:
 
 - name: "1.7.8 | PATCH | Ensure GDM autorun-never is enabled"
   when:
+    - rule_1_7_8
     - desktop_required
   block:
     - name: "1.7.8 | make directory"
@@ -209,6 +219,7 @@ when:
 
 - name: "1.7.9 | PATCH | Ensure GDM autorun-never is not overridden"
   when:
+    - rule_1_7_9
     - desktop_required
   block:
     - name: "1.7.9 | make lock directory"
@@ -231,6 +242,7 @@ when:
 
 - name: "1.7.10 | PATCH | Ensure XDCMP is not enabled"
   when:
+    - rule_1_7_10
     - desktop_required
   ansible.builtin.lineinfile:
     path: /etc/gdm3/custom.conf

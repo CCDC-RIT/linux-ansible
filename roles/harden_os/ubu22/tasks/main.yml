@@ -3,29 +3,66 @@
 
 #reinstall core services (pam, ssh, etc.)
 
+- name: Check OS version and family
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+  tags: always
+  ansible.builtin.fail:
+    msg: "This role can only be run against Ubuntu 22. {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }} is not supported."
+
+# we need to set something up a register earlier in our playbook that this can read to know if it is a kube node or a container
+- name: Setup rules if container
+  when:
+    - is_target_container == 'docker' or
+      ansible_facts.virtualization_type in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+    - container_discovery
+    - always
+  block:
+    - name: Discover and set container variable if required
+      ansible.builtin.set_fact:
+        system_is_container: true
+
+    - name: Load variable for container
+      ansible.builtin.include_vars:
+        file: "{{ container_vars_file }}"
+
+    - name: Output if discovered is a container
+      when: system_is_container
+      ansible.builtin.debug:
+        msg: system has been discovered as a container
+
 - name: "CIS Benchmark | prelims"
   ansible.builtin.import_tasks:
     file: prelim.yml
 
 - name: "CIS Benchmark | section 1"
+  when: section_1
   ansible.builtin.import_tasks:
     file: cis_sections/section_1/main.yml
 
 - name: "CIS Benchmark | section 3"
+  when: section_3
   ansible.builtin.import_tasks:
     file: cis_sections/section_3/main.yml
 
 - name: "CIS Benchmark | section 5"
+  when: section_5
   ansible.builtin.import_tasks:
     file: cis_sections/section_5/main.yml
 
 - name: "CIS Benchmark | section 6"
+  when: section_6
   ansible.builtin.import_tasks:
     file: cis_sections/section_6/main.yml
 
 - name: "CIS Benchmark | section 7"
+  when: section_7
   ansible.builtin.import_tasks:
     file: cis_sections/section_7/main.yml
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: ClamAV
   ansible.builtin.import_tasks: 
@@ -38,3 +75,18 @@
 - name: AIDE
   ansible.builtin.import_tasks:
     file: aide.yml
+
+- name: Reboot system
+  tags: always
+  block:
+    - name: Reboot system if not skipped
+      when:
+        - change_requires_reboot
+      ansible.builtin.reboot:
+
+    - name: Warning a reboot required but skip option set
+      when:
+        - change_requires_reboot
+      ansible.builtin.debug:
+        msg: "Warning!! changes have been made that require a reboot to be implemented but skip reboot was set - Can affect compliance check results"
+      changed_when: true

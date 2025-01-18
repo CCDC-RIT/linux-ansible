@@ -1,3 +1,166 @@
+---
+
+### Section 1
+section_1: true
+section_1_2: true
+section_1_5: true
+section_1_6: true
+## section 1.2
+rule_1_2_1_1: true
+rule_1_2_1_2: true
+rule_1_2_2_1: true
+## section 1.5
+rule_1_5_1: true
+rule_1_5_2: true
+rule_1_5_3: true
+rule_1_5_4: true
+## section 1.6
+rule_1_6_1: true
+rule_1_6_2: true
+rule_1_6_3: true
+rule_1_6_4: true
+rule_1_6_5: true
+rule_1_6_6: true
+
+### Section 3
+section_3: true
+section_3_1: true
+section_3_2: true
+section_3_3: true
+## section 3.1
+rule_3_1_1: true
+rule_3_1_2: true
+rule_3_1_3: true
+## section 3.2
+rule_3_2_1: true
+rule_3_2_2: true
+rule_3_2_3: true
+rule_3_2_4: true
+## section 3.3
+rule_3_3_1: true
+rule_3_3_2: true
+rule_3_3_3: true
+rule_3_3_4: true
+rule_3_3_5: true
+rule_3_3_6: true
+rule_3_3_7: true
+rule_3_3_8: true
+rule_3_3_9: true
+rule_3_3_10: true
+rule_3_3_11: true
+
+### Section 5
+section_5: true
+section_5_2: true
+section_5_3: true
+section_5_4: true
+## section 5.2
+rule_5_2_1: true
+rule_5_2_2: true
+rule_5_2_3: true
+rule_5_2_4: true
+rule_5_2_5: true
+rule_5_2_6: true
+rule_5_2_7: true
+## section 5.3
+rule_5_3_1_1: true
+rule_5_3_1_2: true
+rule_5_3_1_3: true
+rule_5_3_2_1: true
+rule_5_3_2_2: true
+rule_5_3_2_3: true
+rule_5_3_2_4: true
+rule_5_3_3_1_1: true
+rule_5_3_3_1_2: true
+rule_5_3_3_1_3: true
+rule_5_3_3_2_1: true
+rule_5_3_3_2_2: true
+rule_5_3_3_2_3: true
+rule_5_3_3_2_4: true
+rule_5_3_3_2_5: true
+rule_5_3_3_2_6: true
+rule_5_3_3_2_7: true
+rule_5_3_3_2_8: true
+rule_5_3_3_3_1: true
+rule_5_3_3_3_2: true
+rule_5_3_3_3_3: true
+rule_5_3_3_4_1: true
+rule_5_3_3_4_2: true
+rule_5_3_3_4_3: true
+rule_5_3_3_4_4: true
+## section 5.4
+rule_5_4_1_1: true
+rule_5_4_1_2: true
+rule_5_4_1_3: true
+rule_5_4_1_4: true
+rule_5_4_1_5: true
+rule_5_4_1_6: true
+rule_5_4_2_1: true
+rule_5_4_2_2: true
+rule_5_4_2_3: true
+rule_5_4_2_4: true
+rule_5_4_2_5: true
+rule_5_4_2_6: true
+rule_5_4_2_7: true
+rule_5_4_2_8: true
+rule_5_4_3_1: true
+rule_5_4_3_2: true
+rule_5_4_3_3: true
+
+### Section 6
+section_6: true
+section_6_2: true
+## section 6.2
+rule_6_2_1_1_1: true
+rule_6_2_1_1_2: true
+rule_6_2_1_1_3: true
+rule_6_2_1_1_4: true
+rule_6_2_1_1_5: true
+rule_6_2_1_1_6: true
+rule_6_2_2_1: true
+
+### Section 7
+section_7: true
+section_7_1: true
+section_7_2: true
+## section 7.1
+rule_7_1_1: true
+rule_7_1_2: true
+rule_7_1_3: true
+rule_7_1_4: true
+rule_7_1_5: true
+rule_7_1_6: true
+rule_7_1_7: true
+rule_7_1_8: true
+rule_7_1_9: true
+rule_7_1_10: true
+rule_7_1_11: true
+rule_7_1_12: true
+rule_7_1_13: true
+## section 7.2
+rule_7_2_1: true
+rule_7_2_2: true
+rule_7_2_3: true
+rule_7_2_4: true
+rule_7_2_5: true
+rule_7_2_6: true
+rule_7_2_7: true
+rule_7_2_8: true
+rule_7_2_9: true
+rule_7_2_10: true
+
+
+# the role discovers dynamically (in tasks/main.yml) whether it
+# is executed on a container image and sets the variable
+# system_is_container the true. Otherwise, the default value
+# 'false' is left unchanged.
+container_vars_file: is_container.yml
+
+# skip events for EC2 instance testing pipeline.
+# this variable is set to true for automated tests
+# carried out for this role by the role maintainers.
+system_is_ec2: false
+
 # for section 1.7
 # if a desktop is required set this as true, then security settings will be applied to secure GDM
 # if a desktop is not required set this as false, then GDM will be removed
@@ -49,6 +212,22 @@ pam_create_pwquality_files: true
 # for 5.3
 # allow new file to be created or overwrite existing with same name
 pam_create_pwhistory_files: true
+
+# for 6.2
+# these variable specifies how much disk space the journal may use up at most
+# specify values in bytes or use K, M, G, T, P, E as units for the specified sizes.
+# see https://www.freedesktop.org/software/systemd/man/journald.conf.html for more information.
+# ATTENTION: Uncomment the keyword below when values are set!
+journald_systemmaxuse: 10M
+journald_systemkeepfree: 100G
+journald_runtimemaxuse: 10M
+journald_runtimekeepfree: 100G
+# this variable specifies, the maximum time to store entries in a single journal
+# file before rotating to the next one. Set to 0 to turn off this feature.
+# the given values is interpreted as seconds, unless suffixed with the units
+# `year`, `month`, `week`, `day`, `h` or `m` to override the default time unit of seconds.
+# ATTENTION: Uncomment the keyword below when values are set!
+journald_maxfilesec: 1month
 
 # for pam password complexity
 passwd_minlen_value: 14 # minlen = minimum password length

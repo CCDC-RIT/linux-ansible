@@ -1,5 +1,6 @@
 ---
 - name: "7.2.1 | AUDIT | Ensure accounts in /etc/passwd use shadowed passwords"
+  when: rule_7_2_1
   block:
     - name: "7.2.1 | Get users not using shadowed passwords"
       ansible.builtin.shell: awk -F':' '($2 != "x" ) { print $1}' /etc/passwd
@@ -16,6 +17,7 @@
 
 
 - name: "7.2.2 | PATCH | Ensure /etc/shadow password fields are not empty"
+  when: rule_7_2_2
   block:
     - name: "7.2.2 | Find users with no password"
       ansible.builtin.shell: awk -F":" '($2 == "" ) { print $1 }' /etc/shadow
@@ -32,6 +34,7 @@
         - "{{ discovered_empty_password_acct.stdout_lines }}"
 
 - name: "7.2.3 | AUDIT | Ensure all groups in /etc/passwd exist in /etc/group"
+  when: rule_7_2_3
   block:
     - name: "7.2.3 | Check /etc/passwd entries"
       ansible.builtin.shell: pwck -r | grep 'no group' | awk '{ gsub("[:\47]",""); print $2}'
@@ -46,6 +49,7 @@
         msg: "Warning!! The following users have non-existent GIDs (Groups): {{ discovered_passwd_gid_check.stdout_lines | join(', ') }}"
 
 - name: "7.2.4 | PATCH | Ensure shadow group is empty"
+  when: rule_7_2_4
   block:
     - name: "7.2.4 | check users in group"
       ansible.builtin.getent:
@@ -59,6 +63,7 @@
       when: ansible_facts.getent_group.shadow[2] | length > 0
 
 - name: "7.2.5 | AUDIT | Ensure no duplicate UIDs exist"
+  when: rule_7_2_5
   block:
     - name: "7.2.5 | Check for duplicate UIDs"
       ansible.builtin.shell: "pwck -r | awk -F: '{if ($3 in uid) print $1 ; else uid[$3]}' /etc/passwd"
@@ -74,6 +79,7 @@
 
 
 - name: "7.2.6 | AUDIT | Ensure no duplicate GIDs exist"
+  when: rule_7_2_6
   block:
     - name: "7.2.6 | Check for duplicate GIDs"
       ansible.builtin.shell: "pwck -r | awk -F: '{if ($3 in users) print $1 ; else users[$3]}' /etc/group"
@@ -88,6 +94,7 @@
         msg: "Warning!! The following groups have duplicate GIDs: {{ discovered_user_gid_check.stdout_lines }}"
 
 - name: "7.2.7 | AUDIT | Ensure no duplicate user names exist"
+  when: rule_7_2_7
   block:
     - name: "7.2.7 | Check for duplicate User Names"
       ansible.builtin.shell: "pwck -r | awk -F: '{if ($1 in users) print $1 ; else users[$1]}' /etc/passwd"
@@ -102,6 +109,7 @@
         msg: "Warning!! The following user names are duplicates: {{ discovered_dup_username.stdout_lines }}"
 
 - name: "7.2.8 | AUDIT | Ensure no duplicate group names exist"
+  when: rule_7_2_8
   block:
     - name: "7.2.8 | Check for duplicate group names"
       ansible.builtin.shell: "getent passwd | cut -d: -f1 | sort -n | uniq -d"
@@ -116,6 +124,7 @@
         msg: "Warning!! The following group names are duplicates: {{ discovered_dup_group.stdout_lines }}"
 
 - name: "7.2.9 | PATCH | Ensure local interactive user home directories are configured"
+  when: rule_7_2_9
   block:
     - name: "7.2.9 | Create dir if absent"
       ansible.builtin.file:  # noqa risky-file-permissions
@@ -150,6 +159,7 @@
 
 - name: "7.2.10 | PATCH | Ensure local interactive user dot files access is configured"
   when:
+    - rule_7_2_10
     - disruption_high
   block:
     - name: "7.2.10 | Check for files"

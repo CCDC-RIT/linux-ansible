@@ -1,6 +1,7 @@
 ---
 
 - name: "3.3.1 | PATCH | Ensure IP forwarding is disabled"
+  when: rule_3_3_1
   block:
     - name: "3.3.1 | IPv4 settings"
       ansible.posix.sysctl:
@@ -26,6 +27,7 @@
       notify: Flush ipv6 route table
 
 - name: "3.3.2 | PATCH | Ensure packet redirect sending is disabled"
+  when: rule_3_3_2
   ansible.posix.sysctl:
     name: "{{ item }}"
     value: '0'
@@ -40,6 +42,7 @@
   notify: Flush ipv4 route table
 
 - name: "3.3.3 | PATCH | Ensure bogus ICMP responses are ignored"
+  when: rule_3_3_3
   ansible.posix.sysctl:
     name: net.ipv4.icmp_ignore_bogus_error_responses
     value: '1'
@@ -51,6 +54,7 @@
   notify: Flush ipv4 route table
 
 - name: "3.3.4 | PATCH | Ensure broadcast ICMP requests are ignored"
+  when: rule_3_3_4
   ansible.posix.sysctl:
     name: net.ipv4.icmp_echo_ignore_broadcasts
     value: '1'
@@ -62,6 +66,7 @@
   notify: Flush ipv4 route table
 
 - name: "3.3.5 | PATCH | Ensure ICMP redirects are not accepted"
+  when: rule_3_3_5
   block:
     - name: "3.3.5 | IPv4 settings"
       ansible.posix.sysctl:
@@ -93,6 +98,7 @@
       notify: Flush ipv6 route table
 
 - name: "3.3.6 | PATCH | Ensure secure ICMP redirects are not accepted"
+  when: rule_3_3_6
   ansible.posix.sysctl:
     name: "{{ item }}"
     value: '0'
@@ -107,6 +113,7 @@
   notify: Flush ipv4 route table
 
 - name: "3.3.7 | PATCH | Ensure Reverse Path Filtering is enabled"
+  when: rule_3_3_7
   ansible.posix.sysctl:
     name: "{{ item }}"
     value: '1'
@@ -121,6 +128,7 @@
   notify: Flush ipv4 route table
 
 - name: "3.3.8 | PATCH | Ensure source routed packets are not accepted"
+  when: rule_3_3_8
   block:
     - name: "3.3.8 | IPv4 settings"
       ansible.posix.sysctl:
@@ -152,6 +160,7 @@
       notify: Flush ipv6 route table
 
 - name: "3.3.9 | PATCH | Ensure suspicious packets are logged"
+  when: rule_3_3_9
   ansible.posix.sysctl:
     name: "{{ item }}"
     value: '1'
@@ -166,6 +175,7 @@
   notify: Flush ipv4 route table
 
 - name: "3.3.10 | PATCH | Ensure tcp syn cookies is enabled"
+  when: rule_3_3_10
   ansible.posix.sysctl:
     name: net.ipv4.tcp_syncookies
     value: '1'
@@ -178,6 +188,7 @@
 
 - name: "3.3.11 | PATCH | Ensure IPv6 router advertisements are not accepted"
   when:
+    - rule_3_3_11
     - ipv6_required
   ansible.posix.sysctl:
     name: "{{ item }}"

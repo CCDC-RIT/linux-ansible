@@ -1,6 +1,7 @@
 ---
 
 - name: "section 1.2.1.1 | AUDIT | Ensure GPG keys are configured"
+  when: rule_1_2_1_1
   block:
     - name: "1.2.1.1 | get apt gpg keys"
       ansible.builtin.command: apt-key list
@@ -18,6 +19,7 @@
           - "{{ discovered_apt_gpgkeys.stdout_lines }}"
 
 - name: "1.2.1.2 | AUDIT | Ensure package manager repositories are configured"
+  when: rule_1_2_1_2
   block:
     - name: "1.2.1.2 | get repositories"
       ansible.builtin.command: apt-cache policy
@@ -34,6 +36,7 @@
           - "{{ discovered_apt_policy.stdout_lines }}"
 
 - name: "1.2.2.1 | PATCH | Ensure updates, patches, and aditional security software are installed"
+  when: rule_1_2_2_1
   ansible.builtin.package:
     name: "*"
     state: latest
