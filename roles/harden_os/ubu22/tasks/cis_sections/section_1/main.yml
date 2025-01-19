@@ -1,17 +1,21 @@
 ---
 
 - name: "SECTION | 1.2 | Configure Package Repositories and Updated"
+  when: section_1_2
   ansible.builtin.import_tasks:
     file: 1.2.yml
 
 - name: "SECTION | 1.5 | Configure Additional Process Hardening"
+  when: section_1_5
   ansible.builtin.import_tasks:
     file: 1.5.yml
 
 - name: "SECTION | 1.6 | Command Line Warning Banners"
+  when: section_1_6
   ansible.builtin.import_tasks:
     file: 1.6.yml
 
 - name: "SECTION | 1.7 | Configure GNOME Display Manager"
+  when: section_1_7
   ansible.builtin.import_tasks:
     file: 1.7.yml

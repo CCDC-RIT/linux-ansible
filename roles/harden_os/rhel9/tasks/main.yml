@@ -1,7 +1,6 @@
 ---
 
 - name: "Check OS version and family"
-  when: os_check
   tags: always
   ansible.builtin.assert:
     that: (ansible_facts.distribution != 'CentOS' and ansible_facts.os_family == 'RedHat' or ansible_facts.os_family == "Rocky") and ansible_facts.distribution_major_version is version_compare('9', '==')

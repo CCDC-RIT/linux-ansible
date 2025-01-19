@@ -2,18 +2,22 @@
 
 - name: "SECTION | 5.1 | Configure SSH Server"
   when:
+    - section_5_1
     - "'openssh-server' in ansible_facts.packages"
   ansible.builtin.import_tasks:
     file: 5.1.yml
 
 - name: "SECTION | 5.2 | Configure privilege escalation"
+  when: section_5_2
   ansible.builtin.import_tasks:
     file: 5.2.yml
 
-- name: "SECTION | 5.3.1.x | Configure: PAM software packages, authselect, pam_faillock module, pam_pwquality module, pam_pwhistory module, pam_unix module"
+- name: "SECTION | 5.3 | Configure: PAM software packages, authselect, pam_faillock module, pam_pwquality module, pam_pwhistory module, pam_unix module"
+  when: section_5_3
   ansible.builtin.import_tasks:
     file: 5.3.yml
 
 - name: "SECTION | 5.4 | Configure: shadow password suite parameters, root and system accounts and environment, user default environment"
+  when: section_5_4
   ansible.builtin.import_tasks:
     file: 5.4.yml

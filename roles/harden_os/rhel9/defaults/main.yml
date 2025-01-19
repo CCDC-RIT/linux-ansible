@@ -1,243 +1,268 @@
 ---
 
-## section 1.2
-rule_1_2_1_1: true
-rule_1_2_1_2: true
-rule_1_2_1_3: true
-rule_1_2_1_4: true
-rule_1_2_2_1: true
-## section 1.5
-rule_1_5_1: true
-rule_1_5_2: true
-rule_1_5_3: true
-rule_1_5_4: true
-## section 1.6
-rule_1_6_1: true
-rule_1_6_2: true
-rule_1_6_3: true
-rule_1_6_4: true
-rule_1_6_5: true
-rule_1_6_6: true
-rule_1_6_7: true
-## section 1.7
-rule_1_7_1: true
-rule_1_7_2: true
-rule_1_7_3: true
-rule_1_7_4: true
-rule_1_7_5: true
-rule_1_7_6: true
-## section 1.8
-rule_1_8_1: true
-rule_1_8_2: true
-rule_1_8_3: true
-rule_1_8_4: true
-rule_1_8_5: true
-rule_1_8_6: true
-rule_1_8_7: true
-rule_1_8_8: true
-rule_1_8_9: true
-rule_1_8_10: true
+### Section 1         #             Package mgmt, Additional Process Hardening, Config system wide Crypto, Command Line Warning Banners, and GNOME Display Manager
+section_1: true       #             
+section_1_2: true     #             
+section_1_5: true     #             
+section_1_6: true     #             
+section_1_7: true     #             
+section_1_8: true     #             
+## section 1.2        # 1.2         Package mgmt
+rule_1_2_1_1: true    # 1.2.1.1       Ensure GPG keys are configured
+rule_1_2_1_2: true    # 1.2.1.2       Ensure gpgcheck is globally activated
+rule_1_2_1_3: true    # 1.2.1.3       Ensure repo_gpgcheck is globally activated
+rule_1_2_1_4: true    # 1.2.1.4       Ensure package manager repositories are configured
+rule_1_2_2_1: true    # 1.2.2.1       Ensure updates, patches, and additional security software are installed
+## section 1.5        # 1.5         Additional Process Hardening
+rule_1_5_1: true      # 1.5.1         Ensure address space layout randomization (ASLR) is enabled
+rule_1_5_2: true      # 1.5.2         Ensure ptrace_scope is restricted
+rule_1_5_3: true      # 1.5.2         Ensure core dump backtraces are disabled
+rule_1_5_4: true      # 1.5.4         Ensure core dump storage is disabled
+## section 1.6        # 1.6         Config system wide Crypto
+rule_1_6_1: true      # 1.6.1         Ensure system-wide crypto policy is not legacy
+rule_1_6_2: true      # 1.6.2         Ensure system wide crypto policy is not set in sshd configuration
+rule_1_6_3: true      # 1.6.3         Ensure system wide crypto policy disables sha1 hash and signature support | Add submodule exclusion
+rule_1_6_4: true      # 1.6.4         Ensure system wide crypto policy disables macs less than 128 bits
+rule_1_6_5: true      # 1.6.5         Ensure system wide crypto policy disables cbc for ssh
+rule_1_6_6: true      # 1.6.6         Ensure system wide crypto policy disables chacha20-poly1305 for ssh
+rule_1_6_7: true      # 1.6.7         Ensure system wide crypto policy disables EtM for ssh
+## section 1.7        # 1.7         Command Line Warning Banners
+rule_1_7_1: true      # 1.7.1         Ensure message of the day is configured properly
+rule_1_7_2: true      # 1.7.2         Ensure local login warning banner is configured properly
+rule_1_7_3: true      # 1.7.3         Ensure remote login warning banner is configured properly
+rule_1_7_4: true      # 1.7.4         Ensure permissions on /etc/motd are configured
+rule_1_7_5: true      # 1.7.5         Ensure permissions on /etc/issue are configured
+rule_1_7_6: true      # 1.7.6         Ensure permissions on /etc/issue.net are configured
+## section 1.8        # 1.8         Command Line Warning Banners
+rule_1_8_1: true      # 1.8.1         Ensure GNOME Display Manager is removed
+rule_1_8_2: true      # 1.8.2         Ensure GDM login banner is configured
+rule_1_8_3: true      # 1.8.3         Ensure GDM disable-user-list option is enabled
+rule_1_8_4: true      # 1.8.4         Ensure GDM screen locks when the user is idle
+rule_1_8_5: true      # 1.8.5         Ensure GDM screen locks cannot be overridden
+rule_1_8_6: true      # 1.8.6         Ensure GDM automatic mounting of removable media is disabled
+rule_1_8_7: true      # 1.8.7         Ensure GDM disabling automatic mounting of removable media is not overridden
+rule_1_8_8: true      # 1.8.8         Ensure GDM autorun-never is enabled
+rule_1_8_9: true      # 1.8.9         Ensure GDM autorun-never is not overridden
+rule_1_8_10: true     # 1.8.10        Ensure XDMCP is not enabled
 
-## section 2.4
-rule_2_4_1_1: true
-rule_2_4_1_2: true
-rule_2_4_1_3: true
-rule_2_4_1_4: true
-rule_2_4_1_5: true
-rule_2_4_1_6: true
-rule_2_4_1_7: true
-rule_2_4_1_8: true
-rule_2_4_2_1: true
+### Section 2         #             Job Schedulers
+section_2: true       #
+section_2_4: true     #
+## section 2.4        # 2.4         cron and at
+rule_2_4_1_1: true    # 2.4.1.1       Ensure cron daemon is enabled
+rule_2_4_1_2: true    # 2.4.1.2       Ensure permissions on /etc/crontab are configured
+rule_2_4_1_3: true    # 2.4.1.3       Ensure permissions on /etc/cron.hourly are configured
+rule_2_4_1_4: true    # 2.4.1.3       Ensure permissions on /etc/cron.daily are configured
+rule_2_4_1_5: true    # 2.4.1.5       Ensure permissions on /etc/cron.weekly are configured
+rule_2_4_1_6: true    # 2.4.1.6       Ensure permissions on /etc/cron.monthly are configured
+rule_2_4_1_7: true    # 2.4.1.7       Ensure permissions on /etc/cron.d are configured
+rule_2_4_1_8: true    # 2.4.1.8       Ensure crontab is restricted to authorized users
+rule_2_4_2_1: true    # 2.4.2.1       Ensure at is restricted to authorized users
 
-## section 3.1
-rule_3_1_1: true
-rule_3_1_2: true
-rule_3_1_3: true
-## section 3.2
-rule_3_2_1: true
-rule_3_2_2: true
-rule_3_2_3: true
-rule_3_2_4: true
-##section 3.3
-rule_3_3_1: true
-rule_3_3_2: true
-rule_3_3_3: true
-rule_3_3_4: true
-rule_3_3_5: true
-rule_3_3_6: true
-rule_3_3_7: true
-rule_3_3_8: true
-rule_3_3_9: true
-rule_3_3_10: true
-rule_3_3_11: true
+### Section 3         #             Network Configuration
+section_3: true       #             
+section_3_1: true     #             
+section_3_2: true     #             
+section_3_3: true     #             
+## section 3.1        # 3.1         Network Devices
+rule_3_1_1: true      # 3.1.1         Ensure IPv6 status is identified
+rule_3_1_2: true      # 3.1.2         Ensure wireless interfaces are disabled
+rule_3_1_3: true      # 3.1.3         Ensure bluetooth services are not in use
+## section 3.2        # 3.2         Network Kernel Modules
+rule_3_2_1: true      # 3.2.1         Ensure dccp kernel module is not available
+rule_3_2_2: true      # 3.2.2         Ensure tipc kernel module is not available
+rule_3_2_3: true      # 3.2.3         Ensure rds kernel module is not available
+rule_3_2_4: true      # 3.2.4         Ensure sctp kernel module is not available
+##section 3.3         # 3.3         Network Kernel Parameters
+rule_3_3_1: true      # 3.3.1         Ensure IP forwarding is disabled
+rule_3_3_2: true      # 3.3.2         Ensure packet redirect sending is disabled
+rule_3_3_3: true      # 3.3.3         Ensure bogus ICMP responses are ignored
+rule_3_3_4: true      # 3.3.4         Ensure broadcast ICMP requests are ignored
+rule_3_3_5: true      # 3.3.5         Ensure ICMP redirects are not accepted
+rule_3_3_6: true      # 3.3.6         Ensure secure ICMP redirects are not accepted
+rule_3_3_7: true      # 3.3.7         Ensure Reverse Path Filtering is enabled
+rule_3_3_8: true      # 3.3.8         Ensure source routed packets are not accepted
+rule_3_3_9: true      # 3.3.9         Ensure suspicious packets are logged
+rule_3_3_10: true     # 3.3.10        Ensure TCP SYN Cookies is enabled
+rule_3_3_11: true     # 3.3.11        Ensure IPv6 router advertisements are not accepted
 
-## section 5.1
-rule_5_1_1: true
-rule_5_1_2: true
-rule_5_1_3: true
-rule_5_1_4: true
-rule_5_1_5: true
-rule_5_1_6: true
-rule_5_1_7: true
-rule_5_1_8: true
-rule_5_1_9: true
-rule_5_1_10: true
-rule_5_1_11: true
-rule_5_1_12: true
-rule_5_1_13: true
-rule_5_1_14: true
-rule_5_1_15: true
-rule_5_1_16: true
-rule_5_1_17: true
-rule_5_1_18: true
-rule_5_1_19: true
-rule_5_1_20: true
-rule_5_1_21: true
-rule_5_1_22: true
-## section 5.2
-rule_5_2_1: true
-rule_5_2_2: true
-rule_5_2_3: true
-rule_5_2_4: true
-rule_5_2_5: true
-rule_5_2_6: true
-rule_5_2_7: true
-## section 5.3
-rule_5_3_1_1: true
-rule_5_3_1_2: true
-rule_5_3_1_3: true
-rule_5_3_2_1: true
-rule_5_3_2_2: true
-rule_5_3_2_3: true
-rule_5_3_2_4: true
-rule_5_3_2_5: true
-rule_5_3_3_1_1: true
-rule_5_3_3_1_2: true
-rule_5_3_3_1_3: true
-rule_5_3_3_2_1: true
-rule_5_3_3_2_2: true
-rule_5_3_3_2_3: true
-rule_5_3_3_2_4: true
-rule_5_3_3_2_5: true
-rule_5_3_3_2_6: true
-rule_5_3_3_2_7: true
-rule_5_3_3_3_1: true
-rule_5_3_3_3_2: true
-rule_5_3_3_3_3: true
-rule_5_3_3_4_1: true
-rule_5_3_3_4_2: true
-rule_5_3_3_4_3: true
-rule_5_3_3_4_4: true
-## section 5.4
-rule_5_4_1_1: true
-rule_5_4_1_2: true
-rule_5_4_1_3: true
-rule_5_4_1_4: true
-rule_5_4_1_5: true
-rule_5_4_1_6: true
-rule_5_4_2_1: true
-rule_5_4_2_2: true
-rule_5_4_2_3: true
-rule_5_4_2_4: true
-rule_5_4_2_5: true
-rule_5_4_2_5: true
-rule_5_4_2_6: true
-rule_5_4_2_7: true
-rule_5_4_2_8: true
-rule_5_4_3_1: true
-rule_5_4_3_2: true
-rule_5_4_3_3: true
+### Section 5         #
+section_5: true       #
+## section 5.1        # 5.1         Configure SSH Server
+rule_5_1_1: true      # 5.1.1         Ensure permissions on /etc/ssh/sshd_config are configured
+rule_5_1_2: true      # 5.1.2         Ensure permissions on SSH private host key files are configured
+rule_5_1_3: true      # 5.1.3         Ensure permissions on SSH public host key files are configured
+rule_5_1_4: true      # 5.1.4         Ensure sshd Ciphers are configured
+rule_5_1_5: true      # 5.1.5         Ensure sshd KexAlgorithms is configured
+rule_5_1_6: true      # 5.1.6         Ensure sshd KexAlgorithms is configured
+rule_5_1_7: true      # 5.1.7         Ensure sshd access is configured
+rule_5_1_8: true      # 5.1.8         Ensure sshd Banner is configured
+rule_5_1_9: true      # 5.1.9         Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured
+rule_5_1_10: true     # 5.1.10        Ensure sshd DisableForwarding is enabled
+rule_5_1_11: true     # 5.1.11        Ensure sshd GSSAPIAuthentication is disabled
+rule_5_1_12: true     # 5.1.12        Ensure sshd HostbasedAuthentication is disabled
+rule_5_1_13: true     # 5.1.13        Ensure sshd IgnoreRhosts is enabled
+rule_5_1_14: true     # 5.1.14        Ensure sshd LoginGraceTime is set to one minute or less
+rule_5_1_15: true     # 5.1.15        Ensure sshd LogLevel is appropriate
+rule_5_1_16: true     # 5.1.16        Ensure sshd MaxAuthTries is set to 4 or less
+rule_5_1_17: true     # 5.1.17        Ensure sshd MaxStartups is configured
+rule_5_1_18: true     # 5.1.18        Ensure SSH MaxSessions is set to 10 or less
+rule_5_1_19: true     # 5.1.19        Ensure sshd PermitEmptyPasswords is disabled
+rule_5_1_20: true     # 5.1.20        Ensure sshd PermitRootLogin is disabled
+rule_5_1_21: true     # 5.1.21        Ensure sshd PermitUserEnvironment is disabled
+rule_5_1_22: true     # 5.1.22        Ensure SSH PAM is enabled
+## section 5.2        # 5.2         Configure Privilege Escalation
+rule_5_2_1: true      # 5.2.1         Ensure sudo is installed
+rule_5_2_2: true      # 5.2.2         Ensure sudo commands use pty
+rule_5_2_3: true      # 5.2.3         Ensure sudo log file exists
+rule_5_2_4: true      # 5.2.4         Ensure users must provide password for escalation
+rule_5_2_5: true      # 5.2.5         Ensure re-authentication for privilege escalation is not disabled globally
+rule_5_2_6: true      # 5.2.6         Ensure sudo authentication timeout is configured correctly
+rule_5_2_7: true      # 5.2.7         Ensure access to the su command is restricted
+## section 5.3        # 5.3         Configure PAM software packages, Configure authselect, Configure pam_faillock module, Configure pam_pwquality module, Configure pam_pwhistory module, Configure pam_unix module
+rule_5_3_1_1: true    # 5.3.1.1       Ensure latest version of pam is installed
+rule_5_3_1_2: true    # 5.3.1.2       Ensure latest version of authselect is installed
+rule_5_3_1_3: true    # 5.3.1.3       Ensure libpwquality is installed
+rule_5_3_2_1: true    # 5.3.2.1       Ensure active authselect profile includes pam modules
+rule_5_3_2_2: true    # 5.3.2.2       Ensure pam_faillock module is enabled
+rule_5_3_2_3: true    # 5.3.2.3       Ensure pam_pwquality module is enabled
+rule_5_3_2_4: true    # 5.3.2.4       Ensure pam_pwhistory module is enabled
+rule_5_3_2_5: true    # 5.3.2.5       Ensure pam_unix module is enabled
+rule_5_3_3_1_1: true  # 5.3.3.1.1     Ensure password failed attempts lockout is configured
+rule_5_3_3_1_2: true  # 5.3.3.1.2     Ensure password unlock time is configured
+rule_5_3_3_1_3: true  # 5.3.3.1.3     Ensure password failed attempts lockout includes root account
+rule_5_3_3_2_1: true  # 5.3.3.2.1     Ensure password number of changed characters is configured
+rule_5_3_3_2_2: true  # 5.3.3.2.2     Ensure password length is configured
+rule_5_3_3_2_3: true  # 5.3.3.2.3     Ensure password complexity is configured
+rule_5_3_3_2_4: true  # 5.3.3.2.4     Ensure password same consecutive characters is configured
+rule_5_3_3_2_5: true  # 5.3.3.2.5     Ensure password maximum sequential characters is is configured
+rule_5_3_3_2_6: true  # 5.3.3.2.6     Ensure password dictionary check is enabled
+rule_5_3_3_2_7: true  # 5.3.3.2.7     Ensure password quality is enforced for the root user
+rule_5_3_3_3_1: true  # 5.3.3.3.1     Ensure password history remember is configured
+rule_5_3_3_3_2: true  # 5.3.3.3.2     Ensure password history is enforced for the root user
+rule_5_3_3_3_3: true  # 5.3.3.3.3     Ensure pam_pwhistory includes use_authtok
+rule_5_3_3_4_1: true  # 5.3.3.4.1     Ensure pam_unix does not include nullok
+rule_5_3_3_4_2: true  # 5.3.3.4.2     Ensure pam_unix does not include remember
+rule_5_3_3_4_3: true  # 5.3.3.4.3     Ensure pam_unix includes a strong password hashing algorithm
+rule_5_3_3_4_4: true  # 5.3.3.4.4     Ensure pam_unix includes use_authtok
+## section 5.4        # 5.4         User Accounts and Environment
+rule_5_4_1_1: true    # 5.4.1.1       Ensure password expiration is 365 days or less
+rule_5_4_1_2: true    # 5.4.1.2       Ensure minimum password days is configured
+rule_5_4_1_3: true    # 5.4.1.3       Ensure password expiration warning days is configured
+rule_5_4_1_4: true    # 5.4.1.4       Ensure strong password hashing algorithm is configured
+rule_5_4_1_5: true    # 5.4.1.5       Ensure inactive password lock is configured
+rule_5_4_1_6: true    # 5.4.1.6       Ensure all users last password change date is in the past
+rule_5_4_2_1: true    # 5.4.2.1       Ensure root is the only UID 0 account
+rule_5_4_2_2: true    # 5.4.2.2       Ensure root is the only GID 0 account
+rule_5_4_2_3: true    # 5.4.2.3       Ensure group root is the only GID 0 group
+rule_5_4_2_4: true    # 5.4.2.4       Ensure root account access is controlled
+rule_5_4_2_5: true    # 5.4.2.5       Ensure root PATH Integrity
+rule_5_4_2_6: true    # 5.4.2.6       Ensure root user umask is configured
+rule_5_4_2_7: true    # 5.4.2.7       Ensure system accounts do not have a valid login shell
+rule_5_4_2_8: true    # 5.4.2.8       Ensure accounts without a valid login shell are locked | Lock accounts
+rule_5_4_3_1: true    # 5.4.3.1       Ensure nologin is not listed in /etc/shells
+rule_5_4_3_2: true    # 5.4.3.2       Ensure default user shell timeout is configured
+rule_5_4_3_3: true    # 5.4.3.3       Ensure default user umask is configured
 
-## section 6.1
-rule_6_1_1: true
-rule_6_1_2: true
-rule_6_1_3: true
-## section 6.2
-rule_6_2_1_1: true
-rule_6_2_1_2: true
-rule_6_2_1_3: true
-rule_6_2_1_4: true
-rule_6_2_2_1_1: true
-rule_6_2_2_1_2: true
-rule_6_2_2_1_3: true
-rule_6_2_2_1_4: true
-rule_6_2_2_2: true
-rule_6_2_2_3: true
-rule_6_2_2_4: true
-rule_6_2_3_1: true
-rule_6_2_3_2: true
-rule_6_2_3_3: true
-rule_6_2_3_4: true
-rule_6_2_3_5: true
-rule_6_2_3_6: true
-rule_6_2_3_7: true
-rule_6_2_3_8: true
-rule_6_2_4_1: true
-# section 6.3
-rule_6_3_1_1: true
-rule_6_3_1_2: true
-rule_6_3_1_3: true
-rule_6_3_1_4: true
-rule_6_3_2_1: true
-rule_6_3_2_2: true
-rule_6_3_2_3: true
-rule_6_3_2_4: true
-rule_6_3_3_1: true
-rule_6_3_3_2: true
-rule_6_3_3_3: true
-rule_6_3_3_4: true
-rule_6_3_3_5: true
-rule_6_3_3_6: true
-rule_6_3_3_7: true
-rule_6_3_3_8: true
-rule_6_3_3_9: true
-rule_6_3_3_10: true
-rule_6_3_3_11: true
-rule_6_3_3_12: true
-rule_6_3_3_13: true
-rule_6_3_3_14: true
-rule_6_3_3_15: true
-rule_6_3_3_16: true
-rule_6_3_3_17: true
-rule_6_3_3_18: true
-rule_6_3_3_19: true
-rule_6_3_3_20: true
-rule_6_3_3_21: true
-rule_6_3_4_1: true
-rule_6_3_4_2: true
-rule_6_3_4_3: true
-rule_6_3_4_4: true
-rule_6_3_4_5: true
-rule_6_3_4_6: true
-rule_6_3_4_7: true
-rule_6_3_4_8: true
-rule_6_3_4_9: true
-rule_6_3_4_10: true
+### Section 6         #             Logging and Auditing
+section_6: true       #
+section_6_1: true     #
+section_6_2: true     #
+section_6_3: true     #
+## section 6.1        # 6.1         Configure Integrity Checking
+rule_6_1_1: true      # 6.1.1         Ensure AIDE is installed
+rule_6_1_2: true      # 6.1.2         Ensure filesystem integrity is regularly checked
+rule_6_1_3: true      # 6.1.3         Ensure cryptographic mechanisms are used to protect the integrity of audit tools
+## section 6.2        # 6.2         Configure systemd-journald service, Configure journald, Configure rsyslog, Configure Logfiles
+rule_6_2_1_1: true    # 6.2.1.1       Ensure journald service is enabled and active
+rule_6_2_1_2: true    # 6.2.1.2       Ensure journald log file access is configured
+rule_6_2_1_3: true    # 6.2.1.3       Ensure journald log file rotation is configured
+rule_6_2_1_4: true    # 6.2.1.4       Ensure only one logging system is in use
+rule_6_2_2_1_1: true  # 6.2.2.1.1     Ensure systemd-journal-remote is installed
+rule_6_2_2_1_2: true  # 6.2.2.1.2     Ensure systemd-journal-remote authentication is configured
+rule_6_2_2_1_3: true  # 6.2.2.1.3     Ensure systemd-journal-remote is enabled and active
+rule_6_2_2_1_4: true  # 6.2.2.1.4     Ensure systemd-journal-remote service is not in use
+rule_6_2_2_2: true    # 6.2.2.2       Ensure journald ForwardToSyslog is disabled
+rule_6_2_2_3: true    # 6.2.2.3       Ensure journald Compress is configured
+rule_6_2_2_4: true    # 6.2.2.4       Ensure journald Storage is configured
+rule_6_2_3_1: true    # 6.2.3.1       Ensure rsyslog installed
+rule_6_2_3_2: true    # 6.2.3.2       Ensure rsyslog Service is enabled and active
+rule_6_2_3_3: true    # 6.2.3.3       Ensure journald is configured to send logs to rsyslog
+rule_6_2_3_4: true    # 6.2.3.4       Ensure rsyslog log file creation mode is configured
+rule_6_2_3_5: true    # 6.2.3.5       Ensure logging is configured
+rule_6_2_3_6: true    # 6.2.3.6       Ensure rsyslog is configured to send logs to a remote log host
+rule_6_2_3_7: true    # 6.2.3.7       Ensure rsyslog is not configured to recieve logs from a remote client
+rule_6_2_3_8: true    # 6.2.3.8       Ensure rsyslog logrotate is configured
+rule_6_2_4_1: true    # 6.2.4.1       Ensure access to all logfiles has been configured
+# section 6.3         # 6.3         Configure Auditing
+rule_6_3_1_1: true    # 6.3.1.1       Ensure auditd is installed
+rule_6_3_1_2: true    # 6.3.1.2       Ensure auditing for processes that start prior to auditd is enabled
+rule_6_3_1_3: true    # 6.3.1.3       Ensure audit_backlog_limit is sufficient
+rule_6_3_1_4: true    # 6.3.1.4       Ensure auditd service is enabled and active
+rule_6_3_2_1: true    # 6.3.2.1       Ensure audit log storage size is configured
+rule_6_3_2_2: true    # 6.3.2.2       Ensure audit logs are not automatically deleted
+rule_6_3_2_3: true    # 6.3.2.3       Ensure system is disabled when audit logs are full
+rule_6_3_2_4: true    # 6.3.2.4       Ensure system warns when audit logs are low on space
+rule_6_3_3_1: true    # 6.3.3.1       *Ensure changes to system administration scope (sudoers) is collected
+rule_6_3_3_2: true    # 6.3.3.2       *Ensure actions as another user are always logged
+rule_6_3_3_3: true    # 6.3.3.3       *Ensure events that modify the sudo log file are collected
+rule_6_3_3_4: true    # 6.3.3.4       *Ensure events that modify date and time information are collected
+rule_6_3_3_5: true    # 6.3.3.5       *Ensure events that modify the system's network environment are collected
+rule_6_3_3_6: true    # 6.3.3.6       *Ensure use of privileged commands is collected
+rule_6_3_3_7: true    # 6.3.3.7       *Ensure unsuccessful file access attempts are collected
+rule_6_3_3_8: true    # 6.3.3.8       *Ensure events that modify user/group information are collected
+rule_6_3_3_9: true    # 6.3.3.9       *Ensure discretionary access control permission modification events are collected
+rule_6_3_3_10: true   # 6.3.3.10      *Ensure successful file system mounts are collected
+rule_6_3_3_11: true   # 6.3.3.11      *Ensure session initiation information is collected
+rule_6_3_3_12: true   # 6.3.3.12      *Ensure login and logout events are collected
+rule_6_3_3_13: true   # 6.3.3.13      *Ensure file deletion events by users are collected
+rule_6_3_3_14: true   # 6.3.3.14      *Ensure events that modify the system's Mandatory Access Controls are collected
+rule_6_3_3_15: true   # 6.3.3.15      *Ensure successful and unsuccessful attempts to use the chcon command are recorded
+rule_6_3_3_16: true   # 6.3.3.16      *Ensure successful and unsuccessful attempts to use the setfacl command are recorded
+rule_6_3_3_17: true   # 6.3.3.17      *Ensure successful and unsuccessful attempts to use the chacl command are recorded
+rule_6_3_3_18: true   # 6.3.3.18      *Ensure successful and unsuccessful attempts to use the usermod command are recorded
+rule_6_3_3_19: true   # 6.3.3.19      *Ensure kernel module loading and unloading and modification is collected
+rule_6_3_3_20: true   # 6.3.3.20      *Ensure the audit configuration is immutable
+rule_6_3_3_21: true   # 6.3.3.21      Ensure the running and on disk configuration is the same
+rule_6_3_4_1: true    # 6.3.4.1       Ensure the audit log file directory mode is configured
+rule_6_3_4_2: true    # 6.3.4.2       Ensure audit log files mode is configured
+rule_6_3_4_3: true    # 6.3.4.3       Ensure audit log files owner is configured
+rule_6_3_4_4: true    # 6.3.4.4       Ensure only authorized groups are assigned ownership of audit log files
+rule_6_3_4_5: true    # 6.3.4.5       Ensure audit configuration files mode is configured
+rule_6_3_4_6: true    # 6.3.4.6       Ensure audit configuration files owner is configured
+rule_6_3_4_7: true    # 6.3.4.7       Ensure audit configuration files group owner is configured
+rule_6_3_4_8: true    # 6.3.4.8       Ensure audit tools mode is configured
+rule_6_3_4_9: true    # 6.3.4.9       Ensure audit tools owner is configured
+rule_6_3_4_10: true   # 6.3.4.10      Ensure audit tools group owner is configured
 
-## section 7.1
-rule_7_1_1: true
-rule_7_1_2: true
-rule_7_1_3: true
-rule_7_1_4: true
-rule_7_1_5: true
-rule_7_1_6: true
-rule_7_1_7: true
-rule_7_1_8: true
-rule_7_1_9: true
-rule_7_1_10: true
-rule_7_1_11: true
-rule_7_1_12: true
-rule_7_1_13: true
-## section 7.2
-rule_7_2_1: true
-rule_7_2_2: true
-rule_7_2_3: true
-rule_7_2_4: true
-rule_7_2_5: true
-rule_7_2_6: true
-rule_7_2_7: true
-rule_7_2_8: true
-rule_7_2_9: true
+### Section 7         #             System Maintenance
+section_7: true       #
+section_7_1: true     #
+section_7_2: true     #
+## section 7.1        # 7.1         System File Permissions
+rule_7_1_1: true      # 7.1.1         Ensure permissions on /etc/passwd are configured
+rule_7_1_2: true      # 7.1.2         Ensure permissions on /etc/passwd- are configured
+rule_7_1_3: true      # 7.1.3         Ensure permissions on /etc/group are configured
+rule_7_1_4: true      # 7.1.4         Ensure permissions on /etc/group- are configured
+rule_7_1_5: true      # 7.1.5         Ensure permissions on /etc/shadow are configured
+rule_7_1_6: true      # 7.1.6         Ensure permissions on /etc/shadow- are configured
+rule_7_1_7: true      # 7.1.7         Ensure permissions on /etc/gshadow are configured
+rule_7_1_8: true      # 7.1.8         Ensure permissions on /etc/gshadow- are configured
+rule_7_1_9: true      # 7.1.9         Ensure permissions on /etc/shells are configured
+rule_7_1_10: true     # 7.1.10        Ensure permissions on /etc/security/opasswd are configured
+rule_7_1_11: true     # 7.1.11        Ensure world writable files and directories are secured
+rule_7_1_12: true     # 7.1.12        Ensure no files or directories without an owner and a group exist
+rule_7_1_13: true     # 7.1.13        Ensure SUID and SGID files are reviewed
+## section 7.2        # 7.2         Local User and Group Settings
+rule_7_2_1: true      # 7.2.1         Ensure accounts in /etc/passwd use shadowed passwords
+rule_7_2_2: true      # 7.2.2         Ensure /etc/shadow password fields are not empty
+rule_7_2_3: true      # 7.2.3         Ensure all groups in /etc/passwd exist in /etc/group
+rule_7_2_4: true      # 7.2.4         Ensure no duplicate UIDs exist
+rule_7_2_5: true      # 7.2.5         Ensure no duplicate GIDs exist
+rule_7_2_6: true      # 7.2.6         Ensure no duplicate user names exist
+rule_7_2_7: true      # 7.2.7         Ensure no duplicate group names exist
+rule_7_2_8: true      # 7.2.8         Ensure local interactive user home directories are configured
+rule_7_2_9: true      # 7.2.9         Ensure local interactive user dot files access is configured
 
 # for auditd
 # this variable governs if defining user exceptions for auditd logging is acceptable.

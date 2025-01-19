@@ -1,5 +1,6 @@
 ---
 
 - name: "SECTION | 2.4 | Job Schedulers"
+  when: section_2_4
   ansible.builtin.import_tasks:
     file: 2.4.yml

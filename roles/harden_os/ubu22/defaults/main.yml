@@ -1,10 +1,11 @@
 ---
 
-### Section 1
-section_1: true       #             Package mgmt, Additional Process Hardening, Command Line Warning Banners, and GNOME Display Manager
+### Section 1         #             Package mgmt, Additional Process Hardening, Command Line Warning Banners, and GNOME Display Manager
+section_1: true       #             
 section_1_2: true     #             
 section_1_5: true     #             
-section_1_6: true     #             
+section_1_6: true     #   
+section_1_7: true     #          
 ## section 1.2        # 1.2         Package mgmt
 rule_1_2_1_1: true    # 1.2.1         Ensure GPG keys are configured
 rule_1_2_1_2: true    # 1.2.1         Ensure package manager repositories are configured
@@ -34,7 +35,7 @@ rule_1_7_8: true      # 1.7.8         Ensure GDM autorun-never is enabled
 rule_1_7_9: true      # 1.7.9         Ensure GDM autorun-never is not overridden
 rule_1_7_10: true     # 1.7.10        Ensure XDCMP is not enabled
 
-### Section 3                       Network Configuration
+### Section 3         #             Network Configuration
 section_3: true       #             
 section_3_1: true     #             
 section_3_2: true     #             
@@ -61,7 +62,7 @@ rule_3_3_9: true      # 3.3.9         Ensure suspicious packets are logged
 rule_3_3_10: true     # 3.3.10        Ensure tcp syn cookies is enabled
 rule_3_3_11: true     # 3.3.11        Ensure IPv6 router advertisements are not accepted
 
-### Section 5                       Access Control
+### Section 5         #             Access Control
 section_5: true       #             
 section_5_2: true     #             
 section_5_3: true     #            
