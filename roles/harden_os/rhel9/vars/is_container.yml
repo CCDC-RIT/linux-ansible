@@ -1,0 +1,66 @@
+---
+
+# File to skip controls if container
+# Based on standard image no changes
+# it expected all pkgs required for the container are alreday installed
+
+## controls
+
+# Firewall
+firewall: None
+
+# SElinux
+selinux_disable: true
+
+# auditd
+rule_4_1_1_1: false
+rule_4_1_2_1: false
+rule_4_1_2_2: false
+rule_4_1_2_3: false
+
+# cron
+rule_5_1_1: false
+rule_5_1_2: false
+rule_5_1_3: false
+rule_5_1_4: false
+rule_5_1_5: false
+rule_5_1_6: false
+rule_5_1_7: false
+rule_5_1_8: false
+
+# crypto
+rule_1_10: false
+
+# grub
+rule_1_5_1: false
+rule_1_5_2: false
+rule_1_5_3: false
+
+# logging
+rule_4_2_1_1: false
+rule_4_2_1_2: false
+rule_4_2_1_3: false
+rule_4_2_1_4: false
+rule_4_2_1_5: false
+rule_4_2_1_6: false
+rule_4_2_2_1: false
+rule_4_2_2_2: false
+rule_4_2_2_3: false
+
+# systemd
+
+# Users/passwords/accounts
+rule_5_5_2: false
+
+# forwarding
+rule_3_3_1: flase
+rule_3_3_2: false
+rule_3_3_3: false
+rule_3_3_4: false
+rule_3_3_5: false
+rule_3_3_6: false
+rule_3_3_7: false
+rule_3_3_8: false
+rule_3_3_9: false
+rule_3_3_10: false
+rule_3_3_11: false

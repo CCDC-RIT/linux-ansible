@@ -1,0 +1,266 @@
+---
+
+### Section 1         #             Package mgmt, Additional Process Hardening, Command Line Warning Banners, and GNOME Display Manager
+section_1: true       #             
+section_1_2: true     #             
+section_1_5: true     #             
+section_1_6: true     #   
+section_1_7: true     #          
+## section 1.2        # 1.2         Package mgmt
+rule_1_2_1_1: true    # 1.2.1         Ensure GPG keys are configured
+rule_1_2_1_2: true    # 1.2.1         Ensure package manager repositories are configured
+rule_1_2_2_1: true    # 1.2.2         Ensure updates, patches, and aditional security software are installed
+## section 1.5        # 1.5         Configure additional Process Hardening
+rule_1_5_1: true      # 1.5.1         Ensure address space layout randomization is enabled | set active kernel parameter
+rule_1_5_2: true      # 1.5.2         Ensure ptrace_scope is restricted
+rule_1_5_3: true      # 1.5.3         Ensure core dumps are restricted
+rule_1_5_4: true      # 1.5.4         Ensure prelink is not installed
+rule_1_5_5: true      # 1.5.5         Ensure Automatic Error Reporting is not enabled
+## section 1.6        # 1.6         Configure Command Line Warning Banners
+rule_1_6_1: true      # 1.6.1         Ensure message of the day is configured properly
+rule_1_6_2: true      # 1.6.2         Ensure local login warning banner is configured properly
+rule_1_6_3: true      # 1.6.3         Ensure remote login warning banner is configured properly
+rule_1_6_4: true      # 1.6.4         Ensure access to /etc/motd is configured
+rule_1_6_5: true      # 1.6.5         Ensure access to /etc/issue is configured
+rule_1_6_6: true      # 1.6.6         Ensure access to /etc/issue.net is configured
+## section 1.7        # 1.7         Configure GNOME Display Manager
+rule_1_7_1: true      # 1.7.1         Ensure GDM is removed
+rule_1_7_2: true      # 1.7.2         Ensure GDM login banner is configured
+rule_1_7_3: true      # 1.7.3         Ensure GDM disable-user-list option is enabled
+rule_1_7_4: true      # 1.7.4         Ensure GDM screen locks when the user is idle
+rule_1_7_5: true      # 1.7.5         Ensure GDM screen locks cannot be overridden
+rule_1_7_6: true      # 1.7.6         Ensure GDM automatic mounting of removable media is disabled
+rule_1_7_7: true      # 1.7.7         Ensure GDM disabling automatic mounting of removable media is not overridden
+rule_1_7_8: true      # 1.7.8         Ensure GDM autorun-never is enabled
+rule_1_7_9: true      # 1.7.9         Ensure GDM autorun-never is not overridden
+rule_1_7_10: true     # 1.7.10        Ensure XDCMP is not enabled
+
+### Section 3         #             Network Configuration
+section_3: true       #             
+section_3_1: true     #             
+section_3_2: true     #             
+section_3_3: true     #             
+## section 3.1        # 3.1         Configure Network Devices
+rule_3_1_1: true      # 3.1.1         Ensure IPv6 status is identified
+rule_3_1_2: true      # 3.1.2         Ensure wireless interfaces are disabled
+rule_3_1_3: true      # 3.1.3         Ensure bluetooth services are not in use
+## section 3.2        # 3.2         Configure Network Kernel Modules (Host Only)
+rule_3_2_1: true      # 3.2.1         Ensure dccp kernel module is not available
+rule_3_2_2: true      # 3.2.2         Ensure tipc kernel module is not available
+rule_3_2_3: true      # 3.2.3         Ensure rds kernel module is not available
+rule_3_2_4: true      # 3.2.4         
+## section 3.3        # 3.3         Configure Network Kernel Parameters (Host and Router)
+rule_3_3_1: true      # 3.3.1         Ensure IP forwarding is disabled
+rule_3_3_2: true      # 3.3.2         Ensure packet redirect sending is disabled
+rule_3_3_3: true      # 3.3.3         Ensure bogus ICMP responses are ignored
+rule_3_3_4: true      # 3.3.3         Ensure broadcast ICMP requests are ignored
+rule_3_3_5: true      # 3.3.5         Ensure ICMP redirects are not accepted
+rule_3_3_6: true      # 3.3.6         Ensure secure ICMP redirects are not accepted
+rule_3_3_7: true      # 3.3.7         Ensure Reverse Path Filtering is enabled
+rule_3_3_8: true      # 3.3.8         Ensure source routed packets are not accepted
+rule_3_3_9: true      # 3.3.9         Ensure suspicious packets are logged
+rule_3_3_10: true     # 3.3.10        Ensure tcp syn cookies is enabled
+rule_3_3_11: true     # 3.3.11        Ensure IPv6 router advertisements are not accepted
+
+### Section 5         #             Access Control
+section_5: true       #             
+section_5_2: true     #             
+section_5_3: true     #            
+section_5_4: true     #             
+## section 5.2        # 5.2         Configure privilege escalation
+rule_5_2_1: true      # 5.2.1         Ensure sudo is installed
+rule_5_2_2: true      # 5.2.2         Ensure sudo commands use pty
+rule_5_2_3: true      # 5.2.3         Ensure sudo log file exists
+rule_5_2_4: true      # 5.2.4         Ensure users must provide password for privilege escalation
+rule_5_2_5: true      # 5.2.5         Ensure re-authentication for privilege escalation is not disabled globally
+rule_5_2_6: true      # 5.2.6         Ensure sudo authentication timeout is configured correctly
+rule_5_2_7: true      # 5.2.7         Ensure access to the su command is restricted
+## section 5.3        # 5.3         Configure PAM software packages, Configure pam-auth-update profiles, Configure pam_faillock module, Configure pam_quality module, Configure pam_history module, Configure pam_unix module
+rule_5_3_1_1: true    # 5.3.1.1       Ensure latest version of pam is installed
+rule_5_3_1_2: true    # 5.3.1.2       Ensure libpam-modules is installed
+rule_5_3_1_3: true    # 5.3.1.3       Ensure libpam-pwquality is installed
+rule_5_3_2_1: true    # 5.3.2.1       Ensure pam_unix module is enabled
+rule_5_3_2_2: true    # 5.3.2.2       Ensure pam_faillock module is enabled
+rule_5_3_2_3: true    # 5.3.2.3       Ensure pam_pwquality module is enabled
+rule_5_3_2_4: true    # 5.3.2.4       Ensure pam_pwhistory module is enabled
+rule_5_3_3_1_1: true  # 5.3.3.1.1     Ensure password failed attempts lockout is configured
+rule_5_3_3_1_2: true  # 5.3.3.1.2     Ensure password unlock time is configured
+rule_5_3_3_1_3: true  # 5.3.3.1.3     Ensure password failed attempts lockout includes root account
+rule_5_3_3_2_1: true  # 5.3.3.2.1     Ensure password number of changed characters is configured
+rule_5_3_3_2_2: true  # 5.3.3.2.2     Ensure minimum password length is configured
+rule_5_3_3_2_3: true  # 5.3.3.2.3     Ensure password complexity is configured
+rule_5_3_3_2_4: true  # 5.3.3.2.4     Ensure password same consecutive characters is configured
+rule_5_3_3_2_5: true  # 5.3.3.2.5     Ensure password maximum sequential characters is configured
+rule_5_3_3_2_6: true  # 5.3.3.2.6     Ensure password dictionary check is enabled
+rule_5_3_3_2_7: true  # 5.3.3.2.7     Ensure password quality checking is enforced
+rule_5_3_3_2_8: true  # 5.3.3.2.8     Ensure password quality is enforced for the root user
+rule_5_3_3_3_1: true  # 5.3.3.3.1     Ensure password history remember is configured
+rule_5_3_3_3_2: true  # 5.3.3.3.2     Ensure password history is enforced for the root user
+rule_5_3_3_3_3: true  # 5.3.3.3.3     Ensure pam_pwhistory includes use_authtok
+rule_5_3_3_4_1: true  # 5.3.3.4.1     Ensure pam_unix does not include nullok
+rule_5_3_3_4_2: true  # 5.3.3.4.2     Ensure pam_unix does not include remember
+rule_5_3_3_4_3: true  # 5.3.3.4.3     Ensure pam_unix includes a strong password hashing algorithm
+rule_5_3_3_4_4: true  # 5.3.3.4.4     Ensure pam_unix includes use_authtok
+## section 5.4        # 5.4         User Accounts and Environment, Configure shadow password suite parameters, Configure root and system accounts and environment, Configure user default environment
+rule_5_4_1_1: true    # 5.4.1.1       Ensure password expiration is configured
+rule_5_4_1_2: true    # 5.4.1.2       Ensure minimum password age is configured
+rule_5_4_1_3: true    # 5.4.1.3       Ensure password expiration warning days is configured
+rule_5_4_1_4: true    # 5.4.1.4       Ensure strong password hashing algorithm is configured
+rule_5_4_1_5: true    # 5.4.1.5       Ensure inactive password lock is configured
+rule_5_4_1_6: true    # 5.4.1.6       Ensure all users last password change date is in the past
+rule_5_4_2_1: true    # 5.4.2.1       Ensure root is the only UID 0 account
+rule_5_4_2_2: true    # 5.4.2.2       Ensure root is the only GID 0 account
+rule_5_4_2_3: true    # 5.4.2.3       Ensure group root is the only GID 0 group
+rule_5_4_2_4: true    # 5.4.2.4       Ensure root password is set
+rule_5_4_2_5: true    # 5.4.2.5       Ensure root PATH Integrity
+rule_5_4_2_6: true    # 5.4.2.6       Ensure root user umask is configured
+rule_5_4_2_7: true    # 5.4.2.7       Ensure system accounts do not have a valid login shell
+rule_5_4_2_8: true    # 5.4.2.8       Ensure accounts without a valid login shell are locked | Lock accounts
+rule_5_4_3_1: true    # 5.4.3.1       Ensure nologin is not listed in /etc/shells
+rule_5_4_3_2: true    # 5.4.3.2       Ensure default user shell timeout is configured
+rule_5_4_3_3: true    # 5.4.3.3       Ensure default user umask is configured
+
+### Section 6         #             Log Configuration
+section_6: true       #             
+section_6_2: true     #             
+## section 6.2        # 6.2         Configure systemd-journald service, Configure systemd-journald service, Configure Logfiles
+rule_6_2_1_1_1: true  # 6.2.1.1.1     Ensure journald service is enabled and active
+rule_6_2_1_1_2: true  # 6.2.1.1.2     Ensure journald log file access is configured
+rule_6_2_1_1_3: true  # 6.2.1.1.3     Ensure journald log file rotation is configured
+rule_6_2_1_1_4: true  # 6.2.1.1.4     Ensure journald ForwardToSyslog is disabled
+rule_6_2_1_1_5: true  # 6.2.1.1.5     Ensure journald Storage is configured
+rule_6_2_1_1_6: true  # 6.2.1.1.6     Ensure journald Compress is configured
+rule_6_2_2_1: true    # 6.2.2.1       Ensure access to all logfiles has been configured
+
+### Section 7         #             File Permissions and User/Group Settings
+section_7: true       #             
+section_7_1: true     #             
+section_7_2: true     #             
+## section 7.1        # 7.1         System File Permissions
+rule_7_1_1: true      # 7.1.1         Ensure permissions on /etc/passwd are configured
+rule_7_1_2: true      # 7.1.2         Ensure permissions on /etc/passwd- are configured
+rule_7_1_3: true      # 7.1.3         Ensure permissions on /etc/group are configured
+rule_7_1_4: true      # 7.1.3         Ensure permissions on /etc/group- are configured
+rule_7_1_5: true      # 7.1.5         Ensure permissions on /etc/shadow are configured
+rule_7_1_6: true      # 7.1.6         Ensure permissions on /etc/shadow- are configured
+rule_7_1_7: true      # 7.1.7         Ensure permissions on /etc/gshadow are configured
+rule_7_1_8: true      # 7.1.8         Ensure permissions on /etc/gshadow- are configured
+rule_7_1_9: true      # 7.1.9         Ensure permissions on /etc/shells are configured
+rule_7_1_10: true     # 7.1.10        Ensure permissions on /etc/security/opasswd are configured
+rule_7_1_11: true     # 7.1.11        Ensure world writable files and directories are secured
+rule_7_1_12: true     # 7.1.12        Ensure no files or directories without an owner and a group exist
+rule_7_1_13: true     # 7.1.13        Ensure SUID and SGID files are reviewed
+## section 7.2        # 7.2         Local User and Group Settings
+rule_7_2_1: true      # 7.2.1         Ensure accounts in /etc/passwd use shadowed passwords
+rule_7_2_2: true      # 7.2.2         Ensure /etc/shadow password fields are not empty
+rule_7_2_3: true      # 7.2.3         Ensure all groups in /etc/passwd exist in /etc/group
+rule_7_2_4: true      # 7.2.4         Ensure shadow group is empty
+rule_7_2_5: true      # 7.2.5         Ensure no duplicate UIDs exist
+rule_7_2_6: true      # 7.2.6         Ensure no duplicate GIDs exist
+rule_7_2_7: true      # 7.2.7         Ensure no duplicate user names exist
+rule_7_2_8: true      # 7.2.8         Ensure no duplicate group names exist
+rule_7_2_9: true      # 7.2.9         Ensure local interactive user home directories are configured
+rule_7_2_10: true     # 7.2.10        Ensure local interactive user dot files access is configured
+
+
+# the role discovers dynamically (in tasks/main.yml) whether it
+# is executed on a container image and sets the variable
+# system_is_container the true. Otherwise, the default value
+# 'false' is left unchanged.
+container_vars_file: is_container.yml
+
+# skip events for EC2 instance testing pipeline.
+# this variable is set to true for automated tests
+# carried out for this role by the role maintainers.
+system_is_ec2: false
+
+# for section 1.7
+# if a desktop is required set this as true, then security settings will be applied to secure GDM
+# if a desktop is not required set this as false, then GDM will be removed
+desktop_required: true
+
+# for 1.7
+# specifies the warning banner displayed to the user
+warning_banner: Authorized uses only. All activity may be monitored and reported.
+
+# for section 3.1
+# true ipv6 is required
+# flase ipv6 is not required and will be removed
+ipv6_required: false
+
+# for section 3.3
+# this variable governs the mechanism of how the disabling of IPV6 is carried out.
+# its possible values are `grub` and `sysctl`.
+ipv6_disable: 'sysctl'
+
+# for 5.3/5.4
+# this variable governs whether tasks of a potentially disruptive nature on your system
+# (e.g., removing .forward and .netrc files for interactive users) are carried out.
+# if you set this variable to "true", the role will carry such tasks; if you set it to
+# "false", these tasks will be skipped.
+disruption_high: true
+
+# for 5.3
+# allow pam-auth-update --enable pam_unix to run
+pam_auth_unix: true
+
+# for 5.3
+# should NOT be enabled if allowing custom config that enabled pam_faillock
+pam_create_pamunix_file: flase
+
+# for 5.3
+# Allow pam-auth-update --enable faillock
+# and
+# Allow pam-auth-update --enable faillock_notify
+pam_auth_faillock: true
+
+# for 5.3
+# allow new file to be created or overwrite existing with same name
+pam_create_faillock_files: true
+
+# for 5.3
+# allow new file to be created or overwrite existing with same name
+pam_create_pwquality_files: true
+
+# for 5.3
+# allow new file to be created or overwrite existing with same name
+pam_create_pwhistory_files: true
+
+# for 6.2
+# these variable specifies how much disk space the journal may use up at most
+# specify values in bytes or use K, M, G, T, P, E as units for the specified sizes.
+# see https://www.freedesktop.org/software/systemd/man/journald.conf.html for more information.
+# ATTENTION: Uncomment the keyword below when values are set!
+journald_systemmaxuse: 10M
+journald_systemkeepfree: 100G
+journald_runtimemaxuse: 10M
+journald_runtimekeepfree: 100G
+# this variable specifies, the maximum time to store entries in a single journal
+# file before rotating to the next one. Set to 0 to turn off this feature.
+# the given values is interpreted as seconds, unless suffixed with the units
+# `year`, `month`, `week`, `day`, `h` or `m` to override the default time unit of seconds.
+# ATTENTION: Uncomment the keyword below when values are set!
+journald_maxfilesec: 1month
+
+# for pam password complexity
+passwd_minlen_value: 14 # minlen = minimum password length
+passwd_difok_value: 2 # difok = the minimum number of characters that must be different from the old password
+passwd_minclass: 3  # minclass = the minimum number of character types that must be used (i.e., uppercase, lowercase, digits, other)
+passwd_dcredit: -1  # dcredit = maximum number of digits that will generate a credit
+passwd_ucredit: -2  # ucredit = maximum number of uppercase characters that will generate a credit
+passwd_ocredit: 0  # ocredit = maximum number of other characters that will generate a credit
+passwd_lcredit: -2  # lcredit = maximum number of lowercase characters that will generate a credit
+passwd_maxrepeat_value: 3 # maxrepeat = the maximum number of times a single character may be repeated
+passwd_maxsequence_value: 3
+passwd_dictcheck_value: 1 # dictcheck = whether to check for the words from the cracklib dictionary (enabled if the value is not 0)
+passwd_quality_enforce_value: 1 # enforcing = new password is rejected if it fails the check and the value is not 0
+passwd_quality_enforce_root_value: enforce_for_root # enforce_for_root: This ensures that the password policies are adhered to even if its the root user configuring the passwords.
+
+## AIDE
+aide_enabled: yes
+aide_reinit_enabled: no # reinit db every time this role is deployed
+security_aide_exclude_dirs:
+  - /dev
+  - /run
+  - /var/log
+  - /proc

@@ -1,0 +1,16 @@
+---
+
+- name: "SECTION | 6.1 | Configure Integrity Checking"
+  when: section_6_1
+  ansible.builtin.import_tasks:
+    file: 6.1.yml
+
+- name: "SECTION | 6.2 | Configure: systemd-journald service, journald-remote, journald, rsyslog, Logfiles"
+  when: section_6_2
+  ansible.builtin.import_tasks:
+    file: 6.2.yml
+
+- name: "SECTION | 6.3 | Configure: auditd Service, Data Retention, auditd Rules, auditd File Access"
+  when: section_6_3
+  ansible.builtin.import_tasks:
+    file: 6.3.yml

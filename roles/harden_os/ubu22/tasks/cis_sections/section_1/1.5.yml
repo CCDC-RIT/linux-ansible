@@ -1,0 +1,106 @@
+---
+
+- name: "1.5.1 | PATCH | Ensure address space layout randomization is enabled | set active kernel parameter"
+  when: 1_5_1
+  ansible.posix.sysctl:
+    name: kernel.randomize_va_space
+    value: '2'
+    state: present
+    sysctl_file: /etc/sysctl.d/98_kernel.conf
+    reload: true
+    sysctl_set: true
+    ignoreerrors: true
+
+- name: "1.5.2 | PATCH | Ensure ptrace_scope is restricted"
+  when: 1_5_2
+  ansible.posix.sysctl:
+    name: kernel.yama.ptrace_scope
+    value: '1'
+    state: present
+    sysctl_file: /etc/sysctl.d/98_kernel.conf
+    reload: true
+    sysctl_set: true
+    ignoreerrors: true
+
+- name: "1.5.3 | PATCH | Ensure core dumps are restricted"
+  when: 1_5_3
+  block:
+    - name: "1.5.3 | kernel sysctl"
+      ansible.posix.sysctl:
+        name: fs.suid_dumpable
+        value: '0'
+        state: present
+        sysctl_file: /etc/sysctl.d/98_kernel.conf
+        reload: true
+        sysctl_set: true
+        ignoreerrors: true
+
+    - name: "1.5.3 | security limits"
+      ansible.builtin.lineinfile:
+        path: /etc/security/limits.d/99_zero_core.conf
+        regexp: '^\* hard core'
+        line: '* hard core 0'
+        create: true
+        owner: root
+        group: root
+        mode: 'go-wx'
+
+    - name: "1.5.3 | sysctl.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        regexp: '^fs.suid_dumpable'
+        line: fs.suid_dumpable=0
+        owner: root
+        group: root
+        mode: 'go-wx'
+      notify: Reload systemctl
+
+    - name: "1.5.3 | coredump.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/coredump.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'go-wx'
+      loop:
+        - { regexp: '^Storage', line: 'Storage=none' }
+        - { regexp: '^ProcessSizeMax', line: 'ProcessSizeMax=0' }
+
+- name: "1.5.4 | PATCH | Ensure prelink is not installed"
+  when:
+    - rule_1_5_4
+    - "'prelink in ansible_facts.packages"
+  block:
+    - name: "1.5.4 | restore binaries to normal"
+      ansible.builtin.command: prelink -ua
+      changed_when: false
+      failed_when: false
+
+    - name: "1.5.4 | remove prelink package"
+      ansible.builtin.package:
+        name: prelink
+        state: absent
+        purge: false
+
+- name: "1.5.5 | PATCH | Ensure Automatic Error Reporting is not enabled"
+  when: 1_5_5
+  black:
+    - name: "1.5.5 | diable"
+      ansible.builtin.lineinfile:
+        path: /etc/default/apport
+        regexp: ^enabled
+        line: enabled=0
+        create: true
+        owner: root
+        group: root
+        mode: 'go-wx'
+
+    - name: "1.5.5 | remove package"
+      when: "'apport' in ansible_facts.packages"
+      ansible.builtin.package:
+        name: apport
+        state: absent
+        purge: false
+    
