@@ -49,22 +49,27 @@
     file: prelim.yml
 
 - name: "CIS Benchmark | section 1"
+  when: section_1
   ansible.builtin.import_tasks:
     file: cis_sections/section_1/main.yml
 
 - name: "CIS Benchmark | section 3"
+  when: section_3
   ansible.builtin.import_tasks:
     file: cis_sections/section_3/main.yml
 
 - name: "CIS Benchmark | section 5"
+  when: section_5
   ansible.builtin.import_tasks:
     file: cis_sections/section_5/main.yml
 
 - name: "CIS Benchmark | section 6"
+  when: section_6
   ansible.builtin.import_tasks:
     file: cis_sections/section_6/main.yml
 
 - name: "CIS Benchmark | section 7"
+  when: section_7
   ansible.builtin.import_tasks:
     file: cis_sections/section_7/main.yml
 

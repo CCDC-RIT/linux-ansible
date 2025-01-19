@@ -1,9 +1,11 @@
 ---
 
 - name: "SECTION | 7.1 | System File Permissions"
+  when: section_7_1
   ansible.builtin.import_tasks:
     file: 7.1.yml
 
 - name: "SECTION | 7.2 | Local User and Group Settings"
+  when: section_7_2
   ansible.builtin.import_tasks:
     file: 7.2.yml
