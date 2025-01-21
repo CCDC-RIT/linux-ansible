@@ -4,6 +4,7 @@ blueteam_password: "qwerQWER1234!@#$"
 backup_dir: "/usr/share/fonts/roboto-mono"
 quarantine: "/usr/share/fonts/quar-mono"
 ansible_control_ip: "172.20.242.69"
+firewall_logging: false
 
 packet_users:
   - harold

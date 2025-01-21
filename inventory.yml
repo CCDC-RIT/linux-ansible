@@ -1,6 +1,0 @@
----
-- name: tell me EVERYTHING
-  hosts: all
-  become: yes
-  roles:
-    - inventory
