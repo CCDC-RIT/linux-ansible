@@ -334,6 +334,7 @@ else
         pad_string " Interface $iface is down, setting it to up. " "+" 55
         #echo "  Interface $iface is down, setting it to up."
         ip link set "$iface" up
+        sleep 0.5 # need to wait a second for interface to come online, otherwise next checks will still error out
         #exit 0
     fi
 
@@ -355,7 +356,7 @@ else
     fi
 
     echo "  No network configuration issues were found."
-    echo "  If you still suspect network issues, make sure that all intermediate network devices are using the ping command."
+    echo "  If you still suspect network issues, make sure that all intermediate network devices are online using the ping command."
 
     # OLD: Ping until timeout of 2 seconds or 1 successful packet
     : '
@@ -461,7 +462,7 @@ pad_string " Firewall " "=" 35
 echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftables)"
 
 ## iptables tables to check
-declare -a tables=("filter" "nat" "mangle" "raw")
+declare -a tables=("filter" "nat" "mangle" "raw") # NAT cant have drop rules but whatev. RAW INPUT doesnt exist. Raw cant seem to drop packets.
 declare -a chains=("INPUT" "OUTPUT")
 
 ufw disable
@@ -654,14 +655,13 @@ for i in "${!original_dirs[@]}"; do
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
         pad_string " No backup file found, making a new master backup at: " "!" 65
         echo "  $backup_dir/backup.zip"
-        #echo "  No backup file found, making a new master backup at $backup_dir/backup.zip..."
         if [ -d "$original_dir" ]; then
         #echo "$file is a directory."
             #only recurse if dir
             zip -q -r "$backup_dir/backup.zip" "$original_dir"
         else
             #echo "$file is not a directory."
-            zip -q "$new_backup_file_path" "$original_dir"
+            zip -q "$backup_dir/backup.zip" "$original_dir"
         fi
     fi
 done
