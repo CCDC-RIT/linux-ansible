@@ -8,10 +8,6 @@
 
 #for 3.1
 - name: PRELIM | AUDIT | Wireless adapter pre-requisites
-  when:
-    - ubtu22cis_rule_3_1_2
-    - not system_is_container
-  tags: always
   block:
     - name: PRELIM | AUDIT | Discover is wirelss adapter on system
       ansible.builtin.shell: find /sys/class/net/*/ -type d -name wireless
@@ -27,10 +23,12 @@
       ansible.builtin.package:
         name: network-manager
         state: present
+  when:
+    - ubtu22cis_rule_3_1_2
+    - not system_is_container
 
 #for 5.2
 - name: PRELIM | PATCH | Find all sudoers files.
-  tags: always
   ansible.builtin.shell: "find /etc/sudoers /etc/sudoers.d/ -type f ! -name '*~' ! -name '*.*'"
   changed_when: false
   failed_when: false
@@ -39,8 +37,6 @@
 
 #for 5.4
 - name: PRELIM | AUDIT | Gather UID 0 accounts other than root
-  tags:
-    - always
   ansible.builtin.shell: "cat /etc/passwd | awk -F: '($3 == 0 && $1 != \"root\") {i++;print $1 } END {exit i}'"
   changed_when: false
   check_mode: false
@@ -48,7 +44,6 @@
 
 #5.4
 - name: PRELIM | AUDIT | Interactive Users
-  tags: always
   ansible.builtin.shell: >
     grep -E -v '^(root|halt|sync|shutdown)' /etc/passwd | awk -F: '(!index($7, "sbin/nologin") && $7 != "/bin/nologin" && $7 != "/bin/false" && $7 != "/dev/null") { print $1 }'
   changed_when: false
@@ -56,8 +51,6 @@
 
 #for 5.4 and 7.2
 - name: "PRELIM | Parse /etc/passwd"
-  tags:
-    - always
   block:
     - name: "PRELIM | Parse /etc/passwd | Get /etc/password contents"
       ansible.builtin.command: cat /etc/passwd
@@ -89,7 +82,6 @@
 
 #for 7.2
 - name: PRELIM | AUDIT | Interactive User accounts home directories
-  tags: always
   ansible.builtin.shell: >
     grep -E -v '^(root|halt|sync|shutdown)' /etc/passwd | awk -F: '(!index($7, "sbin/nologin") && $7 != "/bin/nologin" && $7 != "/bin/false" && $7 != "/dev/null") { print $6 }'
   changed_when: false

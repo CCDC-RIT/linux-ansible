@@ -1,20 +1,15 @@
 ---
 
 - name: "5.3.1.1 | PATCH | Ensure latest version of pam is installed"
+  ansible.builtin.package:
+    name: pam
+    state: latest
   when:
     - rule_5_3_1_1
     - ansible_facts.packages['pam'][0]['version'] is version('1.5.1-19', '<') or
       "'pam' not in ansible_facts.packages"
-  ansible.builtin.package:
-    name: pam
-    state: latest
 
 - name: "5.3.1.2 | PATCH | Ensure latest version of authselect is installed"
-  when:
-    - rule_5_3_1_2
-    - authselect_pkg_update
-    - ansible_facts.packages['authselect'][0]['version'] is version('1.2.6-2', '<') or
-      "'authselect' not in ansible_facts.packages"
   block:
     - name: "5.3.1.2 | Patch"
       ansible.builtin.package:
@@ -23,33 +18,34 @@
       register: discovered_authselect_updated
 
     - name: "5.3.1.2 | Patch"
-      when: discovered_authselect_updated.changed  # noqa no-handler
       ansible.builtin.set_fact:
         authselect_update: OK
+      when: discovered_authselect_updated.changed  # noqa no-handler
+  when:
+    - rule_5_3_1_2
+    - authselect_pkg_update
+    - ansible_facts.packages['authselect'][0]['version'] is version('1.2.6-2', '<') or
+      "'authselect' not in ansible_facts.packages"
 
 - name: "5.3.1.3 | PATCH | Ensure libpwquality is installed"
+  ansible.builtin.package:
+    name: libpwquality
+    state: latest
   when:
     - rule_5_3_1_3
     - ansible_facts.packages['libpwquality'][0]['version'] is version('1.4.4-8', '<') or
       "'libpwquality' not in ansible_facts.packages"
-  ansible.builtin.package:
-    name: libpwquality
-    state: latest
 
 - name: "5.3.2.1 | PATCH | Ensure active authselect profile includes pam modules"
-  when:
-    - rule_5_3_2_1
-    - disruption_high
-    - allow_authselect_updates
   block:
     - name: "5.3.2.1 | Create custom profiles"
-      when:
-        - authselect_custom_profile_name not in prelim_authselect_current_profile.stdout or
-          prelim_authselect_current_profile.stdout is not defined
       ansible.builtin.command: "/usr/bin/authselect create-profile {{ authselect_custom_profile_name }} -b {{ authselect_default_profile_to_copy }}"
       changed_when: false
       args:
         creates: "/etc/authselect/custom/{{ authselect_custom_profile_name }}"
+      when:
+        - authselect_custom_profile_name not in prelim_authselect_current_profile.stdout or
+          prelim_authselect_current_profile.stdout is not defined
 
     - name: "5.3.2.1 | get profile features"
       ansible.builtin.command: "/usr/bin/authselect list-features custom/{{ authselect_custom_profile_name }}"
@@ -57,7 +53,6 @@
       register: discovered_authselect_profile_features
 
     - name: "5.3.2.1 | Add missing pam modules to config | pwquality"
-      when: "'with-pwquality' not in discovered_authselect_profile_features.stdout_lines"
       ansible.builtin.lineinfile:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^password\s*requisite\s*pam_pwquality.so.*
@@ -65,16 +60,17 @@
       loop:
         - system
         - password
+      when: "'with-pwquality' not in discovered_authselect_profile_features.stdout_lines"
 
     - name: "5.3.2.1 | Backup and Add pam modules"
       ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-pwquality with-pwhistory without-nullok --force --backup=rhel9cis-preremediate-2025-01-14-1345"
       changed_when: true
-
-- name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled"
   when:
-    - rule_5_3_2_2
+    - rule_5_3_2_1
     - disruption_high
     - allow_authselect_updates
+
+- name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled"
   notify: Authselect update
   block:
     - name: "5.3.2.2 | Get current config"
@@ -85,15 +81,15 @@
       register: discovered_authselect_current_faillock
 
     - name: "5.3.2.2 | Add feature if missing"  # noqa syntax-check[specific]"
-      when: discovered_authselect_current_faillock.rc != 0
       ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-faillock with-pwquality with-pwhistory without-nullok"
       changed_when: true
-
-- name: "5.3.2.3 | PATCH | Ensure pam_pwquality module is enabled"
+      when: discovered_authselect_current_faillock.rc != 0
   when:
-    - rule_5_3_2_3
+    - rule_5_3_2_2
     - disruption_high
     - allow_authselect_updates
+
+- name: "5.3.2.3 | PATCH | Ensure pam_pwquality module is enabled"
   block:
     - name: "5.3.2.3 | Get current config"
       ansible.builtin.shell: |
@@ -103,16 +99,16 @@
       register: discovered_authselect_current_quality
 
     - name: "5.3.2.3 | Add feature if missing"
-      when: discovered_authselect_current_quality.rc != 0
       ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-faillock with-pwquality with-pwhistory without-nullok"
       changed_when: true
       notify: Authselect update
-
-- name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled"
+      when: discovered_authselect_current_quality.rc != 0
   when:
-    - rule_5_3_2_4
+    - rule_5_3_2_3
     - disruption_high
     - allow_authselect_updates
+
+- name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled"
   block:
     - name: "5.3.2.4 | Get current config"
       ansible.builtin.shell: |
@@ -122,16 +118,16 @@
       register: discovered_authselect_current_history
 
     - name: "5.3.2.4 | enable feature"
-      when: discovered_authselect_current_history.rc != 0
       ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-pwquality with-pwhistory without-nullok"
       changed_when: true
       notify: Authselect update
-
-- name: "5.3.2.5 | PATCH | Ensure pam_unix module is enabled"
+      when: discovered_authselect_current_history.rc != 0
   when:
-    - rule_5_3_2_5
+    - rule_5_3_2_4
     - disruption_high
     - allow_authselect_updates
+
+- name: "5.3.2.5 | PATCH | Ensure pam_unix module is enabled"
   block:
     - name: "5.3.2.5"
       ansible.builtin.shell: grep -P -- '\b(pam_unix\.so)\b' /etc/authselect/"$(head -1 /etc/authselect/authselect.conf)"/{system,password}-auth
@@ -140,7 +136,6 @@
       register: discovered_authselect_pam_unix
 
     - name: "5.3.2.5 | system-auth"
-      when: "'system-auth:password' not in discovered_authselect_pam_unix.stdout"
       ansible.builtin.lineinfile:
         path: /etc/authselect/custom/{{ authselect_custom_profile_name }}/system-auth
         regexp: "{{ item.regexp }}"
@@ -151,11 +146,10 @@
         loop:
           - { regexp: '^(auth\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', after: '^auth.*pam_faillock.*preauth' }
           - { regexp: '^(password\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', before: '^password.*pam_deny.so' }
+      when: "'system-auth:password' not in discovered_authselect_pam_unix.stdout"
       notify: Authselect update
 
     - name: "5.3.2.5 | password-auth"
-      when: 
-        - "'password-auth:password' not in discovered_authselect_pam_unix.stdout"
       ansible.builtin.lineinfile:
         path: /etc/authselect/custom/{{ authselect_custom_profile_name }}/password-auth
         line: "{{ item.line }}"
@@ -166,10 +160,14 @@
         loop:
           - { regexp: '^(auth\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\2', after: '^auth.*pam_faillock.*preauth' }
           - { regexp: '^(password\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', before: '^password.*pam_deny.so' }
+      when: "'password-auth:password' not in discovered_authselect_pam_unix.stdout"
       notify: Authselect update
+  when:
+    - rule_5_3_2_5
+    - disruption_high
+    - allow_authselect_updates
 
 - name: "5.3.3.1.1 | PATCH | Ensure password failed attempts lockout is configured"
-  when: rule_5_3_3_1_1
   block:
     - name: "5.3.3.1.1 | faillock.conf"
       ansible.builtin.lineinfile:
@@ -179,9 +177,6 @@
         line: "deny = {{ pam_faillock_deny }}"
 
     - name: "5.3.3.1.1 | remove deny from pam files NOT AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+deny\s*=\s*\S+(.*$)
@@ -189,11 +184,11 @@
       loop:
         - password
         - system
-
-    - name: "5.3.3.1.1 | remove deny from AuthSelect config"
       when:
         - allow_authselect_updates
         - disruption_high
+
+    - name: "5.3.3.1.1 | remove deny from AuthSelect config"
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+deny\s*=\s*\S+(.*$)
@@ -202,9 +197,12 @@
         - password
         - system
       notify: Authselect update
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_1_1
 
 - name: "5.3.3.1.2 | PATCH | Ensure password unlock time is configured"
-  when: rule_5_3_3_1_2
   block:
     - name: "5.3.3.1.2 | faillock.conf"
       ansible.builtin.lineinfile:
@@ -214,9 +212,6 @@
         line: "unlock_time = {{ pam_faillock_unlock_time }}"
 
     - name: "5.3.3.1.2 | remove unlock from pam files NOT AuthSelect"
-      when:
-        - disruption_high
-        - not allow_authselect_updates
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+unlock_time\s*=\s*\S+(.*$)
@@ -224,11 +219,11 @@
       loop:
         - password
         - system
+      when:
+        - disruption_high
+        - not allow_authselect_updates
 
     - name: "5.3.3.1.2 | remove unlock from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+unlock_time\s*=\s*\S+(.*$)
@@ -236,10 +231,13 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_1_2
 
 - name: "5.3.3.1.3 | PATCH | Ensure password failed attempts lockout includes root account"
-  when: rule_5_3_3_1_3
   block:
     - name: "5.3.3.1.3 | configure faillock.conf"
       ansible.builtin.lineinfile:
@@ -251,9 +249,6 @@
         mode: 'u-x,go-wx'
 
     - name: "5.3.3.1.3 | remove lockout from pam files NOT AuthSelect"
-      when:
-        - disruption_high
-        - not allow_authselect_updates
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s(even_deny_root|root_unlock_time=\d*)"(\s*=\s*\d|.*)\S+(.*$)
@@ -261,11 +256,11 @@
       loop:
         - password
         - system
+      when:
+        - disruption_high
+        - not allow_authselect_updates
 
     - name: "5.3.3.1.3 | remove lockout from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s(even_deny_root|root_unlock_time=\d*)"(\s*=\s*\d|.*)\S+(.*$)
@@ -273,15 +268,15 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_1_3
 
 - name: "5.3.3.2.1 | PATCH | Ensure password number of changed characters is configured"
-  when: rule_5_3_3_2_1
   block:
     - name: "5.3.3.2.1 | Remove difok from conf files except expected file"
-      when:
-        - item != passwd_difok_file
-        - disruption_high
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'difok\s*=\s*\d+\b'
@@ -290,6 +285,9 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - /etc/pam.d/*-auth
+      when:
+        - item != passwd_difok_file
+        - disruption_high
 
     - name: "5.3.3.2.1 | Ensure difok file exists"
       ansible.builtin.template:
@@ -300,9 +298,6 @@
         mode: 'go-rwx'
 
     - name: "5.3.3.2.1 | Remove difok from pam files Not AuthSelect"
-      when:
-        - not allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdifok=\d*(.*$)
@@ -310,11 +305,11 @@
       loop:
         - password
         - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
 
     - name: "5.3.3.2.1 | Remove difok from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdifok=\d*(.*$)
@@ -322,15 +317,15 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_2_1
 
 - name: "5.3.3.2.2 | PATCH | Ensure password length is configured"
-  when: rule_5_3_3_2_2
   block:
     - name: "5.3.3.2.2 | Remove minlen from conf files except expected file"
-      when:
-        - item != passwd_minlen_file
-        - disruption_high
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'minlen\s*=\s*\d+\b'
@@ -339,6 +334,9 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_minlen_file
+        - disruption_high
 
     - name: "5.3.3.2.2 | Ensure minlen file exists"
       ansible.builtin.template:
@@ -349,9 +347,6 @@
         mode: 'go-rwx'
 
     - name: "5.3.3.2.2 | Remove minlen from pam files NOT AuthSelect"
-      when:
-        - not allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sminlen=\d*(.*$)
@@ -359,11 +354,11 @@
       loop:
         - password
         - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
 
     - name: "5.3.3.2.2 | Remove minlen from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sminlen=\d*(.*$)
@@ -371,15 +366,15 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_2_2
 
 - name: "5.3.3.2.3 | PATCH | Ensure password complexity is configured"
-  when: rule_5_3_3_2_3
   block:
     - name: "5.3.3.2.3 | Remove pwd complex settings from conf files except expected file"
-      when:
-        - item != passwd_complex_file
-        - disruption_high
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: '(minclass|[dulo]credit)\s*=\s*(-\d|\d+)\b'
@@ -388,6 +383,9 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_complex_file
+        - disruption_high
 
     - name: "5.3.3.2.3 | Ensure complexity file exists"
       ansible.builtin.template:
@@ -398,9 +396,6 @@
         mode: 'go-rwx'
 
     - name: "5.3.3.2.3 | Remove complexity from pam files NOT AuthSelect"
-      when:
-        - not allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\s(minclass=[0-3]|[dulo]credit=[^-]\d*)(.*$)
@@ -408,11 +403,11 @@
       loop:
         - password
         - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
 
     - name: "5.3.3.2.3 | Remove complexity from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\s(minclass=[0-3]|[dulo]credit=[^-]\d*)(.*$)
@@ -420,13 +415,15 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_2_3
 
 - name: "5.3.3.2.4 | PATCH | Ensure password same consecutive characters is configured"
-  when: rule_5_3_3_2_4
   block:
     - name: "5.3.3.2.4 | Remove maxrepeat settings from conf files except expected file"
-      when: item != passwd_maxrepeat_file
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'maxrepeat\s*=\s*\d+\b'
@@ -435,6 +432,7 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/*-auth'
+      when: item != passwd_maxrepeat_file
 
     - name: "5.3.3.2.4 | Ensure maxrepeat file exists"
       ansible.builtin.template:
@@ -445,9 +443,6 @@
         mode: 'go-rwx'
 
     - name: "5.3.3.2.4 | Remove maxrepeat from pam files NOT AuthSelect"
-      when:
-        - not allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxrepeat\s*=\s*\d*(.*$)
@@ -455,11 +450,11 @@
       loop:
         - password
         - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
 
     - name: "5.3.3.2.4 | Remove maxrepeat from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxrepeat\s*=\s*\d*(.*$)
@@ -467,15 +462,15 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_2_4
 
 - name: "5.3.3.2.5 | PATCH | Ensure password maximum sequential characters is is configured"
-  when: rule_5_3_3_2_5
   block: 
     - name: "5.3.3.2.5 | Remove maxsequence settings from conf files except expected file"
-      when:
-        - item != passwd_maxsequence_file
-        - disruption_high
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'maxsequence\s*=\s*\d+\b'
@@ -484,6 +479,9 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_maxsequence_file
+        - disruption_high
 
     - name: "5.3.3.2.5 | Ensure maxsequence file exists"
       ansible.builtin.template:
@@ -494,9 +492,6 @@
         mode: 'go-rwx'
 
     - name: "5.3.3.2.5 | Remove maxsequence from pam files NOT AuthSelect"
-      when:
-        - not allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxsequence\s*=\s*\d*(.*$)
@@ -504,11 +499,11 @@
       loop:
         - password
         - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
 
     - name: "5.3.3.2.5 | Remove maxsequence from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxsequence\s*=\s*\d*(.*$)
@@ -516,14 +511,15 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_2_5
 
 - name: "5.3.3.2.6 | PATCH | Ensure password dictionary check is enabled"
-  when: rule_5_3_3_2_6
   block:
     - name: "5.3.3.2.6 | Remove dictcheck settings from conf files except expected file"
-      when:
-        - item != passwd_dictcheck_file
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'dictcheck\s*=\s*\d+\b'
@@ -532,6 +528,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_dictcheck_file
 
     - name: "5.3.3.2.6 | Ensure dictcheck file exists"
       ansible.builtin.template:
@@ -542,9 +540,6 @@
         mode: 'go-rwx'
 
     - name: "5.3.3.2.6 | Remove dictcheck from pam files NOT AuthSelect"
-      when:
-        - not allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdictcheck\s*=\s*\d*(.*$)
@@ -552,12 +547,12 @@
       loop:
         - password
         - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
       notify: Authselect update
 
     - name: "5.3.3.2.6 | Remove dictcheck from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdictcheck\s*=\s*\d*(.*$)
@@ -565,19 +560,22 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_2_6
 
 - name: "5.3.3.2.7 | PATCH | Ensure password quality is enforced for the root user"
-  when: rule_5_3_3_2_7
   ansible.builtin.template:
     src: "{{ passwd_quality_enforce_root_file }}.j2"
     dest: "/{{ passwd_quality_enforce_root_file }}"
     owner: root
     group: root
     mode: 'o-rwx'
+  when: rule_5_3_3_2_7
 
 - name: "5.3.3.3.1 | PATCH | Ensure password history remember is configured"
-  when: rule_5_3_3_3_1
   block:
     - name: "5.3.3.3.1 | Check existing files"
       ansible.builtin.shell: grep -Psi -- '^\h*password\s+[^#\n\r]+\h+pam_pwhistory\.so\s+([^#\n\r]+\s+)?remember=\d+\b' /etc/pam.d/password-auth /etc/pam.d/system-auth
@@ -592,9 +590,6 @@
         line: remember = {{ pamd_pwhistory_remember }}
 
     - name: "5.3.3.3.1 | Remove remember from pam files NOT AuthSelect"
-      when:
-        - not allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/pam.d/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\sremember=\d*(.*$)
@@ -602,11 +597,11 @@
       loop:
         - password
         - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
 
     - name: "5.3.3.3.1 | Remove remember from pam files AuthSelect"
-      when:
-        - allow_authselect_updates
-        - disruption_high
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\sremember=\d*(.*$)
@@ -614,10 +609,13 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_3_1
 
 - name: "5.3.3.3.2 | PATCH | Ensure password history is enforced for the root user"
-  when: rule_5_3_3_3_2
   block:
     - name: "5.3.3.3.2 | Check existing files"
       ansible.builtin.shell: grep -Psi -- '^\h*password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+([^#\n\r]+\h+)?enforce_for_root\b' /etc/pam.d/{system,password}-auth
@@ -632,21 +630,17 @@
         line: enforce_for_root
 
     - name: "5.3.3.3.2 | Ensure enforce_for_root is set"
-      when:
-        - not allow_authselect_updates
-        - discovered_pwhistory_enforce_for_root.stdout | length == 0
-        - disruption_high
       ansible.builtin.lineinfile:
         path: "/{{ pam_confd_dir }}{{ pam_pwhistory_file }}"
         regexp: ^(password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+)(.*)(enforce_for_root)
         line: '\1\2\3 enforce_for_root'
         backrefs: true
-
-    - name: "5.3.3.3.2 | Ensure enforce_for_root is set"
       when:
-        - allow_authselect_updates
+        - not allow_authselect_updates
         - discovered_pwhistory_enforce_for_root.stdout | length == 0
         - disruption_high
+
+    - name: "5.3.3.3.2 | Ensure enforce_for_root is set"
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\senforce_for_root(.*$)
@@ -654,10 +648,14 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - discovered_pwhistory_enforce_for_root.stdout | length == 0
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_3_2
 
 - name: "5.3.3.3.3 | PATCH | Ensure pam_pwhistory includes use_authtok"
-  when: rule_5_3_3_3_3
   block:
     - name: "5.3.3.3.3 | Check existing files"
       ansible.builtin.shell: grep -Psi -- '^\h*password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+([^#\n\r]+\h+)?use_authtok\b' /etc/pam.d/{system,password}-auth
@@ -672,21 +670,17 @@
         line: use_authtok
 
     - name: "5.3.3.3.3 | Ensure use_authtok is set"
-      when:
-        - not allow_authselect_updates
-        - discovered_pwhistory_use_authtok.stdout | length == 0
-        - disruption_high
       ansible.builtin.lineinfile:
         path: "/{{ pam_confd_dir }}{{ pam_pwhistory_file }}"
         regexp: ^(password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+)(.*)(use_authtok)
         line: '\1\2 use_authtok'
         backrefs: true
-
-    - name: "PATCH | add authtok to pam files AuthSelect"
       when:
-        - allow_authselect_updates
+        - not allow_authselect_updates
         - discovered_pwhistory_use_authtok.stdout | length == 0
         - disruption_high
+
+    - name: "PATCH | add authtok to pam files AuthSelect"
       ansible.builtin.lineinfile:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\suse_authtok(.*$)
@@ -695,12 +689,14 @@
       loop:
         - password
         - system
+      when:
+        - allow_authselect_updates
+        - discovered_pwhistory_use_authtok.stdout | length == 0
+        - disruption_high
       notify: Authselect update
+  when: rule_5_3_3_3_3
 
 - name: "5.3.3.4.1 | PATCH | Ensure pam_unix does not include nullok"
-  when:
-    - rule_5_3_3_4_1
-    - disruption_high
   block:
     - name: "5.3.3.4.1 | capture state"
       ansible.builtin.shell: grep -E "pam_unix.so.*nullok" /etc/pam.d/*-auth | cut -d ':' -f1 | uniq
@@ -709,17 +705,16 @@
       register: discovered_pam_nullok
 
     - name: "5.3.3.4.1 | Ensure nullok removed"
-      when:
-        - discovered_pam_nullok.stdout | length > 0
-        - not allow_authselect_updates
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: nullok
         replace: ''
       loop: "{{ discovered_pam_nullok.stdout_lines }}"
+      when:
+        - discovered_pam_nullok.stdout | length > 0
+        - not allow_authselect_updates
 
     - name: "5.3.3.4.1 | Remove nullok from pam files AuthSelect"
-      when: allow_authselect_updates
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_unix\.so)(.*)\snullok(.*$)
@@ -727,12 +722,13 @@
       loop:
         - password
         - system
+      when: allow_authselect_updates
       notify: Authselect update
+  when:
+    - rule_5_3_3_4_1
+    - disruption_high
 
 - name: "5.3.3.4.2 | PATCH | Ensure pam_unix does not include remember"
-  when:
-    - rule_5_3_3_4_2
-    - disruption_high
   block:
     - name: "5.3.3.4.2 | capture state"
       ansible.builtin.shell: grep -E "password.*pam_unix.so.*remember" /etc/pam.d/*-auth | cut -d ':' -f1 | uniq
@@ -741,17 +737,16 @@
       register: discovered_pam_remember
 
     - name: "5.3.3.4.2 | Ensure remember removed"
-      when:
-        - not allow_authselect_updates
-        - discovered_pam_remember.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: remember
         replace: ''
       loop: "{{ discovered_pam_remember.stdout_lines }}"
+      when:
+        - not allow_authselect_updates
+        - discovered_pam_remember.stdout | length > 0
 
     - name: "5.3.3.4.2 | Remove remember from pam files AuthSelect"
-      when: allow_authselect_updates
       ansible.builtin.replace:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_unix\.so)(.*)\sremember\s*=\s*=\d*(.*$)
@@ -759,12 +754,13 @@
       loop:
         - password
         - system
+      when: allow_authselect_updates
       notify: Authselect update
+  when:
+    - rule_5_3_3_4_2
+    - disruption_high
 
 - name: "5.3.3.4.3 | PATCH | Ensure pam_unix includes a strong password hashing algorithm"
-  when:
-    - rule_5_3_3_4_3
-    - disruption_high
   block:
     - name: "5.3.3.4.3 | capture state"
       ansible.builtin.shell: grep -E "password.*pam_unix.so.*(sha512|yescrypt)" /etc/pam.d/*-auth | cut -d ':' -f1 | uniq
@@ -773,17 +769,16 @@
       register: discovered_pam_pwhash
 
     - name: "5.3.3.4.3 | Ensure hash algorithm set"
-      when:
-        - not allow_authselect_updates
-        - discovered_pam_remember.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: "(md5|bigcrypt|sha256|blowfish|gost_yescrypt|sha512|yescrypt)"
         replace: '{{ passwd_hash_algo }}'
       loop: "{{ discovered_pam_remember.stdout_lines }}"
+      when:
+        - not allow_authselect_updates
+        - discovered_pam_remember.stdout | length > 0
 
     - name: "5.3.3.4.3 | Add hash algorithm to pam files AuthSelect"
-      when: allow_authselect_updates
       ansible.builtin.lineinfile:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+)(requisite|required|sufficient)(\s+pam_unix.so\s)(.*)(sha512|yescrypt)(.*$)
@@ -792,12 +787,13 @@
       loop:
         - password
         - system
+      when: allow_authselect_updates
       notify: Authselect update
+  when:
+    - rule_5_3_3_4_3
+    - disruption_high
 
 - name: "5.3.3.4.4 | PATCH | Ensure pam_unix includes use_authtok"
-  when:
-    - rule_5_3_3_4_4
-    - disruption_high
   block:
     - name: "5.3.3.4.4 | capture state"
       ansible.builtin.shell: grep -PH -- '^\h*^password\h*[^#\n\r]+\h+pam_unix.so\b' /etc/pam.d/{password,system}-auth | grep -Pv -- '\buse_authtok\b'
@@ -806,19 +802,18 @@
       register: discovered_pam_authtok
 
     - name: "5.3.3.4.4 | pam_files"
-      when:
-        - not allow_authselect_updates
-        - discovered_pam_authtok is defined
-        - discovered_pam_authtok.stdout | length > 0
       ansible.builtin.lineinfile:
         path: "{{ item }}"
         regexp: ^(\s*password\s+)(requisite|required|sufficient)(\s+pam_unix.so\s)(.*)use_authtok(.*$)
         line: \1\2\3\4use_authtok \5
         backrefs: true
       loop: "{{ discovered_pam_authtok.stdout_lines }}"
+      when:
+        - not allow_authselect_updates
+        - discovered_pam_authtok is defined
+        - discovered_pam_authtok.stdout | length > 0
 
     - name: "5.3.3.4.4 | Add use_authtok pam files AuthSelect"
-      when: allow_authselect_updates
       ansible.builtin.lineinfile:
         path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
         regexp: ^(\s*password\s+)(requisite|required|sufficient)(\s+pam_unix.so\s)(.*)use_authtok(.*$)
@@ -827,4 +822,8 @@
       loop:
         - password
         - system
+      when: allow_authselect_updates
       notify: Authselect update
+  when:
+    - rule_5_3_3_4_4
+    - disruption_high

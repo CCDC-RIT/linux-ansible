@@ -1,51 +1,46 @@
 ---
 
 - name: "5.3.1.1 | PATCH | Ensure latest version of pam is installed"
+  ansible.builtin.package:
+    name: libpam-runtime
+    state: latest
   when:
     - rule_5_3_1_1
     - ansible_facts.packages['libpam-runtime'][0]['version'] is version('1.5.2-6', '<=') or
       "'libpam-runtime' not in ansible_facts.packages"
-  ansible.builtin.package:
-    name: libpam-runtime
-    state: latest
 
 - name: "5.3.1.2 | PATCH | Ensure libpam-modules is installed"
+  ansible.builtin.package:
+    name: libpam-modules
+    state: latest
   when:
     rule_5_3_1_2
     - ansible_facts.packages['libpam-modules'][0]['version'] is version('1.5.2-6', '<=') or
       "'libpam-modules' not in ansible_facts.packages"
-  ansible.builtin.package:
-    name: libpam-modules
-    state: latest
 
 - name: "5.3.1.3 | PATCH | Ensure libpam-pwquality is installed"
-  when:
-    - rule_5_3_1_3
-    - "'libpam-pwquality' not in ansible_facts.packages"
   ansible.builtin.package:
     name: libpam-pwquality
     state: latest
+  when:
+    - rule_5_3_1_3
+    - "'libpam-pwquality' not in ansible_facts.packages"
 
 - name: "5.3.2.1 | PATCH | Ensure pam_unix module is enabled"
-  when:
-    - rule_5_3_2_1
-    - disruption_high
-    - pam_auth_unix
-    - pam_create_pamunix_file
   ansible.builtin.template:
     src: 'usr/share/pam-configs/pam_unix.j2'
     dest: '/usr/share/pam-configs/pam_unix'
     owner: root
     group: root
     mode: 'go-rwx'
+  when:
+    - rule_5_3_2_1
+    - disruption_high
+    - pam_auth_unix
+    - pam_create_pamunix_file
   notify: Pam_auth_update_pwunix
 
 - name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled"
-  when:
-    - rule_5_3_2_2
-    - disruption_high
-    - pam_auth_faillock
-    - pam_create_faillock_files
   ansible.builtin.template:
     src: 'usr/share/pam-configs/{{ item }}.j2'
     dest: '/usr/share/pam-configs/{{ item }}'
@@ -55,38 +50,42 @@
   loop:
     - faillock
     - faillock_notify
+  when:
+    - rule_5_3_2_2
+    - disruption_high
+    - pam_auth_faillock
+    - pam_create_faillock_files
   notify:
     - Pam_auth_update_pwfaillock
     - Pam_auth_update_pwfaillock_notify
 
 - name: "5.3.2.3 | PATCH | Ensure pam_pwquality module is enabled"
-  when:
-    - rule_5_3_2_3
-    - disruption_high
-    - pam_create_pwquality_files
   ansible.builtin.template:
     src: 'usr/share/pam-configs/pwquality.j2'
     dest: '/usr/share/pam-configs/pwquality'
     owner: root
     group: root
     mode: 'go-rwx'
+  when:
+    - rule_5_3_2_3
+    - disruption_high
+    - pam_create_pwquality_files
   notify: Pam_auth_update_pwquality
 
 - name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled"
-  when:
-    - rule_5_3_2_4
-    - disruption_high
-    - pam_create_pwhistory_files
   ansible.builtin.template:
     src: 'usr/share/pam-configs/pwhistory.j2'
     dest: '/usr/share/pam-configs/pwhistory }}'
     owner: root
     group: root
     mode: 'go-rwx'
+  when:
+    - rule_5_3_2_4
+    - disruption_high
+    - pam_create_pwhistory_files
   notify: Pam_auth_update_pwhistory
 
 - name: "5.3.3.1.1 | PATCH | Ensure password failed attempts lockout is configured"
-  when: rule_5_3_3_1_1
   block:
     - name: "5.3.3.1.1 | configure faillock.conf"
       ansible.builtin.lineinfile:
@@ -106,7 +105,6 @@
       register: discovered_faillock_deny_files
 
     - name: "5.3.3.1.1 | if exists remove deny from faillock line in pam-auth conf files"
-      when: discovered_faillock_deny_files.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: '(*.pam_faillock.so\s*)deny\s*=\s*\d+\b(.*)'
@@ -114,9 +112,10 @@
       with_fileglob:
         - '/usr/share/pam-configs/*'
         - '/etc/pam.d/*'
+      when: discovered_faillock_deny_files.stdout | length > 0
+  when: rule_5_3_3_1_1
 
 - name: "5.3.3.1.2 | PATCH | Ensure password unlock time is configured"
-  when: rule_5_3_3_1_2
   block:
     - name: "5.3.3.1.2 | configure faillock.conf"
       ansible.builtin.lineinfile:
@@ -136,7 +135,6 @@
       failed_when: discovered_faillock_unlock_files.rc not in [ 0, 1 ]
 
     - name: "5.3.3.1.2 | if exists remove unlock_time from faillock line in pam-auth conf files"
-      when: discovered_faillock_unlock_files.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: '(*.pam_faillock.so\s*)unlock_time\s*=\s*\b(.*)'
@@ -144,9 +142,10 @@
       with_fileglob:
         - '/usr/share/pam-configs/*'
         - '/etc/pam.d/*'
+      when: discovered_faillock_unlock_files.stdout | length > 0
+  when: rule_5_3_3_1_2
 
 - name: "5.3.3.1.3 | PATCH | Ensure password failed attempts lockout includes root account"
-  when: rule_5_3_3_1_3
   block:
     - name: "5.3.3.1.3 | configure faillock.conf"
       ansible.builtin.lineinfile:
@@ -166,7 +165,6 @@
       register: discovered_faillock_rootlock_files
 
     - name: "5.3.3.1.3 | if exists remove unlock_time from faillock line in pam-auth conf files"
-      when: discovered_faillock_rootlock_files.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: '(*.pam_faillock.so\s*)(even_deny_root\b|root_unlock_time\s*=\s*\d+\b)(.*)'
@@ -174,13 +172,12 @@
       with_fileglob:
         - '/usr/share/pam-configs/*'
         - '/etc/pam.d/*'
+      when: discovered_faillock_rootlock_files.stdout | length > 0
+  when: rule_5_3_3_1_3
 
 - name: "5.3.3.2.1 | PATCH | Ensure password number of changed characters is configured"
-  when: rule_5_3_3_2_1
   block:
     - name: "5.3.3.2.1 | Remove difok from conf files except expected file"
-      when:
-        - item != 'etc/security/pwquality.conf.d/50-pwdifok.conf'
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'difok\s*=\s*\d+\b'
@@ -189,6 +186,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/common-password'
+      when:
+        - item != 'etc/security/pwquality.conf.d/50-pwdifok.conf'
 
     - name: "5.3.3.2.1 | Ensure difok file exists"
       ansible.builtin.template:
@@ -197,13 +196,11 @@
         owner: root
         group: root
         mode: 'go-rwx'
+  when: rule_5_3_3_2_1
 
 - name: "5.3.3.2.2 | PATCH | Ensure minimum password length is configured"
-  when: rule_5_3_3_2_2
   block:
     - name: "5.3.3.2.2 | Remove minlen from conf files except expected file"
-      when:
-        - item != 'etc/security/pwquality.conf.d/50-pwlength.conf'
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'minlen\s*=\s*\d+\b'
@@ -212,6 +209,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/common-password'
+      when:
+        - item != 'etc/security/pwquality.conf.d/50-pwlength.conf'
 
     - name: "5.3.3.2.2 | Ensure minlen file exists"
       ansible.builtin.template:
@@ -220,13 +219,11 @@
         owner: root
         group: root
         mode: 'go-rwx'
+  when: rule_5_3_3_2_2
 
 - name: "5.3.3.2.3 | PATCH | Ensure password complexity is configured"
-  when: rule_5_3_3_2_3
   block:
     - name: "5.3.3.2.3 | Remove pwd complex settings from conf files except expected file"
-      when:
-        - item != 'etc/security/pwquality.conf.d/50-pwcomplexity.conf'
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: '(minclass|[dulo]credit)\s*=\s*(-\d|\d+)\b'
@@ -235,6 +232,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/common-password'
+      when:
+        - item != 'etc/security/pwquality.conf.d/50-pwcomplexity.conf'
 
     - name: "5.3.3.2.3 | Ensure complexity file exists"
       ansible.builtin.template:
@@ -243,13 +242,11 @@
         owner: root
         group: root
         mode: 'go-rwx'
+  when: rule_5_3_3_2_3
 
 - name: "5.3.3.2.4 | PATCH | Ensure password same consecutive characters is configured"
-  when: rule_5_3_3_2_4
   block:
     - name: "5.3.3.2.4 | Remove maxrepeat settings from conf files except expected file"
-      when:
-        - item != 'etc/security/pwquality.conf.d/50-pwrepeat.conf'
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'maxrepeat\s*=\s*\d+\b'
@@ -258,6 +255,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/common-password'
+      when:
+        - item != 'etc/security/pwquality.conf.d/50-pwrepeat.conf'
 
     - name: "5.3.3.2.4 | Ensure maxrepeat file exists"
       ansible.builtin.template:
@@ -266,13 +265,11 @@
         owner: root
         group: root
         mode: 'go-rwx'
+  when: rule_5_3_3_2_4
 
 - name: "5.3.3.2.5 | PATCH | Ensure password maximum sequential characters is configured"
-  when: rule_5_3_3_2_5
   block:
     - name: "5.3.3.2.5 | Remove maxsequence settings from conf files except expected file"
-      when:
-        - item != 'etc/security/pwquality.conf.d/50-pwmaxsequence.conf'
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'maxsequence\s*=\s*\d+\b'
@@ -281,6 +278,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/common-password'
+      when:
+        - item != 'etc/security/pwquality.conf.d/50-pwmaxsequence.conf'
 
     - name: "5.3.3.2.5 | Ensure maxsequence file exists"
       ansible.builtin.template:
@@ -289,13 +288,11 @@
         owner: root
         group: root
         mode: 'go-rwx'
+  when: rule_5_3_3_2_5
 
 - name: "5.3.3.2.6 | PATCH | Ensure password dictionary check is enabled"
-  when: rule_5_3_3_2_6
   block:
     - name: "5.3.3.2.6 | Remove dictcheck settings from conf files except expected file"
-      when:
-        - item != 'etc/security/pwquality.conf.d/50-pwdictcheck.conf'
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'dictcheck\s*=\s*\d+\b'
@@ -304,6 +301,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/common-password'
+      when:
+        - item != 'etc/security/pwquality.conf.d/50-pwdictcheck.conf'
 
     - name: "5.3.3.2.6 | Ensure dictcheck file exists"
       ansible.builtin.template:
@@ -312,13 +311,11 @@
         owner: root
         group: root
         mode: 'go-rwx'
+  when: rule_5_3_3_2_6
 
 - name: "5.3.3.2.7 | PATCH | Ensure password quality checking is enforced"
-  when: rule_5_3_3_2_7
   block:
     - name: "5.3.3.2.7 | Remove quality enforcement settings from conf files except expected file"
-      when:
-        - item != 'etc/security/pwquality.conf.d/50-pwquality_enforce.conf'
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'enforcing\s*=\s*\d+\b'
@@ -327,6 +324,8 @@
         - '/etc/security/pwquality.conf'
         - '/etc/security/pwquality.conf.d/*.conf'
         - '/etc/pam.d/common-password'
+      when:
+        - item != 'etc/security/pwquality.conf.d/50-pwquality_enforce.conf'
 
     - name: "5.3.3.2.7 | Ensure quality enforcement file exists"
       ansible.builtin.template:
@@ -335,20 +334,18 @@
         owner: root
         group: root
         mode: 'go-rwx'
+  when: rule_5_3_3_2_7
 
 - name: "5.3.3.2.8 | PATCH | Ensure password quality is enforced for the root user"
-  when: rule_5_3_3_2_8
   ansible.builtin.template:
     src: 'etc/security/pwquality.conf.d/50-pwroot.conf.j2'
     dest: '/etc/security/pwquality.conf.d/50-pwroot.conf'
     owner: root
     group: root
     mode: 'go-rwx'
+  when: rule_5_3_3_2_8
 
 - name: "5.3.3.3.1 | PATCH | Ensure password history remember is configured"
-  when:
-    - rule_5_3_3_3_1
-    - disruption_high
   block:
     - name: "5.3.3.3.1 | Check existing files"
       ansible.builtin.shell: grep -Psi -- '^\h*password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+([^#\n\r]+\h+)?remember=\d+\b' /etc/pam.d/common-password
@@ -357,18 +354,18 @@
       failed_when: discovered_pwhistory_remember.rc not in [0, 1]
 
     - name: "5.3.3.3.1 | Ensure remember is set"
-      when: discovered_pwhistory_remember.stdout | length > 0
       ansible.builtin.lineinfile:
         path: '/usr/share/pam-configs/pwhistory'
         regexp: ^(password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+)(.*)(remember=\d+)
         line: '\1\2\3 remember=24'
         backrefs: true
+      when: discovered_pwhistory_remember.stdout | length > 0
       notify: Pam_auth_update_pwhistory
+  when:
+    - rule_5_3_3_3_1
+    - disruption_high
 
 - name: "5.3.3.3.2 | PATCH | Ensure password history is enforced for the root user"
-  when:
-    - rule_5_3_3_3_2
-    - disruption_high
   block:
     - name: "5.3.3.3.2 | Check existing files"
       ansible.builtin.shell: grep -Psi -- '^\h*password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+([^#\n\r]+\h+)?enforce_for_root\b' /etc/pam.d/common-password
@@ -377,18 +374,18 @@
       failed_when: discovered_pwhistory_remember.rc not in [0, 1]
 
     - name: "5.3.3.3.2 | Ensure remember is set"
-      when: discovered_pwhistory_remember.stdout | length > 0
       ansible.builtin.lineinfile:
         path: '/usr/share/pam-configs/pwhistory'
         regexp: ^(password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+)(.*)(enforce_for_root)
         line: '\1\2\3 enforce_for_root'
         backrefs: true
+      when: discovered_pwhistory_remember.stdout | length > 0
       notify: Pam_auth_update_pwhistory
+  when:
+    - rule_5_3_3_3_2
+    - disruption_high
 
 - name: "5.3.3.3.3 | PATCH | Ensure pam_pwhistory includes use_authtok"
-  when:
-    - rule_5_3_3_3_3
-    - disruption_high
   block:
     - name: "5.3.3.3.3 | Check existing files"
       ansible.builtin.shell: grep -Psi -- '^\h*password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+([^#\n\r]+\h+)?use_authtok\b' /etc/pam.d/common-password
@@ -397,18 +394,18 @@
       failed_when: discovered_pwhistory_use_authtok.rc not in [0, 1]
 
     - name: "5.3.3.3.3 | Ensure remember is set"
-      when: discovered_pwhistory_use_authtok.stdout | length > 0
       ansible.builtin.lineinfile:
         path: '/usr/share/pam-configs/pwhistory'
         regexp: ^(password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+)(.*)(use_authtok)
         line: '\1\2\3 use_authtok'
         backrefs: true
+      when: discovered_pwhistory_use_authtok.stdout | length > 0
       notify: Pam_auth_update_pwhistory
+  when:
+    - rule_5_3_3_3_3
+    - disruption_high
 
 - name: "5.3.3.4.1 | PATCH | Ensure pam_unix does not include nullok"
-  when:
-    - rule_5_3_3_4_1
-    - disruption_high
   block:
     - name: "5.3.3.4.1 | capture state"
       ansible.builtin.shell: grep -E "pam_unix.so.*nullok" /etc/pam.d/common-* /usr/share/pam-configs/* | cut -d ':' -f1 | uniq
@@ -417,16 +414,18 @@
       register: discovered_pam_nullok
 
     - name: "5.3.3.4.1 | Ensure nullok removed"
-      when: discovered_pam_nullok.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: nullok
         replace: ''
       loop: "{{ discovered_pam_nullok.stdout_lines }}"
+      when: discovered_pam_nullok.stdout | length > 0
       notify: Pam_auth_update_pwunix
+  when:
+    - rule_5_3_3_4_1
+    - disruption_high
 
 - name: "5.3.3.4.2 | PATCH | Ensure pam_unix does not include remember"
-  when: rule_5_3_3_4_2
   block:
     - name: "5.3.3.4.2 | capture state"
       ansible.builtin.shell: grep -PH -- '^\h*^\h*[^#\n\r]+\h+pam_unix\.so\b' /etc/pam.d/common-{password,auth,account,session,session-noninteractive} | grep -Pv -- '\bremember=\d\b'
@@ -435,15 +434,15 @@
       register: discovered_pam_remember
 
     - name: "5.3.3.4.2 | Ensure remember removed"
-      when: discovered_pam_remember.stdout | length > 0
       ansible.builtin.replace:
         path: "/usr/share/pam-configs/pam_unix"
         regexp: remember=\d+
         replace: ''
+      when: discovered_pam_remember.stdout | length > 0
       notify: Pam_auth_update_pwunix
+  when: rule_5_3_3_4_2
 
 - name: "5.3.3.4.3 | PATCH | Ensure pam_unix includes a strong password hashing algorithm"
-  when: rule_5_3_3_4_3
   block:
     - name: "5.3.3.4.3 | capture state"
       ansible.builtin.shell: grep -PH -- '^\h*password\h+([^#\n\r]+)\h+pam_unix\.so\h+([^#\n\r]+\h+)?(yescrypt)\b' /etc/pam.d/common-password
@@ -452,15 +451,15 @@
       register: discovered_pam_pwhash
 
     - name: "5.3.3.4.3 | Ensure hash algorithm set"
-      when: discovered_pam_remember.stdout | length > 0
       ansible.builtin.replace:
         path: "/usr/share/pam-configs/pam_unix"
         regexp: "(md5|bigcrypt|sha256|blowfish|gost_yescrypt|sha512|yescrypt)"
         replace: 'yescrypt'
+        when: discovered_pam_remember.stdout | length > 0
       notify: Pam_auth_update_pwunix
+  when: rule_5_3_3_4_3
 
 - name: "5.3.3.4.4 | PATCH | Ensure pam_unix includes use_authtok"
-  when: rule_5_3_3_4_4
   block:
     - name: "5.3.3.4.4 | capture state"
       ansible.builtin.shell: grep -PH -- '^\h*password\h+([^#\n\r]+)\h+pam_unix\.so\h+([^#\n\r]+\h+)?use_authtok\b' /etc/pam.d/common-password
@@ -469,11 +468,12 @@
       register: discovered_pam_authtok
 
     - name: "5.3.3.4.4 | pam_files"
-      when:
-        - discovered_pam_authtok is defined
-        - discovered_pam_authtok | length > 0
       ansible.builtin.lineinfile:
         path: "/etc/pam.d/common-password"
         regexp: ^(\s*password\s+[success=end.*]\s+pam_unix\.so)(.*)\s+use_authtok\s*=\s*\S+(.*$)
         line: \1\2\3 use_authtok
         backrefs: true
+      when:
+        - discovered_pam_authtok is defined
+        - discovered_pam_authtok | length > 0
+  when: rule_5_3_3_4_4

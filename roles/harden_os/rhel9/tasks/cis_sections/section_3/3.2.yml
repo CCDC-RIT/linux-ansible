@@ -1,7 +1,6 @@
 ---
 
 - name: "3.2.1 | PATCH | Ensure dccp kernel module is not available"
-  when: rule_3_2_1
   block:
     - name: "3.2.1 | modprobe"
       ansible.builtin.lineinfile:
@@ -21,9 +20,9 @@
         line: "blacklist cramfs"
         create: true
         mode: 'u-x,go-rwx'
+  when: rule_3_2_1
 
 - name: "3.2.2 | PATCH | Ensure tipc kernel module is not available"
-  when: rule_3_2_2
   block:
     - name: "3.2.2 | modprobe"
       ansible.builtin.lineinfile:
@@ -43,9 +42,9 @@
         line: "blacklist tipc"
         create: true
         mode: 'u-x,go-rwx'
+  when: rule_3_2_2
 
 - name: "3.2.3 | PATCH | Ensure rds kernel module is not available"
-  when: rule_3_2_3
   block:
     - name: "3.2.3 | modprobe"
       ansible.builtin.lineinfile:
@@ -65,9 +64,9 @@
         line: "blacklist rds"
         create: true
         mode: 'u-x,go-rwx'
+  when: rule_3_2_3
 
 - name: "3.2.4 | PATCH | Ensure sctp kernel module is not available"
-  when: rule_3_2_4
   block:
     - name: "3.2.4 | modprobe"
       ansible.builtin.lineinfile:
@@ -87,3 +86,4 @@
         line: "blacklist sctp"
         create: true
         mode: 'u-x,go-rwx'
+  when: rule_3_2_4

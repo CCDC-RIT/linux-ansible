@@ -1,14 +1,13 @@
 ---
 
 - name: "6.2.1.1.1 | PATCH | Ensure journald service is enabled and active"
-  when: rule_6_2_1_1_1
   ansible.builtin.systemd:
     name: systemd-journald.service
     masked: false
     state: started
+  when: rule_6_2_1_1_1
 
 - name: "6.2.1.1.2 | PATCH | Ensure journald log file access is configured"
-  when: rule_6_2_1_1_2
   block:
     - name: "6.2.1.1.2 | Default file permissions"
       ansible.builtin.file:
@@ -21,21 +20,21 @@
       register: discovered_tmpfile_override
 
     - name: "6.2.1.1.2 | If override file check for journal"
-      when: discovered_tmpfile_override.stat.exists
       ansible.builtin.shell: grep -E 'z /var/log/journal/%m/system.journal \d*' /usr/lib/tmpfiles.d/systemd.conf
       changed_when: false
       failed_when: discovered_journald_fileperms_override.rc not in [ 0, 1 ]
       register: discovered_journald_fileperms_override
+      when: discovered_tmpfile_override.stat.exists
 
     - name: "6.2.1.1.2 | Warning if override found"
+      ansible.builtin.debug:
+        msg: "Warning!! - tmpfiles override found /usr/lib/tmpfiles.d/systemd.conf affecting journald files please confirm matches site policy"
       when:
         - discovered_tmpfile_override.stat.exists
         - discovered_journald_fileperms_override.stdout | length > 0
-      ansible.builtin.debug:
-        msg: "Warning!! - tmpfiles override found /usr/lib/tmpfiles.d/systemd.conf affecting journald files please confirm matches site policy"
+  when: rule_6_2_1_1_2
 
 - name: "6.2.1.1.3 | PATCH | Ensure journald log file rotation is configured"
-  when: rule_6_2_1_1_3
   block:
     - name: "6.2.1.1.3 | Add file"
       ansible.builtin.template:
@@ -58,9 +57,9 @@
         - '^(\s*RuntimeKeepFree\s*=.*)'
         - '^(\s*MaxFileSec\s*=.*)'
       notify: Restart journald
+  when: rule_6_2_1_1_3
 
 - name: "6.2.1.1.4 | PATCH | Ensure journald ForwardToSyslog is disabled"
-  when: rule_6_2_1_1_4
   block:
     - name: "6.2.1.1.4 | Add file"
       ansible.builtin.template:
@@ -77,9 +76,9 @@
         regexp: ^(\s*ForwardToSyslog)
         replace: '#\1'
       notify: Restart journald
+  when: rule_6_2_1_1_4
 
 - name: "6.2.1.1.5 | PATCH | Ensure journald Storage is configured"
-  when: rule_6_2_1_1_5
   block:
     - name: "6.2.1.1.5 | Add file"
       ansible.builtin.template:
@@ -96,9 +95,9 @@
         regexp: ^(?i)(\s*storage=)
         replace: '#\1'
       notify: Restart journald
+  when: rule_6_2_1_1_5
 
 - name: "6.2.1.1.6 | PATCH | Ensure journald Compress is configured"
-  when: rule_6_2_1_1_6
   block:
     - name: "6.2.1.1.6 | Add file"
       ansible.builtin.template:
@@ -115,9 +114,9 @@
         regexp: ^(?i)(\s*compress=)
         replace: '#\1'
       notify: Restart journald
+  when: rule_6_2_1_1_6
 
 - name: "6.2.2.1 | PATCH | Ensure access to all logfiles has been configured"
-  when: rule_6_2_2_1
   block:
     - name: "6.2.2.1 | find files"
       ansible.builtin.shell: find /var/log/ -type f -exec ls {} \;
@@ -126,16 +125,16 @@
       register: discovered_system_logfiles
 
     - name: "6.2.2.1 | change permissions"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'u-x,g-wx,o-rwx'
+      loop: "{{ discovered_system_logfiles.stdout_lines }}"
       when:
         - discovered_system_logfiles.stdout_lines is defined
         - item != "/var/log/btmp"
         - item != "/var/log/utmp"
         - item != "/var/log/wtmp"
         - item != "/var/log/lastlog"
-      ansible.builtin.file:
-        path: "{{ item }}"
-        mode: 'u-x,g-wx,o-rwx'
-      loop: "{{ discovered_system_logfiles.stdout_lines }}"
 
     - name: "6.2.2.1 | change permissions"
       ansible.builtin.file:
@@ -146,3 +145,4 @@
         - "/var/log/lastlog*"
         - "/var/log/sssd*"
         - "/var/log/SSSD*"
+  when: rule_6_2_2_1
