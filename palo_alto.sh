@@ -46,6 +46,7 @@ create_rule() {
             <application><member>$application</member></application> 
             <action>$action</action>
         </entry>"
+    echo ""
 }
 
 change_rule_status() {
@@ -56,9 +57,27 @@ change_rule_status() {
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
     --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules" \
     --data-urlencode "/entry[@name=$rule_name]&element=<disabled>$action</disabled>"
+    echo ""
 }
 
-inital() {
+create_service() {
+    local service_name="$1"
+    local protocol="$2"
+    local port_number="$3"
+
+    echo "Creating $service_name with $protocol port $port_number"
+    curl -ks -X POST "https://$FIREWALL_IP/api/" \
+        -d "type=config&action=set&key=$API_KEY" \
+        --data-urlencode "xpath=/config/shared/service" \
+        --data-urlencode "element=<request>
+            <set><config><shared><service>
+            <entry name=$service_name>
+            <protocol>
+            <$protocol><port>$port_number</port></$protocol>
+            </protocol></entry></service></shared></config></set></request>"
+}
+
+initial() {
     # All Win to DC
     # TCP: 88,135,389,445,464,636,3268
     # UDP: 53, 88,123,135,389,445,464,636
@@ -81,8 +100,9 @@ inital() {
     # From All Win to Wazuh and Graylog 
     # TCP: 1514, 1515, 80, 443
 
-    create_rule "test" "any" "any" "any" "any" "service-http" "any" "allow"
-    create_rule "Windows-to-DC-88" "any" "any" "any" "any" "88" "any" "allow"
+    # create_rule "test" "any" "any" "any" "any" "service-http" "any" "allow"
+    # create_rule "Windows-to-DC-88" "any" "any" "any" "any" "88" "any" "allow"
+    create_service "tcp-88" "tcp" "88"
 }
 
 if [ "$1" = "init" ]; then
@@ -102,4 +122,4 @@ fi
 echo "Committing changes"
 curl -k -X POST "https://$FIREWALL_IP/api/?type=commit&key=$API_KEY" \
 	--data-urlencode "cmd=<commit><description>blue4life</description></commit>"
-
+echo ""
