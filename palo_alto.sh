@@ -77,7 +77,7 @@ create_service() {
     local protocol="$1"
     local port_number="$2"
 
-    echo "Creating $service_name with $protocol port $port_number"
+    echo "Creating service $protocol-$port_number"
     curl -ks -X POST "https://$FIREWALL_IP/api/" \
         -d "type=config" \
         -d "action=set" \
@@ -117,21 +117,21 @@ initial() {
     # All Win to DC
     # TCP: 88,135,389,445,464,636,3268
     # UDP: 53, 88,123,135,389,445,464,636
-    create_service "tcp-88" "tcp" "88"
-    create_service "tcp-135" "tcp" "135"
-    create_service "tcp-389" "tcp" "389"
-    create_service "tcp-445" "tcp" "445"
-    create_service "tcp-464" "tcp" "464"
-    create_service "tcp-636" "tcp" "636"
-    create_service "tcp-3268" "tcp" "3268"
-    create_service "udp-53" "udp" "53"
-    create_service "udp-88" "udp" "88"
-    create_service "udp-123" "udp" "123"
-    create_service "udp-135" "udp" "135"
-    create_service "udp-389" "udp" "389"
-    create_service "udp-445" "udp" "445"
-    create_service "udp-464" "udp" "464"
-    create_service "udp-636" "udp" "636"
+    create_service "tcp" "88"
+    create_service "tcp" "135"
+    create_service "tcp" "389"
+    create_service "tcp" "445"
+    create_service "tcp" "464"
+    create_service "tcp" "636"
+    create_service "tcp" "3268"
+    create_service "udp" "53"
+    create_service "udp" "88"
+    create_service "udp" "123"
+    create_service "udp" "135"
+    create_service "udp" "389"
+    create_service "udp" "445"
+    create_service "udp" "464"
+    create_service "udp" "636"
 }
 
 the_rules_to_end_all_rule() {
