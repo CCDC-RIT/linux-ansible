@@ -1,5 +1,7 @@
 ---
 
+is_target_container: true
+
 ### Section 1         #             Package mgmt, Additional Process Hardening, Command Line Warning Banners, and GNOME Display Manager
 section_1: true       #             
 section_1_2: true     #             
@@ -187,6 +189,13 @@ warning_banner: Authorized uses only. All activity may be monitored and reported
 # true ipv6 is required
 # flase ipv6 is not required and will be removed
 ipv6_required: false
+
+# for section 3.1
+# this variable is used for a preliminary task regarding the installation of Network Manager
+# if it is set to `true`, Network Manager is installed during the "prelim" section of
+# the role. If set to `false`, Network Manager is not installed. Bear in mind that without
+# it, ensuring that wireless interfaces are disabled will not be possible!
+install_network_manager: true
 
 # for section 3.3
 # this variable governs the mechanism of how the disabling of IPV6 is carried out.
