@@ -88,7 +88,7 @@
     - rule_1_7_3
     - desktop_required
 
-- name: "1.7.4 | PATCH | Ensure GDM screen locks when the user is idle"\
+- name: "1.7.4 | PATCH | Ensure GDM screen locks when the user is idle"
   block:
     - name: "1.7.4 | session profile"
       ansible.builtin.lineinfile:

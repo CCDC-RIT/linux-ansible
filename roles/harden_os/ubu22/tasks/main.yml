@@ -6,9 +6,7 @@
 - name: Check OS version and family
   ansible.builtin.fail:
     msg: "This role can only be run against Ubuntu 22. {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }} is not supported."
-  when:
-    - ansible_facts.distribution == 'Ubuntu'
-  tags: always
+  when: ansible_facts.distribution != 'Ubuntu'
 
 # we need to set something up a register earlier in our playbook that this can read to know if it is a kube node or a container
 - name: Setup rules if container
@@ -25,12 +23,9 @@
       when: system_is_container
       ansible.builtin.debug:
         msg: system has been discovered as a container
-    when:
+  when:
     - is_target_container == 'docker' or
       ansible_facts.virtualization_type in ["docker", "lxc", "openvz", "podman", "container"]
-    tags:
-    - container_discovery
-    - always
 
 - name: "CIS Benchmark | prelims"
   ansible.builtin.import_tasks:
