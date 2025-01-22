@@ -32,16 +32,6 @@ curl -ks -X POST "https://$FIREWALL_IP/api/" \
     -d "type=config&action=override&key=$API_KEY" \
     --data-urlencode "xpath=/config/shared/service"
 
-if [ "$1" = "fix" ]; then
-    fixes
-    commit_changes
-    exit
-fi
-
-initial
-the_rules_to_end_all_rule
-commit_changes
-
 create_rule() {
     local rule_name="$1"
     local from_zone="$2"
@@ -154,3 +144,13 @@ commit_changes() {
 	    --data-urlencode "cmd=<commit><description>blue4life</description></commit>"
     echo ""
 }
+
+if [ "$1" = "fix" ]; then
+    fixes
+    commit_changes
+    exit
+fi
+
+initial
+the_rules_to_end_all_rule
+commit_changes
