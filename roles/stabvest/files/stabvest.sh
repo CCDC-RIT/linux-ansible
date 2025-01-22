@@ -49,7 +49,6 @@ TODO
 * backup /usr/share folders? benchmark the processing power needed...
 * benchmark used cpu time and compare to frequency
 * restart systemd after restoring service file?
-* fix backups of single files
 * ignore empty config fields
 * fix reinstall criteria
 
@@ -127,7 +126,8 @@ fi
 pad_string() {
     local input="$1"
     local char="$2"
-    local total_length=$3
+    #local total_length=$3
+    local total_length=75
     local input_length=${#input}
     local padding_length=$(( (total_length - input_length) / 2 ))
     
@@ -272,7 +272,8 @@ if [ "$1" = "backup" ]; then
             # If backup already exists, "archive" them by appending the current time to their name.
             new_filename="$backup_dir-$timestamp"
             #echo "  Found existing backup - archiving existing files to $new_filename..."
-            pad_string " Found existing backup - archiving existing files to $new_filename... " "!" 75
+            pad_string " Found existing backup - archiving existing files to: " "!" 65
+            echo "    $new_filename"
             mv "$backup_dir" "$new_filename"
         fi
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
@@ -326,7 +327,7 @@ pad_string " Network " "=" 35
 iface=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
 
 if [ -z "$iface" ]; then
-    pad_string " ERROR: No primary network interface found, skipping network connectivity tests. " "-" 85
+    pad_string " ERROR: No primary network interface found, skipping network tests. " "-" 75
     #echo "ERROR: No primary network interface found, skipping network connectivity tests."
 else
     # Check if the interface is up
@@ -334,6 +335,7 @@ else
         pad_string " Interface $iface is down, setting it to up. " "+" 55
         #echo "  Interface $iface is down, setting it to up."
         ip link set "$iface" up
+        sleep 0.5 # need to wait a second for interface to come online, otherwise next checks will still error out
         #exit 0
     fi
 
@@ -347,15 +349,15 @@ else
 
     # Check if the interface is part of the correct routing table (default gateway exists)
     if ! ip route show | grep -q "$iface"; then
-        pad_string " ERROR: Interface $iface is not part of the routing table. " "-" 85
-        pad_string " Does it have a valid route to the default gateway and/or is one configured? " "-" 85
-        pad_string " Operator must manually fix this error. " "-" 85
+        pad_string " ERROR: Interface $iface is not part of the routing table. " "-" 75
+        pad_string " Does it have a valid/configured route to the default gateway? " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
         #echo "ERROR: Interface $iface is not part of the routing table. Does it have a valid route to the default gateway and/or is one configured? Operator must manually fix this error."
         #exit 1
     fi
 
     echo "  No network configuration issues were found."
-    echo "  If you still suspect network issues, make sure that all intermediate network devices are using the ping command."
+    echo "  If you still suspect network issues, make sure that all intermediate network devices are online using the ping command."
 
     # OLD: Ping until timeout of 2 seconds or 1 successful packet
     : '
@@ -461,7 +463,7 @@ pad_string " Firewall " "=" 35
 echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftables)"
 
 ## iptables tables to check
-declare -a tables=("filter" "nat" "mangle" "raw")
+declare -a tables=("filter" "nat" "mangle" "raw" "security") # NAT cant have drop rules but whatev. RAW INPUT doesnt exist. Raw cant seem to drop packets.
 declare -a chains=("INPUT" "OUTPUT")
 
 ufw disable
@@ -505,7 +507,8 @@ fi
 '
 
 echo ""
-pad_string " Backed up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp. " "!" 125
+pad_string " Backed up iptables IPv4 rules to: " "!" 75
+echo "    $backupdir/iptables_rules_backup-$timestamp."
 #echo "  Backed up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp."
 echo ""
 # # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
@@ -515,6 +518,7 @@ iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
 #Setup variable
 rules_removed=false
 
+echo "  Checking for iptables rules that block traffic on the scored service's port..."
 # Loop through all provided ports
 for port in "${ports[@]}"; do
     # Loop through provided iptables tables
@@ -540,8 +544,9 @@ for port in "${ports[@]}"; do
                 # Extract and display the full text of the first rule before removing it
                 rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
                 #echo "  $table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
-                pad_string " $table table, $chain chain: Potentially malicious firewall rule found and deleted: " "+" 90
-                echo "  $rule_text"
+                pad_string " Potentially malicious firewall rule found and deleted: " "+" 90
+                echp "    $table table, $chain chain: "
+                echo "    $rule_text"
 
                 # Extract and remove the first rule
                 rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
@@ -622,7 +627,7 @@ for i in "${!original_dirs[@]}"; do
         else
             echo "  Live files differ from the backup. Restoring backup..."
             pad_string " Creating backup file of current (bad) files to: " "!" 55
-            pad_string " $backup_dir/bad_backup-$timestamp.zip " "!" 55
+            echo "    $backup_dir/bad_backup-$timestamp.zip "
             #echo "  Creating backup file of current (bad) files to $backup_dir/bad_backup-$timestamp.zip..."
             new_backup_file_path="$backup_dir/bad_backup-$timestamp.zip"
             if [ -d "$original_dir" ]; then
@@ -653,15 +658,14 @@ for i in "${!original_dirs[@]}"; do
     else
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
         pad_string " No backup file found, making a new master backup at: " "!" 65
-        echo "  $backup_dir/backup.zip"
-        #echo "  No backup file found, making a new master backup at $backup_dir/backup.zip..."
+        echo "    $backup_dir/backup.zip"
         if [ -d "$original_dir" ]; then
         #echo "$file is a directory."
             #only recurse if dir
             zip -q -r "$backup_dir/backup.zip" "$original_dir"
         else
             #echo "$file is not a directory."
-            zip -q "$new_backup_file_path" "$original_dir"
+            zip -q "$backup_dir/backup.zip" "$original_dir"
         fi
     fi
 done
