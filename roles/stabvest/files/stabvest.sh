@@ -45,10 +45,9 @@ Full example if youre backing up the webroot for apache2:
 TODO
 * test literally everything including timestamps
 * check default policy for iptables + find more iptables breaks + deconflict with team SOP (default deny policy)
-* freebsd compat (pf for firewall)
+* freebsd compat (pf for firewall) - NOT NEEDED FOR 2025 (hopefully)
 * backup /usr/share folders? benchmark the processing power needed...
 * benchmark used cpu time and compare to frequency
-* restart systemd after restoring service file?
 * ignore empty config fields
 * fix reinstall criteria
 
@@ -71,12 +70,13 @@ contentdir="/var/www/html"
 # /usr/share/apache2
 
 # Nginx
-# declare -a ports=( 80 443 ) # use numbers only, no named alias like "http"
-# servicename="nginx"
-# packagename="nginx"
-# binarypath="/usr/sbin/nginx"
-# configdir="/etc/nginx"
-# contentdir="/var/www/html"
+#declare -a ports=( 80 443 ) # use numbers only, no named alias like "http"
+#servicename="nginx"
+#packagename="nginx"
+#binarypath="/usr/sbin/nginx"
+#configdir="/etc/nginx"
+#contentdir="/var/www/html" # UBUNTU
+#contentdir="/usr/share/nginx/htm" # RHEL
 # /usr/lib/nginx
 # /usr/share/nginx
 
@@ -464,7 +464,8 @@ echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftabl
 
 ## iptables tables to check
 declare -a tables=("filter" "nat" "mangle" "raw" "security") # NAT cant have drop rules but whatev. RAW INPUT doesnt exist. Raw cant seem to drop packets.
-declare -a chains=("INPUT" "OUTPUT")
+declare -a chains=("INPUT" "OUTPUT" "PREROUTING" "POSTROUTING" "FORWARD") # not all tables have these chains but i cant think of a better way to do this
+# TODO: we currently have no feasible way to check arbitrary user defined chains (including UFW chains)!
 
 ufw disable
 systemctl stop ufw
@@ -533,7 +534,7 @@ for port in "${ports[@]}"; do
                 # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
                 # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
                 # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
-                deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
+                deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
                 if [ -z "$deny_rules" ]; then
                     break
                 fi
@@ -568,24 +569,35 @@ fi
 ####################################
 ######## Service Integrity #########
 ####################################
-original_dirs=(
-    "/lib/systemd/system/$servicename.service"
-    "$binarypath"
-    "$configdir"
-    "$contentdir"
-)
-backup_dirs=(
-    "$backupdir/systemd"
-    "$backupdir/binary"
-    "$backupdir/config"
-    "$backupdir/data"
-)
-is_single_files=(
-    true
-    true
-    false
-    false
-)
+# Initialize arrays
+original_dirs=()
+backup_dirs=()
+is_single_files=()
+
+# Add config variables to arrays only if they are not empty
+if [ -n "$servicename" ]; then
+    original_dirs+=("/lib/systemd/system/$servicename.service")
+    backup_dirs+=("$backupdir/systemd")
+    is_single_files+=(true)
+fi
+
+if [ -n "$binarypath" ]; then
+    original_dirs+=("$binarypath")
+    backup_dirs+=("$backupdir/binary")
+    is_single_files+=(true)
+fi
+
+if [ -n "$configdir" ]; then
+    original_dirs+=("$configdir")
+    backup_dirs+=("$backupdir/config")
+    is_single_files+=(false)
+fi
+
+if [ -n "$contentdir" ]; then
+    original_dirs+=("$contentdir")
+    backup_dirs+=("$backupdir/data")
+    is_single_files+=(false)
+fi
 
 # Ensure arrays are the same length
 if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
@@ -650,6 +662,9 @@ for i in "${!original_dirs[@]}"; do
             #unzip -q "$backup_dir/backup.zip" -d "$original_dir"
             unzip -q "$backup_dir/backup.zip" -d /
             systemctl restart "$servicename" # reload the config/content
+            if [ "$(basename "$backup_dir")" = "systemd" ]; then
+                systemctl daemon-reload
+            fi
             rm -rf "$backup_dir/tmp"
             pad_string " File restore and service restart completed for $(basename "$backup_dir") section " "+" 70
             #echo "  Service restarted and tmp files deleted."
