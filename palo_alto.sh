@@ -160,13 +160,17 @@ commit_changes() {
     echo ""
 }
 
-if [ "$1" = "fix" ]; then
+CHOICE=""
+read -p "Are you (init)ializing or (fix)ing? " CHOICE
+echo ""
+
+if [ "$CHOICE" = "fix" ]; then
     fixes
     commit_changes
     exit
+elif [ "$CHOICE" = "init" ]; then
+    initial
+    the_rules_to_end_all_rule
+    commit_changes
+    exit
 fi
-
-initial
-the_rules_to_end_all_rule
-commit_changes
-exit
