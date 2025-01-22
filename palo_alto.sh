@@ -25,12 +25,15 @@ echo "Obtaining API key"
 sleep 1
 RAW=$(curl -k -H "Content-Type: application/x-www-form-urlencoded" -X POST https://$FIREWALL_IP/api/?type=keygen -d "user=$USER&password=$PASSWORD")
 API_KEY=$(awk -v str="$RAW" 'BEGIN { split(str, parts, "<key>|</key>"); print parts[2] }')
+echo ""
 
 echo "Overriding template for services..."
 sleep 1
 curl -ks -X POST "https://$FIREWALL_IP/api/" \
     -d "type=config&action=override&key=$API_KEY" \
-    --data-urlencode "xpath=/config/shared/service"
+    --data-urlencode "xpath=/config/shared/service" \
+    --data-urlencode "element=<override></override>"
+echo ""
 
 create_rule() {
     local rule_name="$1"
@@ -90,6 +93,7 @@ create_service() {
                 </$protocol>
             </protocol>
         </entry>"
+    echo ""
 }
 
 initial() {
@@ -135,7 +139,7 @@ initial() {
 }
 
 the_rules_to_end_all_rule() {
-    create_rule "All-Win-To-DC" "DMZ" "Private" "DMZ" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+    create_rule "All-Win-To-DC-TCP" "DMZ" "Private" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
 }
 
 commit_changes() {
