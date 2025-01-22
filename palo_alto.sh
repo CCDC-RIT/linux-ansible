@@ -28,6 +28,11 @@ RAW=$(curl -k -H "Content-Type: application/x-www-form-urlencoded" -X POST https
 API_KEY=$(awk -v str="$RAW" 'BEGIN { split(str, parts, "<key>|</key>"); print parts[2] }')
 echo ""
 
+if [ -z "$API_KEY" ]; then
+    echo "Failed to retrieve API key"
+    exit
+fi
+
 echo "Overriding template for services..."
 sleep 1
 curl -ks -X POST "https://$FIREWALL_IP/api/" \
@@ -70,7 +75,12 @@ change_rule_status() {
     local rule_name="$1"
     local action="$2"
 
-    echo "Changing status of $rule_name to $action"
+    if [ "$action" = "yes" ]; then
+        echo "Disabling $rule_name"
+    else
+        echo "Enabling $rule_name"
+    fi
+
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
     --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules/entry[@name='$rule_name']" \
     --data-urlencode "element=<disabled>$action</disabled>"
@@ -115,13 +125,6 @@ initial() {
     # UDP: 3389
     # From All Win to Wazuh and Graylog 
     # TCP: 1514, 1515, 80, 443
-
-    # create_rule "test" "any" "any" "any" "any" "service-http" "any" "allow"
-    # create_rule "Windows-to-DC-88" "any" "any" "any" "any" "88" "any" "allow"
-
-    # All Win to DC
-    # TCP: 88,135,389,445,464,636,3268
-    # UDP: 53, 88,123,135,389,445,464,636
     create_service "tcp" "88"
     create_service "tcp" "135"
     create_service "tcp" "389"
@@ -129,6 +132,7 @@ initial() {
     create_service "tcp" "464"
     create_service "tcp" "636"
     create_service "tcp" "3268"
+
     create_service "udp" "53"
     create_service "udp" "88"
     create_service "udp" "123"
@@ -140,7 +144,13 @@ initial() {
 }
 
 the_rules_to_end_all_rule() {
-    create_rule "All-Win-To-DC-TCP" "DMZ" "Private" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+    # All Win to DC
+    # TCP: 88,135,389,445,464,636,3268
+    # UDP: 53,88,123,135,389,445,464,636
+    create_rule "All-Win-DMZ-To-DC-Private-TCP" "DMZ" "Private" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+    create_rule "All-Win-DMZ-To-DC-Private-UDP" "DMZ" "Private" "any" "any" "udp-53 udp-88 udp-123 udp-135 udp-389 udp-445 udp-464 udp-636" "any" "allow"
+    create_rule "All-Win-Private-To-DC-DMZ-TCP" "Private" "DMZ" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+    create_rule "All-Win-Private-To-DC-DMZ-UDP" "Private" "DMZ" "any" "any" "udp-53 udp-88 udp-123 udp-135 udp-389 udp-445 udp-464 udp-636" "any" "allow"
 }
 
 commit_changes() {
@@ -159,3 +169,4 @@ fi
 initial
 the_rules_to_end_all_rule
 commit_changes
+exit
