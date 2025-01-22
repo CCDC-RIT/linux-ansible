@@ -161,9 +161,13 @@ commit_changes() {
 }
 
 backup_changes() {
-    local backup_ip=""
-    read -s -p "Enter backup IP: "
-    echo ""
+    if [ ! -d "/var/log/asa/osa/" ]; then
+        mkdir /var/log/asa/osa
+    fi
+
+    if [ -e "/var/log/asa/osa/running-config.xml" ]; then
+        rm "/var/log/asa/osa/running-config.xml"
+    fi
 
     echo "Backing up configuration"
     sleep 1
@@ -185,7 +189,7 @@ elif [ "$CHOICE" = "i" ]; then
     commit_changes
     exit
 elif [ "$CHOICE" = "b" ]; then
-    backup
+    backup_changes
     exit
 else
     echo "Invalid choice"
