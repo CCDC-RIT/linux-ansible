@@ -71,8 +71,8 @@ change_rule_status() {
 
     echo "Changing status of $rule_name to $action"
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
-    --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules" \
-    --data-urlencode "/entry[@name=$rule_name]&element=<disabled>$action</disabled>"
+    --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules/entry[@name='$rule_name']" \
+    --data-urlencode "element=<disabled>$action</disabled>"
     echo ""
 }
 
