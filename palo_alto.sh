@@ -19,6 +19,7 @@ echo ""
 
 PASSWORD=""
 read -s -p "Enter password: " PASSWORD
+echo ""
 
 echo "Obtaining API key"
 sleep 1
@@ -31,17 +32,32 @@ curl -ks -X POST "https://$FIREWALL_IP/api/" \
     -d "type=config&action=override&key=$API_KEY" \
     --data-urlencode "xpath=/config/shared/service"
 
+if [ "$1" = "fix" ]; then
+    fixes
+    commit_changes
+    exit
+fi
+
+initial
+the_rules_to_end_all_rule
+commit_changes
+
 create_rule() {
     local rule_name="$1"
     local from_zone="$2"
     local to_zone="$3"
     local source_ip="$4"
     local dest_ip="$5"
-    local service="$6"
+    local services="$6"
     local application="$7"
     local action="$8"
-    
-    echo "Creating rule $rule_name"
+
+    local service_xml=""
+    for svc in $services; do
+        service_xml+="<member>$svc</member>"
+    done
+
+    echo "Creating rule $rule_name with services: $services"
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
         --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules" \
         --data-urlencode "element=<entry name='$rule_name'>
@@ -49,7 +65,7 @@ create_rule() {
             <to><member>$to_zone</member></to> 
             <source><member>$source_ip</member></source> 
             <destination><member>$dest_ip</member></destination> 
-            <service><member>$service</member></service> 
+            <service>$service_xml</service> 
             <application><member>$application</member></application> 
             <action>$action</action>
         </entry>"
@@ -68,9 +84,8 @@ change_rule_status() {
 }
 
 create_service() {
-    local service_name="$1"
-    local protocol="$2"
-    local port_number="$3"
+    local protocol="$1"
+    local port_number="$2"
 
     echo "Creating $service_name with $protocol port $port_number"
     curl -ks -X POST "https://$FIREWALL_IP/api/" \
@@ -78,7 +93,7 @@ create_service() {
         -d "action=set" \
         -d "key=$API_KEY" \
         -d "xpath=/config/shared/service" \
-        --data-urlencode "element=<entry name='$service_name'>
+        --data-urlencode "element=<entry name='$protocol-$port_number'>
             <protocol>
                 <$protocol>
                     <port>$port_number</port>
@@ -88,10 +103,6 @@ create_service() {
 }
 
 initial() {
-    # All Win to DC
-    # TCP: 88,135,389,445,464,636,3268
-    # UDP: 53, 88,123,135,389,445,464,636
-
     # All win out to dc
     # UDP: 53
 
@@ -112,24 +123,34 @@ initial() {
 
     # create_rule "test" "any" "any" "any" "any" "service-http" "any" "allow"
     # create_rule "Windows-to-DC-88" "any" "any" "any" "any" "88" "any" "allow"
+
+    # All Win to DC
+    # TCP: 88,135,389,445,464,636,3268
+    # UDP: 53, 88,123,135,389,445,464,636
     create_service "tcp-88" "tcp" "88"
+    create_service "tcp-135" "tcp" "135"
+    create_service "tcp-389" "tcp" "389"
+    create_service "tcp-445" "tcp" "445"
+    create_service "tcp-464" "tcp" "464"
+    create_service "tcp-636" "tcp" "636"
+    create_service "tcp-3268" "tcp" "3268"
+    create_service "udp-53" "udp" "53"
+    create_service "udp-88" "udp" "88"
+    create_service "udp-123" "udp" "123"
+    create_service "udp-135" "udp" "135"
+    create_service "udp-389" "udp" "389"
+    create_service "udp-445" "udp" "445"
+    create_service "udp-464" "udp" "464"
+    create_service "udp-636" "udp" "636"
 }
 
-if [ "$1" = "init" ]; then
-    echo "Running initial configuration"
-    initial
-elif [ "$1" = "fix" ]; then
-    echo "Running fixes"
-    fixes
-elif [ $# -gt 1 -o $# -eq 0 ]; then
-    echo "Only one parameter allowed!"
-    exit
-else
-    echo "Invalid parameter, use 'init' or 'fix'"
-    exit
-fi
+the_rules_to_end_all_rule() {
+    create_rule "All-Win-To-DC" "DMZ" "Private" "DMZ" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+}
 
-echo "Committing changes"
-curl -k -X POST "https://$FIREWALL_IP/api/?type=commit&key=$API_KEY" \
-	--data-urlencode "cmd=<commit><description>blue4life</description></commit>"
-echo ""
+commit_changes() {
+    echo "Committing changes"
+    curl -k -X POST "https://$FIREWALL_IP/api/?type=commit&key=$API_KEY" \
+	    --data-urlencode "cmd=<commit><description>blue4life</description></commit>"
+    echo ""
+}
