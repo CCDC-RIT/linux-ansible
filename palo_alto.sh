@@ -1,7 +1,8 @@
 #!/bin/bash
 
 fixes() {
-    change_rule_status "test" "no"
+    # For disabling rules, yes -> disabled and no -> enabled
+    change_rule_status "test" "yes"
 }
 
 PUBLIC="Public"
