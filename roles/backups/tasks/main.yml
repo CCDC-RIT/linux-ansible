@@ -1,39 +1,35 @@
 ---
-- name: Backup important directories on multiple hosts
-  hosts: all
-  become: yes
-  tasks:
-    - name: Create backup directory on worker nodes
-      file:
-        path: "/var/backups/system_backups"
-        state: directory
-        mode: '0755'
+- name: Create backup directory on worker nodes
+  file:
+    path: "/var/backups/system_backups"
+    state: directory
+    mode: '0755'
 
-    - name: Archive important directories on worker nodes
-      command: >
-        tar czf /var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /home /var/log /var/www
+- name: Archive important directories on worker nodes
+  command: >
+    tar czf /var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /home /var/log /var/www
 
-    - name: Fetch the backup archive to the manager node
-      fetch:
-        src: "/var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
-        dest: "backups/"
-        flat: yes
+- name: Fetch the backup archive to the manager node
+  fetch:
+    src: "/var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+    dest: "backups/"
+    flat: yes
 
-    - name: Ensure local backup directory exists on manager node
-      delegate_to: localhost
-      run_once: true
-      file:
-        path: "backups"
-        state: directory
-        mode: '0755'
+- name: Ensure local backup directory exists on manager node
+  delegate_to: localhost
+  run_once: true
+  file:
+    path: "backups"
+    state: directory
+    mode: '0755'
 
-    - name: Move backups to a well-structured directory on manager node
-      delegate_to: localhost
-      shell: |
-        mv backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz \
-        backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
-      args:
-        creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+- name: Move backups to a well-structured directory on manager node
+  delegate_to: localhost
+  shell: |
+    mv backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz \
+    backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
+  args:
+    creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
 
-  vars:
-    ansible_date_time: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
+vars:
+  ansible_date_time: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
