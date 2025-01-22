@@ -1,28 +1,39 @@
-- name: Set timestamp fact
-  set_fact:
-    timestamp: "{{ ansible_date_time.iso8601_basic }}"
+---
+- name: Backup important directories on multiple hosts
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create backup directory on worker nodes
+      file:
+        path: "/var/backups/system_backups"
+        state: directory
+        mode: '0755'
 
-- name: Archive /etc with timestamp
-  ansible.builtin.archive:
-    path: /etc
-    dest: "{{ backup_dir }}/etc_{{ timestamp }}.tar.gz"
-    format: gz
-  register: archive_result
+    - name: Archive important directories on worker nodes
+      command: >
+        tar czf /var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /home /var/log /var/www
 
-- name: Generate SHA256 hash of the /etc backup
-  ansible.builtin.command:
-    cmd: "sha256 {{ backup_dir }}/etc_{{ timestamp }}.tar.gz"
-  register: hash_result
-  changed_when: false
+    - name: Fetch the backup archive to the manager node
+      fetch:
+        src: "/var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+        dest: "backups/"
+        flat: yes
 
-- name: Save hash to a file on the target
-  ansible.builtin.copy:
-    content: "{{ hash_result.stdout }}"
-    dest: "{{ backup_dir }}/etc_{{ timestamp }}.hash"
+    - name: Ensure local backup directory exists on manager node
+      delegate_to: localhost
+      run_once: true
+      file:
+        path: "backups"
+        state: directory
+        mode: '0755'
 
-- name: Fetch hash to the controller
-  ansible.builtin.fetch:
-    src: "/tmp/etc_{{ timestamp }}.hash"
-    dest: "{{ backup_dir }}/{{ inventory_hostname }}_etc_{{ timestamp }}.hash"
-    flat: yes
-  
+    - name: Move backups to a well-structured directory on manager node
+      delegate_to: localhost
+      shell: |
+        mv backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz \
+        backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
+      args:
+        creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+
+  vars:
+    ansible_date_time: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
