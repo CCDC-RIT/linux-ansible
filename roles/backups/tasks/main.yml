@@ -30,6 +30,3 @@
     backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
   args:
     creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
-
-vars:
-  ansible_date_time: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
