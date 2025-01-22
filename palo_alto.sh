@@ -15,12 +15,13 @@ echo ""
 
 USER=""
 read -s -p "Enter username: " USER
-
 echo ""
-sleep 1
+
 PASSWORD=""
 read -s -p "Enter password: " PASSWORD
-echo ""
+
+echo "Obtaining API key"
+sleep 1
 RAW=$(curl -k -H "Content-Type: application/x-www-form-urlencoded" -X POST https://$FIREWALL_IP/api/?type=keygen -d "user=$USER&password=$PASSWORD")
 API_KEY=$(awk -v str="$RAW" 'BEGIN { split(str, parts, "<key>|</key>"); print parts[2] }')
 
@@ -73,14 +74,17 @@ create_service() {
 
     echo "Creating $service_name with $protocol port $port_number"
     curl -ks -X POST "https://$FIREWALL_IP/api/" \
-        -d "type=config&action=set&key=$API_KEY" \
-        --data-urlencode "xpath=/config/shared/service" \
-        --data-urlencode "element=<request>
-            <set><config><shared><service>
-            <entry name='$service_name'>
+        -d "type=config" \
+        -d "action=set" \
+        -d "key=$API_KEY" \
+        -d "xpath=/config/shared/service" \
+        --data-urlencode "element=<entry name='$service_name'>
             <protocol>
-            <$protocol><port>$port_number</port></$protocol>
-            </protocol></entry></service></shared></config></set></request>"
+                <$protocol>
+                    <port>$port_number</port>
+                </$protocol>
+            </protocol>
+        </entry>"
 }
 
 initial() {
