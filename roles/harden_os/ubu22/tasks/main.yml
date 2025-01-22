@@ -24,7 +24,7 @@
       ansible.builtin.debug:
         msg: system has been discovered as a container
   when:
-    - is_target_container == 'docker' or
+    - is_target_container or
       ansible_facts.virtualization_type in ["docker", "lxc", "openvz", "podman", "container"]
 
 - name: "CIS Benchmark | prelims"

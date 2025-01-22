@@ -16,15 +16,15 @@
       register: prelim_wireless_adapters_exist
 
     - name: PRELIM | PATCH | Install Network-Manager | if wireless adapter present
-      when:
-        - ubtu22cis_install_network_manager
-        - prelim_wireless_adapters_exist.rc == 0
-        - "'network-manager' not in ansible_facts.packages"
       ansible.builtin.package:
         name: network-manager
         state: present
+      when:
+        - install_network_manager
+        - prelim_wireless_adapters_exist.rc == 0
+        - "'network-manager' not in ansible_facts.packages"
   when:
-    - ubtu22cis_rule_3_1_2
+    - rule_3_1_2
     - not system_is_container
 
 #for 5.2
