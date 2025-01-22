@@ -8,16 +8,12 @@
 
 # for 1.8
 - name: "PRELIM | Discover Gnome Desktop Environment"
-  tags:
-    - always
   ansible.builtin.stat:
     path: /usr/share/gnome/gnome-version.xml
   register: prelim_gnome_present
 
 # for 3.1
 - name: "PRELIM | AUDIT | Wireless adapter pre-requisites"
-  when:
-    - not system_is_container
   block:
     - name: "PRELIM | AUDIT | Discover is wirelss adapter on system"
       ansible.builtin.command: find /sys/class/net/*/ -type d -name wireless
@@ -26,12 +22,14 @@
       failed_when: discover_wireless_adapters.rc not in [ 0, 1 ]
 
     - name: "PRELIM | PATCH | Install Network-Manager | if wireless adapter present"
-      when:
-        - discover_wireless_adapters.rc == 0
-        - "'NetworkManager' not in ansible_facts.packages"
       ansible.builtin.package:
         name: NetworkManager
         state: present
+      when:
+        - discover_wireless_adapters.rc == 0
+        - "'NetworkManager' not in ansible_facts.packages"
+  when:
+    - not system_is_container
 
 # for 5.4
 - name: "PRELIM | AUDIT | Gather UID 0 accounts other than root"
@@ -49,7 +47,6 @@
 
 # for 5.4
 - name: "Check authselect profile is selected"
-  when: allow_authselect_updates
   block:
     - name: "Check authselect profile name has been updated | Ensure name from default is changed"
       ansible.builtin.assert:
@@ -67,10 +64,10 @@
         that: prelim_authselect_current_profile is defined
         success_msg: "Authselect is running and profile is selected"
         fail_msg: Authselect updates have been selected there are issues with profile selection"
+  when: allow_authselect_updates
 
 # for 5.4 and 7.2
 - name: "PRELIM | 5.5.2 | 6.2.7 | 6.2.8 | 6.2.20 | Parse /etc/passwd"
-  tags: always
   block:
     - name: "PRELIM | 5.5.2 | 6.2.7 | 6.2.8 | 6.2.20 | Parse /etc/passwd"
       ansible.builtin.command: cat /etc/passwd
@@ -101,27 +98,27 @@
 
 # for 6.3
 - name: "PRELIM | AUDIT | Discover audit logfile"
+  ansible.builtin.shell: grep ^log_file /etc/audit/auditd.conf | awk '{ print $NF }'
+  changed_when: false
+  register: prelim_auditd_logfile
   when:
     - rule_6_3_4_1 or
       rule_6_3_4_2 or
       rule_6_3_4_3 or
       rule_6_3_4_4
-  ansible.builtin.shell: grep ^log_file /etc/audit/auditd.conf | awk '{ print $NF }'
-  changed_when: false
-  register: prelim_auditd_logfile
 
 # for 6.3
 - name: "PRELIM | AUDIT | Audit conf and rules files | list files"
-  when:
-    - rule_6_3_4_5 or
-      rule_6_3_4_6 or
-      rule_6_3_4_7
   ansible.builtin.find:
     path: /etc/audit
     file_type: file
     recurse: true
     patterns: '*.conf,*.rules'
   register: prelim_auditd_conf_files
+  when:
+    - rule_6_3_4_5 or
+      rule_6_3_4_6 or
+      rule_6_3_4_7
 
 # for 7.2
 - name: "PRELIM | AUDIT | Interactive User accounts home directories"
@@ -133,7 +130,6 @@
 
 # for 7.2
 - name: "PRELIM | AUDIT | Discover Interactive UID MIN and MIN from logins.def"
-  when: discover_int_uid
   tags: always
   block:
     - name: "PRELIM | AUDIT | Capture UID_MIN information from logins.def"
@@ -150,3 +146,4 @@
       ansible.builtin.set_fact:
         prelim_min_int_uid: "{{ prelim_uid_min_id.stdout }}"
         prelim_max_int_uid: "{{ prelim_uid_max_id.stdout }}"
+  when: discover_int_uid

@@ -1,47 +1,46 @@
 ---
 
 - name: "5.2.1 | PATCH | Ensure sudo is installed"
-  when: rule_5_2_1
   ansible.builtin.package:
     name: sudo
     state: present
+  when: rule_5_2_1
 
 - name: "5.2.2 | PATCH | Ensure sudo commands use pty"
-  when: rule_5_2_2
   ansible.builtin.lineinfile:
     path: /etc/sudoers
     regexp: '^Defaults\s+use_'
     line: 'Defaults        use_pty'
     insertafter: '^\s*Defaults'
+  when: rule_5_2_2
 
 - name: "5.2.3 | PATCH | Ensure sudo log file exists"
-  when: rule_5_2_3
   ansible.builtin.lineinfile:
     path: /etc/sudoers
     regexp: '^Defaults\s+logfile'
     line: 'Defaults        logfile=/var/log/sudo.log'
     insertafter: '^\s*Defaults'
+  when: rule_5_2_3
 
 - name: "5.2.4 | PATCH | Ensure users must provide password for privilege escalation"
-  when: rule_5_2_4
   ansible.builtin.replace:
     path: "{{ item }}"
     regexp: '^([^#|{% if system_is_ec2 %}ec2-user{% endif %}].*)NOPASSWD(.*)'
     replace: '\1PASSWD\2'
     validate: '/usr/sbin/visudo -cf %s'
   loop: "{{ prelim_sudoers_files.stdout_lines }}"
+  when: rule_5_2_4
 
 - name: "5.2.5 | PATCH | Ensure re-authentication for privilege escalation is not disabled globally"
-  when: rule_5_2_5
   ansible.builtin.replace:
     path: "{{ item }}"
     regexp: '^([^#].*)!authenticate(.*)'
     replace: '\1authenticate\2'
     validate: '/usr/sbin/visudo -cf %s'
   loop: "{{ prelim_sudoers_files.stdout_lines }}"
+  when: rule_5_2_5
 
 - name: "5.2.6 | PATCH | Ensure sudo authentication timeout is configured correctly"
-  when: rule_5_2_6
   block:
     - name: "5.2.6 | Get files with timeout set"
       ansible.builtin.shell: grep -is 'timestamp_timeout' /etc/sudoers /etc/sudoers.d/* | cut -d":" -f1 | uniq | sort
@@ -50,25 +49,25 @@
       register: discovered_timeout_files
 
     - name: "5.2.6 | Set value if no results"
-      when: discovered_timeout_files.stdout | length == 0
       ansible.builtin.lineinfile:
         path: /etc/sudoers
         regexp: '^\s*Defaults/s+timestamp_timeout='
         line: 'Defaults        timestamp_timeout=15'
         insertafter: '^\s*Defaults'
         validate: '/usr/sbin/visudo -cf %s'
+      when: discovered_timeout_files.stdout | length == 0
 
     - name: "5.2.6 | Set value if has results"
-      when: discovered_timeout_files.stdout | length > 0
       ansible.builtin.replace:
         path: "{{ item }}"
         regexp: 'timestamp_timeout=(\d+)'
         replace: 'timestamp_timeout=15'
         validate: '/usr/sbin/visudo -cf %s'
       loop: "{{ discovered_timeout_files.stdout_lines }}"
+      when: discovered_timeout_files.stdout | length > 0
+  when: rule_5_2_6
 
 - name: "5.2.7 | PATCH | Ensure access to the su command is restricted"
-  when: rule_5_2_7
   block:
     - name: "5.2.7 | Ensure sugroup exists"
       ansible.builtin.group:
@@ -87,3 +86,4 @@
         path: /etc/pam.d/su
         regexp: '^(#)?auth\s+required\s+pam_wheel\.so'
         line: 'auth           required        pam_wheel.so use_uid group=nosugroup'
+  when: rule_5_2_7

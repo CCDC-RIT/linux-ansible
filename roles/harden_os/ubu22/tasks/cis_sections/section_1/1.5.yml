@@ -1,7 +1,6 @@
 ---
 
 - name: "1.5.1 | PATCH | Ensure address space layout randomization is enabled | set active kernel parameter"
-  when: 1_5_1
   ansible.posix.sysctl:
     name: kernel.randomize_va_space
     value: '2'
@@ -10,9 +9,9 @@
     reload: true
     sysctl_set: true
     ignoreerrors: true
+  when: rule_1_5_1
 
 - name: "1.5.2 | PATCH | Ensure ptrace_scope is restricted"
-  when: 1_5_2
   ansible.posix.sysctl:
     name: kernel.yama.ptrace_scope
     value: '1'
@@ -21,9 +20,9 @@
     reload: true
     sysctl_set: true
     ignoreerrors: true
+  when: rule_1_5_2
 
 - name: "1.5.3 | PATCH | Ensure core dumps are restricted"
-  when: 1_5_3
   block:
     - name: "1.5.3 | kernel sysctl"
       ansible.posix.sysctl:
@@ -67,11 +66,9 @@
       loop:
         - { regexp: '^Storage', line: 'Storage=none' }
         - { regexp: '^ProcessSizeMax', line: 'ProcessSizeMax=0' }
+  when: rule_1_5_3
 
 - name: "1.5.4 | PATCH | Ensure prelink is not installed"
-  when:
-    - rule_1_5_4
-    - "'prelink in ansible_facts.packages"
   block:
     - name: "1.5.4 | restore binaries to normal"
       ansible.builtin.command: prelink -ua
@@ -83,10 +80,12 @@
         name: prelink
         state: absent
         purge: false
+  when:
+    - rule_1_5_4
+    - "'prelink in ansible_facts.packages"
 
 - name: "1.5.5 | PATCH | Ensure Automatic Error Reporting is not enabled"
-  when: 1_5_5
-  black:
+  block:
     - name: "1.5.5 | diable"
       ansible.builtin.lineinfile:
         path: /etc/default/apport
@@ -98,9 +97,10 @@
         mode: 'go-wx'
 
     - name: "1.5.5 | remove package"
-      when: "'apport' in ansible_facts.packages"
       ansible.builtin.package:
         name: apport
         state: absent
         purge: false
+      when: "'apport' in ansible_facts.packages"
+  when: rule_1_5_5
     

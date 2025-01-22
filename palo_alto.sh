@@ -1,7 +1,8 @@
 #!/bin/bash
 
 fixes() {
-    change_rule_status "test" "no"
+    # For disabling rules, yes -> disabled and no -> enabled
+    change_rule_status "test" "yes"
 }
 
 PUBLIC="Public"
@@ -19,17 +20,26 @@ echo ""
 
 PASSWORD=""
 read -s -p "Enter password: " PASSWORD
+echo ""
 
 echo "Obtaining API key"
 sleep 1
 RAW=$(curl -k -H "Content-Type: application/x-www-form-urlencoded" -X POST https://$FIREWALL_IP/api/?type=keygen -d "user=$USER&password=$PASSWORD")
 API_KEY=$(awk -v str="$RAW" 'BEGIN { split(str, parts, "<key>|</key>"); print parts[2] }')
+echo ""
+
+if [ -z "$API_KEY" ]; then
+    echo "Failed to retrieve API key"
+    exit
+fi
 
 echo "Overriding template for services..."
 sleep 1
 curl -ks -X POST "https://$FIREWALL_IP/api/" \
     -d "type=config&action=override&key=$API_KEY" \
-    --data-urlencode "xpath=/config/shared/service"
+    --data-urlencode "xpath=/config/shared/service" \
+    --data-urlencode "element=<override></override>"
+echo ""
 
 create_rule() {
     local rule_name="$1"
@@ -37,11 +47,16 @@ create_rule() {
     local to_zone="$3"
     local source_ip="$4"
     local dest_ip="$5"
-    local service="$6"
+    local services="$6"
     local application="$7"
     local action="$8"
-    
-    echo "Creating rule $rule_name"
+
+    local service_xml=""
+    for svc in $services; do
+        service_xml+="<member>$svc</member>"
+    done
+
+    echo "Creating rule $rule_name with services: $services"
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
         --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules" \
         --data-urlencode "element=<entry name='$rule_name'>
@@ -49,7 +64,7 @@ create_rule() {
             <to><member>$to_zone</member></to> 
             <source><member>$source_ip</member></source> 
             <destination><member>$dest_ip</member></destination> 
-            <service><member>$service</member></service> 
+            <service>$service_xml</service> 
             <application><member>$application</member></application> 
             <action>$action</action>
         </entry>"
@@ -60,38 +75,39 @@ change_rule_status() {
     local rule_name="$1"
     local action="$2"
 
-    echo "Changing status of $rule_name to $action"
+    if [ "$action" = "yes" ]; then
+        echo "Disabling $rule_name"
+    else
+        echo "Enabling $rule_name"
+    fi
+
     curl -k -X POST "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
-    --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules" \
-    --data-urlencode "/entry[@name=$rule_name]&element=<disabled>$action</disabled>"
+    --data-urlencode "xpath=/config/devices/entry/vsys/entry[@name='vsys1']/rulebase/security/rules/entry[@name='$rule_name']" \
+    --data-urlencode "element=<disabled>$action</disabled>"
     echo ""
 }
 
 create_service() {
-    local service_name="$1"
-    local protocol="$2"
-    local port_number="$3"
+    local protocol="$1"
+    local port_number="$2"
 
-    echo "Creating $service_name with $protocol port $port_number"
+    echo "Creating service $protocol-$port_number"
     curl -ks -X POST "https://$FIREWALL_IP/api/" \
         -d "type=config" \
         -d "action=set" \
         -d "key=$API_KEY" \
         -d "xpath=/config/shared/service" \
-        --data-urlencode "element=<entry name='$service_name'>
+        --data-urlencode "element=<entry name='$protocol-$port_number'>
             <protocol>
                 <$protocol>
                     <port>$port_number</port>
                 </$protocol>
             </protocol>
         </entry>"
+    echo ""
 }
 
 initial() {
-    # All Win to DC
-    # TCP: 88,135,389,445,464,636,3268
-    # UDP: 53, 88,123,135,389,445,464,636
-
     # All win out to dc
     # UDP: 53
 
@@ -109,27 +125,69 @@ initial() {
     # UDP: 3389
     # From All Win to Wazuh and Graylog 
     # TCP: 1514, 1515, 80, 443
+    create_service "tcp" "88"
+    create_service "tcp" "135"
+    create_service "tcp" "389"
+    create_service "tcp" "445"
+    create_service "tcp" "464"
+    create_service "tcp" "636"
+    create_service "tcp" "3268"
 
-    # create_rule "test" "any" "any" "any" "any" "service-http" "any" "allow"
-    # create_rule "Windows-to-DC-88" "any" "any" "any" "any" "88" "any" "allow"
-    create_service "tcp-88" "tcp" "88"
+    create_service "udp" "53"
+    create_service "udp" "88"
+    create_service "udp" "123"
+    create_service "udp" "135"
+    create_service "udp" "389"
+    create_service "udp" "445"
+    create_service "udp" "464"
+    create_service "udp" "636"
 }
 
-if [ "$1" = "init" ]; then
-    echo "Running initial configuration"
-    initial
-elif [ "$1" = "fix" ]; then
-    echo "Running fixes"
+the_rules_to_end_all_rule() {
+    # All Win to DC
+    # TCP: 88,135,389,445,464,636,3268
+    # UDP: 53,88,123,135,389,445,464,636
+    create_rule "All-Win-DMZ-To-DC-Private-TCP" "DMZ" "Private" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+    create_rule "All-Win-DMZ-To-DC-Private-UDP" "DMZ" "Private" "any" "any" "udp-53 udp-88 udp-123 udp-135 udp-389 udp-445 udp-464 udp-636" "any" "allow"
+    create_rule "All-Win-Private-To-DC-DMZ-TCP" "Private" "DMZ" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+    create_rule "All-Win-Private-To-DC-DMZ-UDP" "Private" "DMZ" "any" "any" "udp-53 udp-88 udp-123 udp-135 udp-389 udp-445 udp-464 udp-636" "any" "allow"
+}
+
+commit_changes() {
+    echo "Committing changes"
+    curl -k -X POST "https://$FIREWALL_IP/api/?type=commit&key=$API_KEY" \
+	    --data-urlencode "cmd=<commit><description>blue4life</description></commit>"
+    echo ""
+}
+
+backup_changes() {
+    local backup_ip=""
+    read -s -p "Enter backup IP: "
+    echo ""
+
+    echo "Backing up configuration"
+    sleep 1
+    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > /asa/osa/running-config.xml
+    echo ""
+}
+
+CHOICE=""
+read -p "Are you (i)nitializing, (f)ixing, or (b)acking up? " CHOICE
+echo ""
+
+if [ "$CHOICE" = "f" ]; then
     fixes
-elif [ $# -gt 1 -o $# -eq 0 ]; then
-    echo "Only one parameter allowed!"
+    commit_changes
+    exit
+elif [ "$CHOICE" = "i" ]; then
+    initial
+    the_rules_to_end_all_rule
+    commit_changes
+    exit
+elif [ "$CHOICE" = "b" ]; then
+    backup
     exit
 else
-    echo "Invalid parameter, use 'init' or 'fix'"
+    echo "Invalid choice"
     exit
 fi
-
-echo "Committing changes"
-curl -k -X POST "https://$FIREWALL_IP/api/?type=commit&key=$API_KEY" \
-	--data-urlencode "cmd=<commit><description>blue4life</description></commit>"
-echo ""

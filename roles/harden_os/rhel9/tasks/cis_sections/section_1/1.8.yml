@@ -1,18 +1,15 @@
 ---
 
 - name: "1.8.1 | PATCH | Ensure GNOME Display Manager is removed"
+  ansible.builtin.package:
+    name: gdm
+    state: absent
   when:
     - rule_1_8_1
     - "'gdm' in ansible_facts.packages"
     - not gui
-  ansible.builtin.package:
-    name: gdm
-    state: absent
 
 - name: "1.8.2 | PATCH | Ensure GDM login banner is configured"
-  when:
-    - rule_1_8_2
-    - gui
   block:
     - name: "1.8.2 | gdm profile"
       ansible.builtin.lineinfile:
@@ -37,11 +34,11 @@
         group: root
         mode: 'go-wx'
       notify: Reload dconf
+  when:
+    - rule_1_8_2
+    - gui
 
 - name: "1.8.3 | PATCH | Ensure GDM disable-user-list option is enabled"
-  when:
-    - rule_1_8_3
-    - gui
   ansible.builtin.lineinfile:
     path: "{{ item.file }}"
     regexp: "{{ item.regexp }}"
@@ -50,18 +47,18 @@
     owner: root
     group: root
     mode: 'go-wx'
-  notify: Reload dconf
   loop:
     - { file: '/etc/dconf/profile/gdm', regexp: 'user-db', line: 'user-db:user' }
     - { file: '/etc/dconf/profile/gdm', regexp: 'system-db', line: 'system-db:gdm' }
     - { file: '/etc/dconf/profile/gdm', regexp: 'file-db', line: 'file-db:/usr/share/gdm/greeter-dconf-defaults'}
     - { file: '/etc/dconf/db/gdm.d/00-login-screen', regexp: '\[org\/gnome\/login-screen\]', line: '[org/gnome/login-screen]' }
     - { file: '/etc/dconf/db/gdm.d/00-login-screen', regexp: 'disable-user-list=', line: 'disable-user-list=true' }
+  when:
+    - rule_1_8_3
+    - gui
+  notify: Reload dconf
 
 - name: "1.8.4 | PATCH | Ensure GDM screen locks when the user is idle"
-  when:
-    - rule_1_8_4
-    - gui
   block:
     - name: "1.8.4 | User profile"
       ansible.builtin.lineinfile:
@@ -92,11 +89,11 @@
         group: root
         mode: 'go-wx'
       notify: Reload dconf
+  when:
+    - rule_1_8_4
+    - gui
 
 - name: "1.8.5 | PATCH | Ensure GDM screen locks cannot be overridden"
-  when:
-    - rule_1_8_5
-    - gui
   block:
     - name: "1.8.5 | Make lock directory"
       ansible.builtin.file:
@@ -114,23 +111,23 @@
         group: root
         mode: 'go-wx'
       notify: Reload dconf
+  when:
+    - rule_1_8_5
+    - gui
 
 - name: "1.8.6 | PATCH | Ensure GDM automatic mounting of removable media is disabled"
-  when:
-    - rule_1_8_6
-    - gui
   ansible.builtin.template:
     src: etc/dconf/db/00-media-automount.j2
     dest: "/etc/dconf/db/{{ dconf_db_name }}.d/00-media-automount"
     owner: root
     group: root
     mode: 'go-wx'
+  when:
+    - rule_1_8_6
+    - gui   
   notify: Reload dconf
 
 - name: "1.8.7 | PATCH | Ensure GDM disabling automatic mounting of removable media is not overridden"
-  when:
-    - rule_1_8_7
-    - gui
   block:
     - name: "1.8.7 | Make lock directory"
       ansible.builtin.file:
@@ -148,11 +145,11 @@
         group: root
         mode: 'go-wx'
       notify: Reload dconf
+  when:
+    - rule_1_8_7
+    - gui
 
 - name: "1.8.8 | PATCH | Ensure GDM autorun-never is enabled"
-  when:
-    - rule_1_8_8
-    - gui
   block:
     - name: "1.8.8 | Make directory"
       ansible.builtin.file:
@@ -170,11 +167,11 @@
         group: root
         mode: 'go-wx'
       notify: Reload dconf
+  when:
+    - rule_1_8_8
+    - gui
 
 - name: "1.8.9 | PATCH | Ensure GDM autorun-never is not overridden"
-  when:
-    - rule_1_8_9
-    - gui
   block:
     - name: "1.8.9 | Make lock directory"
       ansible.builtin.file:
@@ -192,12 +189,15 @@
         group: root
         mode: 'go-wx'
       notify: Reload dconf
+  when:
+    - rule_1_8_9
+    - gui
 
 - name: "1.8.10 | PATCH | Ensure XDMCP is not enabled"
-  when:
-    - rule_1_8_10
-    - gui
   ansible.builtin.lineinfile:
     path: /etc/gdm/custom.conf
     regexp: 'Enable=true'
     state: absent
+  when:
+    - rule_1_8_10
+    - gui

@@ -1,14 +1,12 @@
 ---
 
 - name: "Check OS version and family"
-  tags: always
   ansible.builtin.assert:
     that: (ansible_facts.distribution != 'CentOS' and ansible_facts.os_family == 'RedHat' or ansible_facts.os_family == "Rocky") and ansible_facts.distribution_major_version is version_compare('9', '==')
     fail_msg: "This role can only be run against Supported OSs. {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }} is not supported."
     success_msg: "This role is running against a supported OS {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }}"
 
 - name: "Check ansible version"
-  tags: always
   ansible.builtin.assert:
     that: ansible_version.full is version_compare(min_ansible_version, '>=')
     fail_msg: "You must use Ansible {{ min_ansible_version }} or greater"
@@ -16,9 +14,6 @@
 
 # we need to set something up a register earlier in our playbook that this can read to know if it is a kube node or a container
 - name: "Setup rules if container"
-  when:
-    - is_target_container == 'container' or
-      ansible_facts.virtualization_type in ["docker", "lxc", "openvz", "podman", "container"]
   block:
     - name: "Discover and set container variable if required"
       ansible.builtin.set_fact:
@@ -29,9 +24,12 @@
         file: "{{ container_vars_file }}"
 
     - name: "Output if discovered is a container"
-      when: system_is_container
       ansible.builtin.debug:
-        msg: system has been discovered as a 
+        msg: system has been discovered as a container
+      when: system_is_container
+  when:
+    - is_target_container == 'container' or
+      ansible_facts.virtualization_type in ["docker", "lxc", "openvz", "podman", "container"]
         
 - name: "Gather the package facts"
   tags: always
@@ -48,33 +46,30 @@
     file: prelim.yml
 
 - name: "CIS Benchmark | section 1"
-  when: section_1
   ansible.builtin.import_tasks:
     file: cis_sections/section_1/main.yml
+  when: section_1
 
 - name: "CIS Benchmark | section 3"
-  when: section_3
   ansible.builtin.import_tasks:
     file: cis_sections/section_3/main.yml
+  when: section_3
 
 - name: "CIS Benchmark | section 5"
-  when: section_5
   ansible.builtin.import_tasks:
     file: cis_sections/section_5/main.yml
+  when: section_5
 
 - name: "CIS Benchmark | section 6"
-  when: section_6
   ansible.builtin.import_tasks:
     file: cis_sections/section_6/main.yml
+  when: section_6
 
 - name: "CIS Benchmark | section 7"
-  when: section_7
   ansible.builtin.import_tasks:
     file: cis_sections/section_7/main.yml
+  when: section_7
 
 - name: "Run post remediation tasks"
-  tags:
-    - post_tasks
-    - always
   ansible.builtin.import_tasks:
     file: post.yml

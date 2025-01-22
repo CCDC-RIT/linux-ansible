@@ -1,7 +1,6 @@
 ---
 
 - name: "5.4.1.1 | PATCH | Ensure password expiration is configured"
-  when: rule_5_4_1_1
   block:
     - name: "5.4.1.1 | Set /etc/login.defs PASS_MAX_DAYS"
       ansible.builtin.lineinfile:
@@ -17,16 +16,16 @@
       register: discovered_max_days
 
     - name: "5.4.1.1 | Set existing users PASS_MAX_DAYS"
-      when:
-        - disruption_high
-        - (item != 'root')
       ansible.builtin.command: chage --maxdays 365 {{ item }}
       failed_when: false
       changed_when: discovered_max_days.stdout | length > 0
       loop: "{{ discovered_max_days.stdout_lines }}"
+      when:
+        - disruption_high
+        - (item != 'root')
+  when: rule_5_4_1_1
 
 - name: "5.4.1.2 | PATCH | Ensure minimum password age is configured"
-  when: rule_5_4_1_2
   block:
     - name: "5.4.1.2 | Set /etc/login.defs PASS_MIN_DAYS"
       ansible.builtin.lineinfile:
@@ -41,16 +40,16 @@
       register: discovered_passwd_min_days
 
     - name: "5.4.1.2 | Set existing users PASS_MIN_DAYS"
-      when:
-        - disruption_high
-        - (item != 'root')
       ansible.builtin.command: chage --mindays 1 {{ item }}
       failed_when: false
       changed_when: discovered_passwd_min_days.stdout |length > 0
       loop: "{{ discovered_passwd_min_days.stdout_lines }}"
+      when:
+        - disruption_high
+        - (item != 'root')
+  when: rule_5_4_1_2
 
 - name: "5.4.1.3 | PATCH | Ensure password expiration warning days is configured"
-  when: rule_5_4_1_3
   block:
     - name: "5.4.1.3 | Set /etc/login.defs PASS_WARN_AGE"
       ansible.builtin.lineinfile:
@@ -65,23 +64,23 @@
       register: discovered_passwd_warn_days
 
     - name: "5.4.1.3 | Set existing users PASS_WARN_AGE"
-      when:
-        - disruption_high
-        - (item != 'root')
       ansible.builtin.command: chage --maxdays 7 {{ item }}
       failed_when: false
       changed_when: discovered_passwd_warn_days.stdout | length > 0
       loop: "{{ discovered_passwd_warn_days.stdout_lines }}"
+      when:
+        - disruption_high
+        - (item != 'root')
+  when: rule_5_4_1_3
 
 - name: "5.4.1.4 | PATCH | Ensure strong password hashing algorithm is configured"
-  when: rule_5_4_1_4
   ansible.builtin.lineinfile:
     path: /etc/login.defs
     regexp: '^ENCRYPT_METHOD'
     line: 'ENCRYPT_METHOD YESCRYPT'
+  when: rule_5_4_1_4
 
 - name: "5.4.1.5 | PATCH | Ensure inactive password lock is configured"
- when: rule_5_4_1_5
   block:
     - name: "5.4.1.5 | General setting"
       ansible.builtin.shell: useradd -D | grep INACTIVE | cut -d= -f2
@@ -90,10 +89,10 @@
       register: discovered_passwd_inactive_setting
 
     - name: "5.4.1.5 | Set inactive period for new users"
-      when: discovered_passwd_inactive_setting.stdout != 45 | string
       ansible.builtin.command: useradd -D -f 45
       failed_when: false
       changed_when: true
+      when: discovered_passwd_inactive_setting.stdout != 45 | string
 
     - name: "5.4.1.5 | Get Individual users"
       ansible.builtin.shell: awk -F':' '(/^[^:]+:[^!*]/ && ($7~/(\\s*|-1)/ || ( $7>1 && $7<45))) {print $1}' /etc/shadow
@@ -102,18 +101,18 @@
       register: discovered_passwd_inactive_users
 
     - name: "5.4.1.5 | Set inactive period for existing users"
-      when:
-        - disruption_high
-        - discovered_passwd_inactive_users.stdout | length > 0
-        - (item != 'root')
       ansible.builtin.command: chage --inactive 45 {{ item }}
       failed_when: false
       changed_when: true
       with_items:
         - "{{ ubu22_passwd | map(attribute='id') | list | intersect(discovered_passwd_inactive_users.stdout_lines) | list }}"
+      when:
+        - disruption_high
+        - discovered_passwd_inactive_users.stdout | length > 0
+        - (item != 'root')
+  when: rule_5_4_1_5
 
 - name: "5.4.1.6 | PATCH | Ensure all users last password change date is in the past"
-  when: rule_5_4_1_6
   block:
     - name: "5.4.1.6 | Get current date in Unix Time"
       ansible.builtin.shell: echo $(($(date --utc --date "$1" +%s)/86400))
@@ -130,41 +129,34 @@
       register: discovered_passwd_future_user_list
 
     - name: "5.4.1.6 | Warn about users"
-      when: discovered_passwd_future_user_list.stdout | length > 0
       ansible.builtin.debug:
         msg:
           - "WARNING!! The following accounts have the last PW change date in the future"
           - "{{ discovered_passwd_future_user_list.stdout_lines }}"
-
-    - name: "5.4.1.6 | warn_count"
       when: discovered_passwd_future_user_list.stdout | length > 0
-      ansible.builtin.import_tasks:
-        file: warning_facts.yml
 
     - name: "5.4.1.6 | Lock accounts with future PW changed dates"
-      when:
-        - disruption_high
-        - discovered_passwd_future_user_list.stdout | length > 0
       ansible.builtin.command: passwd --expire {{ item }}
       failed_when: false
       changed_when: true
       with_items:
         - "{{ discovered_passwd_future_user_list.stdout_lines }}"
+      when:
+        - disruption_high
+        - discovered_passwd_future_user_list.stdout | length > 0
+  when: rule_5_4_1_6
 
 - name: "5.4.2.1 | PATCH | Ensure root is the only UID 0 account"
-  when:
-    - rule_5_4_2_1
-    - prelim_uid_zero_accounts_except_root.rc
-    - disruption_high
   ansible.builtin.command: passwd -l {{ item }}
   changed_when: false
   failed_when: false
   loop: "{{ prelim_uid_zero_accounts_except_root.stdout_lines }}"
+  when:
+    - rule_5_4_2_1
+    - prelim_uid_zero_accounts_except_root.rc
+    - disruption_high
 
 - name: "5.4.2.2 | PATCH | Ensure root is the only GID 0 account"
-  when:
-    - rule_5_4_2_2
-    - disruption_high
   block:
     - name: "5.4.2.2 | Get members of gid 0"
       ansible.builtin.shell: "awk -F: '($1 !~ /^(sync|shutdown|halt|operator)/ && $4==\"0\") {print $1}' /etc/passwd | grep -wv 'root'"
@@ -173,17 +165,19 @@
       register: discovered_gid0_members
 
     - name: "5.4.2.2 | Remove users not root from gid 0"
-      when:
-        - discovered_gid0_members is defined
-        - discovered_gid0_members.stdout | length > 0
       ansible.builtin.user:
         name: "{{ item }}"
         group: root
         state: absent
       loop: "{{ discovered_gid0_members.stdout_lines }}"
+      when:
+        - discovered_gid0_members is defined
+        - discovered_gid0_members.stdout | length > 0
+  when:
+    - rule_5_4_2_2
+    - disruption_high
 
 - name: "5.4.2.3 | AUDIT | Ensure group root is the only GID 0 group"
-  when: rule_5_4_2_3
   block:
     - name: "5.4.2.3 | Get groups with gid 0"
       ansible.builtin.shell: "awk -F: '$3==\"0\"{print $1}' /etc/group | grep -vw 'root'"
@@ -192,16 +186,16 @@
       register: discovered_gid0_groups
 
     - name: "5.4.2.3 | Warning if others gid 0 groups"
-      when:
-        - discovered_gid0_groups is defined
-        - discovered_gid0_groups.stdout | length > 0
       ansible.builtin.debug:
         msg:
           - "Warning!! You have other groups assigned to GID 0 - Please resolve"
           - "{{ discovered_gid0_groups.stdout_lines }}"
+      when:
+        - discovered_gid0_groups is defined
+        - discovered_gid0_groups.stdout | length > 0
+  when: rule_5_4_2_3
 
 - name: "5.4.2.4 | PATCH | Ensure root password is set"
-  when: rule_5_4_2_4
   block:
     - name: "5.4.2.4"
       ansible.builtin.shell: passwd -S root | grep -E "root P"
@@ -214,9 +208,9 @@
         that: root_passwd_set.rc == 0
         fail_msg: "You have rule 5.4.2.4 enabled this requires that you have a root password set - Please manually set a root password"
         success_msg: "You have a root password set"
+  when: rule_5_4_2_4
 
 - name: "5.4.2.5 | PATCH | Ensure root PATH Integrity"
-  when: rule_5_4_2_5
   block:
     - name: "5.4.2.5 | Get root paths"
       ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2
@@ -224,32 +218,31 @@
       register: discovered_root_paths
 
     - name: "5.4.2.5 | Get root paths"
-      when: discovered_root_paths is defined
       ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2 | tr ":" "\n"
       changed_when: false
       register: discovered_root_paths_split
+      when: discovered_root_paths is defined
 
     - name: "5.4.2.5 | Set fact"
-      when: discovered_root_paths is defined
       ansible.builtin.set_fact:
         root_paths: "{{ discovered_root_paths.stdout }}"
+      when: discovered_root_paths is defined
 
     - name: "5.4.2.5 | Check for empty dirs"
-      when: discovered_root_paths is defined
       ansible.builtin.shell: 'echo {{ root_paths }} | grep -q "::" && echo "roots path contains a empty directory (::)"'
       changed_when: false
       failed_when: discovered_root_path_empty_dir.rc not in [ 0, 1 ]
       register: discovered_root_path_empty_dir
+      when: discovered_root_paths is defined
 
     - name: "5.4.2.5 | Check for trailing ':'"
-      when: discovered_root_paths is defined
       ansible.builtin.shell: '{{ root_paths }} | cut -d= -f2 | grep -q ":$" && echo "roots path contains a trailing (:)"'
       changed_when: false
       failed_when: discovered_root_path_trailing_colon.rc not in [ 0, 1 ]
       register: discovered_root_path_trailing_colon
+      when: discovered_root_paths is defined
 
     - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Check for owner and permissions"
-      when: discovered_root_paths is defined
       block:
         - name: "5.4.2.5 | Check for owner and permissions"
           ansible.builtin.stat:
@@ -258,11 +251,6 @@
           loop: "{{ discovered_root_paths_split.stdout_lines }}"
 
         - name: "5.4.2.5 | Set permissions"
-          when:
-            - item.stat.exists
-            - item.stat.isdir
-            - item.stat.pw_name != 'root' or item.stat.gr_name != 'root' or item.stat.woth or item.stat.wgrp
-            - (item != 'root')
           ansible.builtin.file:
             path: "{{ item.stat.path }}"
             state: directory
@@ -273,9 +261,15 @@
           loop: "{{ discovered_root_path_perms.results }}"
           loop_control:
             label: "{{ item }}"
+          when:
+            - item.stat.exists
+            - item.stat.isdir
+            - item.stat.pw_name != 'root' or item.stat.gr_name != 'root' or item.stat.woth or item.stat.wgrp
+            - (item != 'root')
+      when: discovered_root_paths is defined
+  when: rule_5_4_2_5
 
 - name: "5.4.2.6 | PATCH | Ensure root user umask is configured"
-  when: rule_5_4_2_6
   ansible.builtin.lineinfile:
     path: /root/.bash_profile
     regexp: \s*umask
@@ -284,42 +278,42 @@
     owner: root
     group: root
     mode: 'g-wx,o-rwx'
+  when: rule_5_4_2_6
 
 - name: "5.4.2.7 | PATCH | Ensure system accounts do not have a valid login shell"
-  when:
-    - rule_5_4_2_7
-    - "item.id not in prelim_interactive_usernames.stdout"
-    - "'root' not in item.id"
-    - disruption_high
   ansible.builtin.user:
     name: "{{ item.id }}"
     shell: /usr/sbin/nologin
   loop: "{{ ubu22_passwd }}"
   loop_control:
     label: "{{ item.id }}"
-
-- name: "5.4.2.8 | PATCH | Ensure accounts without a valid login shell are locked | Lock accounts"
   when:
-    - rule_5_4_2_8
-    - disruption_high
+    - rule_5_4_2_7
     - "item.id not in prelim_interactive_usernames.stdout"
     - "'root' not in item.id"
+    - disruption_high
+
+- name: "5.4.2.8 | PATCH | Ensure accounts without a valid login shell are locked | Lock accounts"
   ansible.builtin.user:
     name: "{{ item.id }}"
     password_lock: true
   loop: "{{ ubu22_passwd }}"
   loop_control:
     label: "{{ item.id }}"
+  when:
+    - rule_5_4_2_8
+    - disruption_high
+    - "item.id not in prelim_interactive_usernames.stdout"
+    - "'root' not in item.id"
 
 - name: "5.4.3.1 | PATCH | Ensure nologin is not listed in /etc/shells"
-  when: rule_5_4_3_1
   ansible.builtin.replace:
     path: /etc/shells
     regexp: nologin
     replace: ""
+  when: rule_5_4_3_1
 
 - name: "5.4.3.2 | PATCH | Ensure default user shell timeout is configured"
-  when: rule_5_4_3_2
   ansible.builtin.blockinfile:
     path: "{{ item.path }}"
     state: "{{ item.state }}"
@@ -333,9 +327,9 @@
   loop:
     - { path: /etc/profile.d/tmout.sh, state: present }
     - { path: /etc/profile, state: "{{ ('/etc/profile.d/tmout.sh' == '/etc/profile') | ternary('present', 'absent') }}" }
+  when: rule_5_4_3_2
 
 - name: "5.4.3.3 | PATCH | Ensure default user umask is configured"
-  when: rule_5_4_3_3
   ansible.builtin.replace:
     path: "{{ item.path }}"
     regexp: (?i)(umask\s+\d\d\d)
@@ -343,3 +337,4 @@
   loop:
     - { path: '/etc/profile', line: 'umask' }
     - { path: '/etc/login.defs', line: 'UMASK' }
+  when: rule_5_4_3_3
