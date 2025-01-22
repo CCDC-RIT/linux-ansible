@@ -15,14 +15,20 @@ echo ""
 
 USER=""
 read -s -p "Enter username: " USER
-echo ""
 
+echo ""
+sleep 1
 PASSWORD=""
 read -s -p "Enter password: " PASSWORD
 echo ""
-
 RAW=$(curl -k -H "Content-Type: application/x-www-form-urlencoded" -X POST https://$FIREWALL_IP/api/?type=keygen -d "user=$USER&password=$PASSWORD")
 API_KEY=$(awk -v str="$RAW" 'BEGIN { split(str, parts, "<key>|</key>"); print parts[2] }')
+
+echo "Overriding template for services..."
+sleep 1
+curl -ks -X POST "https://$FIREWALL_IP/api/" \
+    -d "type=config&action=override&key=$API_KEY" \
+    --data-urlencode "xpath=/config/shared/service"
 
 create_rule() {
     local rule_name="$1"
@@ -71,7 +77,7 @@ create_service() {
         --data-urlencode "xpath=/config/shared/service" \
         --data-urlencode "element=<request>
             <set><config><shared><service>
-            <entry name=$service_name>
+            <entry name='$service_name'>
             <protocol>
             <$protocol><port>$port_number</port></$protocol>
             </protocol></entry></service></shared></config></set></request>"
