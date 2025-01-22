@@ -160,17 +160,34 @@ commit_changes() {
     echo ""
 }
 
+backup_changes() {
+    local backup_ip=""
+    read -s -p "Enter backup IP: "
+    echo ""
+
+    echo "Backing up configuration"
+    sleep 1
+    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > /asa/osa/running-config.xml
+    echo ""
+}
+
 CHOICE=""
-read -p "Are you (init)ializing or (fix)ing? " CHOICE
+read -p "Are you (i)nitializing, (f)ixing, or (b)acking up? " CHOICE
 echo ""
 
-if [ "$CHOICE" = "fix" ]; then
+if [ "$CHOICE" = "f" ]; then
     fixes
     commit_changes
     exit
-elif [ "$CHOICE" = "init" ]; then
+elif [ "$CHOICE" = "i" ]; then
     initial
     the_rules_to_end_all_rule
     commit_changes
+    exit
+elif [ "$CHOICE" = "b" ]; then
+    backup
+    exit
+else
+    echo "Invalid choice"
     exit
 fi
