@@ -644,8 +644,6 @@ for i in "${!original_dirs[@]}"; do
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
         unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp" # TODO what's the resulting timestamps on this? Not that it matters...
 
-        if diff <(lsattr /path/to/file1) <(lsattr /path/to/file2) > /dev/null; then
-            echo "The file attributes are the same."
         if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(lsattr "$original_dir") <(lsattr "$backup_dir/tmp$original_dir") > /dev/null; then
             echo "  Live files match the backup files. No action needed."
             rm -rf "$backup_dir/tmp"
