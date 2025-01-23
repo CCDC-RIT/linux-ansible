@@ -536,9 +536,13 @@ for port in "${ports[@]}"; do
                 # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
                 deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
                 if [ -z "$deny_rules" ]; then
-                    break
+                    # If no regular rules remain, check for drop all rules. If its also empty, we're done.
+                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E 'DROP  ' | grep -Evi 'dpt:|spt:|port')
+                    if [ -z "$deny_rules" ]; then
+                        break
+                    fi
                 fi
-                
+
                 #set removal flag to true
                 rules_removed=true
 
