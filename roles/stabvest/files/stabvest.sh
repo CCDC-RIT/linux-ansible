@@ -88,12 +88,23 @@ contentdir="/var/www/html"
 #contentdir="/var/lib/mysql"
 
 # PostGreSQL
-#declare -a ports=( 3306 )
-#servicename="mysql"
-#packagename="mysql-server"
+#declare -a ports=( 5432 )
+#servicename="postgresql" # RHEL: postgresql-server
+#packagename="postgresql"
+#binarypath="/usr/lib/postgresql/<version>/bin/" # RHEL: /usr/pgsql-<version>/bin/
+#configdir="/etc/postgresql/" # RHEL: /var/lib/pgsql/
+#contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
+
+# InfluxDB
+#declare -a ports=( 8086 8088 )
+#servicename="influxdb"
+#packagename="influxdb2"
 #binarypath="/usr/bin/msql"
-#configdir="/etc/mysql"
-#contentdir="/usr/local/pgsql/data" # or /var/lib/postgresql/[version]/data/
+#configdir="/etc/influxdb"
+#contentdir="/etc/default/influxdb2"
+# content is stored at the "dir=XYZ" line in the config file. however, we dont want to back up and restore it as it may change.
+
+# TODO docker??
 
 
 
@@ -540,10 +551,10 @@ for port in "${ports[@]}"; do
                     # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
                     # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
                     # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
-                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E '$action' | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is. TODO THIS DOESNT SEARCH FOR DROP AAAAAA. also redirect
+                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "$action" | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is. TODO THIS DOESNT SEARCH FOR DROP AAAAAA. also redirect
                     if [ -z "$deny_rules" ]; then
                         # If no regular rules remain, check for drop all rules (do not contain a specific port). If its also empty, we're done.
-                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E '$action' | grep -Evi 'dpt:|spt:|port')
+                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
                         if [ -z "$deny_rules" ]; then
                             break
                         fi
@@ -556,7 +567,7 @@ for port in "${ports[@]}"; do
                     rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
                     #echo "  $table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
                     pad_string " Potentially malicious firewall rule found and deleted: " "+" 90
-                    echp "    $table table, $chain chain: "
+                    echo "    $table table, $chain chain: "
                     echo "    $rule_text"
 
                     # Extract and remove the first rule
@@ -644,9 +655,10 @@ for i in "${!original_dirs[@]}"; do
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
         unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp" # TODO what's the resulting timestamps on this? Not that it matters...
 
-        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(lsattr "$original_dir") <(lsattr "$backup_dir/tmp$original_dir") > /dev/null; then
-            echo "  Live files match the backup files. No action needed."
-            rm -rf "$backup_dir/tmp"
+        # Compare content of all files, and compare file permissions of all files
+        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(find "$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) <(find "$backup_dir/tmp$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) &> /dev/null; then
+                echo "  Live files match the backup files. No action needed."
+                rm -rf "$backup_dir/tmp"
         else
             echo "  Live files differ from the backup. Restoring backup..."
             pad_string " Creating backup file of current (bad) files to: " "!" 55
@@ -707,3 +719,5 @@ echo ""
 timestomp_recursive "$backupdir"
 random_date=$(generate_random_date)
 touch -t "$random_date" "$(dirname $backupdir)" #do the dir holding the backup dir too. will have a sus timestamp compared to the others but whatever
+
+# note to self: 12 hrs of operation with 60sec cycles under moderate circumstances produces 30k lines of logs, 1.5mb. moderate = constant restore of all watched directories
