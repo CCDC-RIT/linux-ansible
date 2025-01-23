@@ -161,22 +161,29 @@ commit_changes() {
 }
 
 backup_changes() {
-    if [ ! -d "/var/log/asa/osa/" ]; then
-        mkdir /var/log/asa/osa
-    fi
+    # Ensure the backup directory exists
+    mkdir ~/asa
+    mkdir ~/asa/osa/
 
-    if [ -e "/var/log/asa/osa/running-config.xml" ]; then
-        rm "/var/log/asa/osa/running-config.xml"
-    fi
+    # Keep track of previous backups
+    mv -b ~/asa/osa/running-config.xml ~/asa/osa/running-config-old.xml
+    touch ~/asa/osa/running-config.xml
 
     echo "Backing up configuration"
     sleep 1
-    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > /asa/osa/running-config.xml
+    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > ~/asa/osa/running-config.xml
     echo ""
 }
 
+revert_changes() {
+    local backup_file="~/asa/osa/running-config.xml"
+
+    curl -k -F key=$API_KEY -F file=@$backup_file "https://$FIREWALL_IP/api/?type=import&category=configuration"
+    curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<load><config><from>$backup_file</from></config></load>&key=$API_KEY"
+}
+
 CHOICE=""
-read -p "Are you (i)nitializing, (f)ixing, or (b)acking up? " CHOICE
+read -p "Are you (i)nitializing, (f)ixing, (b)acking up, or (r)everting? " CHOICE
 echo ""
 
 if [ "$CHOICE" = "f" ]; then
@@ -190,6 +197,9 @@ elif [ "$CHOICE" = "i" ]; then
     exit
 elif [ "$CHOICE" = "b" ]; then
     backup_changes
+    exit
+elif [ "$CHOICE" = "r" ]; then
+    revert_changes
     exit
 else
     echo "Invalid choice"
