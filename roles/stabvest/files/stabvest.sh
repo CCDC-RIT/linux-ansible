@@ -66,6 +66,9 @@ packagename="apache2"
 binarypath="/usr/sbin/apache2"
 configdir="/etc/apache2"
 contentdir="/var/www/html"
+miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+miscdir2=""
+miscdir3=""
 # /usr/share/apache2
 
 # Nginx
@@ -76,6 +79,9 @@ contentdir="/var/www/html"
 #configdir="/etc/nginx"
 #contentdir="/var/www/html" # UBUNTU
 #contentdir="/usr/share/nginx/htm" # RHEL
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 # /usr/lib/nginx
 # /usr/share/nginx
 
@@ -86,6 +92,9 @@ contentdir="/var/www/html"
 #binarypath="/usr/bin/msql"
 #configdir="/etc/mysql"
 #contentdir="/var/lib/mysql"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 
 # PostGreSQL
 #declare -a ports=( 5432 )
@@ -94,6 +103,9 @@ contentdir="/var/www/html"
 #binarypath="/usr/lib/postgresql/<version>/bin/" # RHEL: /usr/pgsql-<version>/bin/
 #configdir="/etc/postgresql/" # RHEL: /var/lib/pgsql/
 #contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 
 # InfluxDB
 #declare -a ports=( 8086 8088 )
@@ -101,8 +113,10 @@ contentdir="/var/www/html"
 #packagename="influxdb2"
 #binarypath="/usr/bin/msql"
 #configdir="/etc/influxdb"
-#contentdir="/etc/default/influxdb2"
-# content is stored at the "dir=XYZ" line in the config file. however, we dont want to back up and restore it as it may change.
+#contentdir=""# content is stored at the "dir=XYZ" line in the config file. however, we dont want to back up and restore it as it may change.
+#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 
 # TODO docker??
 
@@ -594,31 +608,41 @@ fi
 # Initialize arrays
 original_dirs=()
 backup_dirs=()
-is_single_files=()
 
 # Add config variables to arrays only if they are not empty
 if [ -n "$servicename" ]; then
     original_dirs+=("/lib/systemd/system/$servicename.service")
     backup_dirs+=("$backupdir/systemd")
-    is_single_files+=(true)
 fi
 
 if [ -n "$binarypath" ]; then
     original_dirs+=("$binarypath")
     backup_dirs+=("$backupdir/binary")
-    is_single_files+=(true)
 fi
 
 if [ -n "$configdir" ]; then
     original_dirs+=("$configdir")
     backup_dirs+=("$backupdir/config")
-    is_single_files+=(false)
 fi
 
 if [ -n "$contentdir" ]; then
     original_dirs+=("$contentdir")
     backup_dirs+=("$backupdir/data")
-    is_single_files+=(false)
+fi
+
+if [ -n "$miscdir1" ]; then
+    original_dirs+=("$miscdir1")
+    backup_dirs+=("$backupdir/misc1")
+fi
+
+if [ -n "$miscdir2" ]; then
+    original_dirs+=("$miscdir2")
+    backup_dirs+=("$backupdir/misc2")
+fi
+
+if [ -n "$miscdir3" ]; then
+    original_dirs+=("$miscdir3")
+    backup_dirs+=("$backupdir/misc3")
 fi
 
 # Ensure arrays are the same length
@@ -634,7 +658,6 @@ fi
 for i in "${!original_dirs[@]}"; do
     original_dir="${original_dirs[$i]}"
     backup_dir="${backup_dirs[$i]}"
-    is_single_file="${is_single_files[$i]}"
     
     echo ""
     pad_string " Service Integrity - $(basename "$backup_dir") " "=" 40
@@ -677,10 +700,12 @@ for i in "${!original_dirs[@]}"; do
 
             echo "  Restoring known good configuration..."
             # Now that we have an extra backup, attempt to restore the "good" config.
-            rm -rf "$original_dir"
-            if [ "$is_single_file" = false ] ; then
+            if [ -d "$original_dir" ]; then
+                rm -rf "$original_dir"
                 mkdir -p "$original_dir" # this breaks if its just one file, so only do it if its a dir
                 # no need for timestomp. What would we even timestomp it to? It's too hard to store that info and would be confusing.
+            else 
+                rm -rf "$original_dir"
             fi
             #absolute path funnies
             #unzip -q "$backup_dir/backup.zip" -d "$original_dir"
