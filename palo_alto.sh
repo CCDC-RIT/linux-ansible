@@ -163,19 +163,45 @@ commit_changes() {
 }
 
 backup_changes() {
-    # Ensure the backup directory exists
-    mkdir ~/asa/
-    mkdir ~/asa/osa/
+    local backup_dir="$HOME/asa/osa"
+    local backup_file="$backup_dir/running-config.xml"
+    local old_backup="$backup_dir/running-config-old.xml"
+    local older_backup="$backup_dir/running-config-old.xml~"
 
-    # Keep track of (up to last 2) previous backups
-    mv -b ~/asa/osa/running-config.xml ~/asa/osa/running-config-old.xml
-    touch ~/asa/osa/running-config.xml
+    echo "Removing old backups locally..."
+    rm -f "$older_backup" "$old_backup"
+
+    echo "Rotating backups..."
+    if [ -f "$old_backup" ]; then
+        mv "$old_backup" "$older_backup"
+    fi
+    if [ -f "$backup_file" ]; then
+        mv "$backup_file" "$old_backup"
+    fi
 
     echo "Backing up configuration"
     sleep 1
-    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > ~/asa/osa/running-config.xml
+    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > $backup_file
     echo ""
+
+    echo "Removing old backups from Palo Alto..."
+    for file in "running-config.xml" "running-config-old.xml" "running-config-old.xml~"; do
+        echo "Deleting $file from firewall..."
+        curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<delete><config><saved>$file</saved></config></delete>&key=$API_KEY"
+    done
+
+    echo "Uploading new backups to Palo Alto..."
+    for file in "$backup_file" "$old_backup" "$older_backup"; do
+        if [ -f "$file" ]; then
+            filename=$(basename "$file")
+            echo "Uploading $filename..."
+            curl -k -F key="$API_KEY" -F file=@"$file" "https://$FIREWALL_IP/api/?type=import&category=configuration"
+        fi
+    done
+
+    echo "Backup and upload process completed successfully."
 }
+
 
 revert_changes() {
     local iteration="$1"
