@@ -3,6 +3,9 @@
 
 #reinstall core services (pam, ssh, etc.)
 
+- name: Gather ansible facts
+  ansible.builtin.package_facts:
+
 - name: Check OS version and family
   ansible.builtin.fail:
     msg: "This role can only be run against Ubuntu 22. {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }} is not supported."
@@ -23,9 +26,7 @@
       when: system_is_container
       ansible.builtin.debug:
         msg: system has been discovered as a container
-  when:
-    - is_target_container or
-      ansible_facts.virtualization_type in ["docker", "lxc", "openvz", "podman", "container"]
+  when: is_target_container
 
 - name: "CIS Benchmark | prelims"
   ansible.builtin.import_tasks:

@@ -87,6 +87,7 @@
   when:
     - rule_1_7_3
     - desktop_required
+    - not prelim_dconf_system_db | length == 0
 
 - name: "1.7.4 | PATCH | Ensure GDM screen locks when the user is idle"
   block:

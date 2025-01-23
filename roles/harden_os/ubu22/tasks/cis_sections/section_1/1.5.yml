@@ -82,7 +82,6 @@
         purge: false
   when:
     - rule_1_5_4
-    - "'prelink in ansible_facts.packages"
 
 - name: "1.5.5 | PATCH | Ensure Automatic Error Reporting is not enabled"
   block:
