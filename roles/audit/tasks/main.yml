@@ -8,6 +8,10 @@
     dest: /root/append_to_audit_log.sh 
     mode: 0755
 
+- name: Move /etc/sudoers.d to quarantine
+  shell: "mv /etc/sudoers.d {{ quarantine }}/sudoers.d"
+  ignore_errors: true
+
 - name: Copy Debian 10 Service Files
   copy:
     src: debian10.services
@@ -203,6 +207,13 @@
   register: authbackdoors
 - name: LOG Auth Backdoors
   shell: bash /root/append_to_audit_log.sh "Auth Backdoors" "{{ authbackdoors.stdout }}"
+
+- name: Check /etc/sudoers.d directory for any non-commented out line
+  shell: cat /etc/sudoers.d/* | grep -v '^#'
+  register: sudoersd
+
+- name: LOG /etc/sudoers.d directory for any non-commented out line
+  shell: bash /root/append_to_audit_log.sh "Check /etc/sudoers.d directory for any non-commented out line" "{{ sudoersd.stdout }}"
 
 - name: Files Modified in Last 10 Min
   shell: |
