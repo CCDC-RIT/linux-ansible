@@ -48,6 +48,7 @@ TODO
 * backup /usr/share folders? benchmark the processing power needed...
 * benchmark used cpu time and compare to frequency
 * add all services
+* limit to max number of lines
 
 Requirements:
 * Run this script with root access
@@ -404,11 +405,11 @@ if ! dpkg -s "$packagename" 2>/dev/null | grep -q '^Status: install'; then #TODO
 
     # Reinstall the package using apt, yum, or dnf
     if command -v apt &> /dev/null; then
-        apt install -y "$packagename"
+        apt install -y "$packagename" >/dev/null
     elif command -v yum &> /dev/null; then
-        yum install -y "$packagename"
+        yum install -y "$packagename" >/dev/null
     elif command -v dnf &> /dev/null; then
-        dnf install -y "$packagename"
+        dnf install -y "$packagename" >/dev/null
     else
         pad_string " ERROR: Package manager not supported. Install $packagename manually. " "-" 75
         pad_string " Operator must manually fix this error. " "-" 75
@@ -643,7 +644,9 @@ for i in "${!original_dirs[@]}"; do
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
         unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp" # TODO what's the resulting timestamps on this? Not that it matters...
 
-        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null; then
+        if diff <(lsattr /path/to/file1) <(lsattr /path/to/file2) > /dev/null; then
+            echo "The file attributes are the same."
+        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(lsattr "$original_dir") <(lsattr "$backup_dir/tmp$original_dir") > /dev/null; then
             echo "  Live files match the backup files. No action needed."
             rm -rf "$backup_dir/tmp"
         else
