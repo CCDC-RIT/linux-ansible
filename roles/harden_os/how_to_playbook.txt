@@ -1,0 +1,27 @@
+- hosts: all
+  become: true  # Assuming you need elevated privileges
+
+  roles:
+    - role: harden_os
+      vars:
+        ubu22_defaults: "{{ lookup('file', 'roles/harden_os/ubu22/defaults/main.yml') }}"
+
+  tasks:
+    - name: Include ubu22 defaults
+      include_vars:
+        file: roles/harden_os/ubu22/defaults/main.yml
+
+    - name: Include ubu22 vars main.yml
+      include_vars:
+        file: roles/harden_os/ubu22/vars/main.yml
+
+    - name: Include ubu22 vars is_container.yml
+      include_vars:
+        file: roles/harden_os/ubu22/vars/is_container.yml
+
+    - name: Include ubu22 tasks
+      include_tasks: roles/harden_os/ubu22/tasks/main.yml
+
+  handlers:
+    - name: Include ubu22 handlers
+      include_tasks: roles/harden_os/ubu22/handlers/main.yml
