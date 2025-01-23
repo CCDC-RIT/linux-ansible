@@ -189,6 +189,7 @@ backup_changes() {
         echo "Deleting $file from firewall..."
         curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<delete><config><saved>$file</saved></config></delete>&key=$API_KEY"
     done
+    echo ""
 
     echo "Uploading new backups to Palo Alto..."
     for file in "$backup_file" "$old_backup" "$older_backup"; do
@@ -198,8 +199,7 @@ backup_changes() {
             curl -k -F key="$API_KEY" -F file=@"$file" "https://$FIREWALL_IP/api/?type=import&category=configuration"
         fi
     done
-
-    echo "Backup and upload process completed successfully."
+    echo ""
 }
 
 
