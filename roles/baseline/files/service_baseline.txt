@@ -313,4 +313,4 @@ nftables.service
 snapd.failure.service
 dev-mqueue.mount
 systemd-exit.service
-acpid.service
+acpid.servic

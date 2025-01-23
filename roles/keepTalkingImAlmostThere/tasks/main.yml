@@ -1,0 +1,6 @@
+---
+- name: Upgrade packages
+  package: 
+    name: "*"
+    state: latest
+  when: ansible_facts['os_family'] == 'Debian'
