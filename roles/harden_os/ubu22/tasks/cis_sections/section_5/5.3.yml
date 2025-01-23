@@ -28,7 +28,7 @@
 
 - name: "5.3.2.1 | PATCH | Ensure pam_unix module is enabled"
   ansible.builtin.template:
-    src: 'usr/share/pam-configs/pam_unix.j2'
+    src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/usr/share/pam-configs/pam_unix.j2'
     dest: '/usr/share/pam-configs/pam_unix'
     owner: root
     group: root
@@ -42,7 +42,7 @@
 
 - name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled"
   ansible.builtin.template:
-    src: 'usr/share/pam-configs/{{ item }}.j2'
+    src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/usr/share/pam-configs/{{ item }}.j2'
     dest: '/usr/share/pam-configs/{{ item }}'
     owner: root
     group: root
@@ -61,7 +61,7 @@
 
 - name: "5.3.2.3 | PATCH | Ensure pam_pwquality module is enabled"
   ansible.builtin.template:
-    src: 'usr/share/pam-configs/pwquality.j2'
+    src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/usr/share/pam-configs/pwquality.j2'
     dest: '/usr/share/pam-configs/pwquality'
     owner: root
     group: root
@@ -74,7 +74,7 @@
 
 - name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled"
   ansible.builtin.template:
-    src: 'usr/share/pam-configs/pwhistory.j2'
+    src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/usr/share/pam-configs/pwhistory.j2'
     dest: '/usr/share/pam-configs/pwhistory }}'
     owner: root
     group: root
@@ -191,7 +191,7 @@
 
     - name: "5.3.3.2.1 | Ensure difok file exists"
       ansible.builtin.template:
-        src: 'etc/security/pwquality.conf.d/50-pwdifok.conf.j2'
+        src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwdifok.conf.j2'
         dest: '/etc/security/pwquality.conf.d/50-pwdifok.conf'
         owner: root
         group: root
@@ -214,7 +214,7 @@
 
     - name: "5.3.3.2.2 | Ensure minlen file exists"
       ansible.builtin.template:
-        src: 'etc/security/pwquality.conf.d/50-pwlength.conf.j2'
+        src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwlength.conf.j2'
         dest: '/etc/security/pwquality.conf.d/50-pwlength.conf '
         owner: root
         group: root
@@ -237,7 +237,7 @@
 
     - name: "5.3.3.2.3 | Ensure complexity file exists"
       ansible.builtin.template:
-        src: 'etc/security/pwquality.conf.d/50-pwcomplexity.conf.j2'
+        src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwcomplexity.conf.j2'
         dest: '/etc/security/pwquality.conf.d/50-pwcomplexity.conf'
         owner: root
         group: root
@@ -260,7 +260,7 @@
 
     - name: "5.3.3.2.4 | Ensure maxrepeat file exists"
       ansible.builtin.template:
-        src: 'etc/security/pwquality.conf.d/50-pwrepeat.conf.j2'
+        src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwrepeat.conf.j2'
         dest: '/etc/security/pwquality.conf.d/50-pwrepeat.conf'
         owner: root
         group: root
@@ -283,7 +283,7 @@
 
     - name: "5.3.3.2.5 | Ensure maxsequence file exists"
       ansible.builtin.template:
-        src: 'etc/security/pwquality.conf.d/50-pwmaxsequence.conf.j2'
+        src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwmaxsequence.conf.j2'
         dest: '/etc/security/pwquality.conf.d/50-pwmaxsequence.conf'
         owner: root
         group: root
@@ -306,7 +306,7 @@
 
     - name: "5.3.3.2.6 | Ensure dictcheck file exists"
       ansible.builtin.template:
-        src: 'etc/security/pwquality.conf.d/50-pwdictcheck.conf.j2'
+        src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwdictcheck.conf.j2'
         dest: '/etc/security/pwquality.conf.d/50-pwdictcheck.conf'
         owner: root
         group: root
@@ -329,7 +329,7 @@
 
     - name: "5.3.3.2.7 | Ensure quality enforcement file exists"
       ansible.builtin.template:
-        src: 'etc/security/pwquality.conf.d/50-pwquality_enforce.conf.j2'
+        src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwquality_enforce.conf.j2'
         dest: '/etc/security/pwquality.conf.d/50-pwquality_enforce.conf'
         owner: root
         group: root
@@ -338,7 +338,7 @@
 
 - name: "5.3.3.2.8 | PATCH | Ensure password quality is enforced for the root user"
   ansible.builtin.template:
-    src: 'etc/security/pwquality.conf.d/50-pwroot.conf.j2'
+    src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/security/pwquality.conf.d/50-pwroot.conf.j2'
     dest: '/etc/security/pwquality.conf.d/50-pwroot.conf'
     owner: root
     group: root
