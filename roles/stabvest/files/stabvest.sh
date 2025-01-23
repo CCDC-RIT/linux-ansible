@@ -115,6 +115,8 @@ if [ ! -d "$backupdir" ]; then
     mkdir -p "$backupdir"
 fi
 
+# note that restored files retain the perms and timestamp of their original file
+
 
 
 #####################################
@@ -207,7 +209,7 @@ timestomp_recursive() {
 # Intended to be executed using the same script file as the automated process uses so that all config and backup dirs are the same.
 # Usage: execute the script with "backup" as the first argument
 
-# TODO: what happens to file permissions?????
+# TODO THIS IS SO OUTDATED
 
 # Check if the first argument is "backup" to execute in backup mode
 if [ "$1" = "backup" ]; then
@@ -465,6 +467,7 @@ echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftabl
 ## iptables tables to check
 declare -a tables=("filter" "nat" "mangle" "raw" "security") # NAT cant have drop rules but whatev. RAW INPUT doesnt exist. Raw cant seem to drop packets.
 declare -a chains=("INPUT" "OUTPUT" "PREROUTING" "POSTROUTING" "FORWARD") # not all tables have these chains but i cant think of a better way to do this
+declare -a actions=("DROP" "REDIRECT" "TARPIT")
 # TODO: we currently have no feasible way to check arbitrary user defined chains (including UFW chains)!
 
 ufw disable
@@ -529,35 +532,37 @@ for port in "${ports[@]}"; do
         #echo ""
         #echo "Scanning port $port on table $table..."
         for chain in "${chains[@]}"; do
-            # Check and remove rules in chain until no more malicious rules are found
-            while :; do
-                # Some notes:
-                # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
-                # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
-                # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
-                deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is
-                if [ -z "$deny_rules" ]; then
-                    # If no regular rules remain, check for drop all rules. If its also empty, we're done.
-                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E 'DROP  ' | grep -Evi 'dpt:|spt:|port')
+            for action in "${actions[@]}"; do
+                # Check and remove rules in chain until no more malicious rules are found
+                while :; do
+                    # Some notes:
+                    # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
+                    # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
+                    # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
+                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E '$action' | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is. TODO THIS DOESNT SEARCH FOR DROP AAAAAA. also redirect
                     if [ -z "$deny_rules" ]; then
-                        break
+                        # If no regular rules remain, check for drop all rules (do not contain a specific port). If its also empty, we're done.
+                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E '$action' | grep -Evi 'dpt:|spt:|port')
+                        if [ -z "$deny_rules" ]; then
+                            break
+                        fi
                     fi
-                fi
 
-                #set removal flag to true
-                rules_removed=true
+                    #set removal flag to true
+                    rules_removed=true
 
-                # Extract and display the full text of the first rule before removing it
-                rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
-                #echo "  $table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
-                pad_string " Potentially malicious firewall rule found and deleted: " "+" 90
-                echp "    $table table, $chain chain: "
-                echo "    $rule_text"
+                    # Extract and display the full text of the first rule before removing it
+                    rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
+                    #echo "  $table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
+                    pad_string " Potentially malicious firewall rule found and deleted: " "+" 90
+                    echp "    $table table, $chain chain: "
+                    echo "    $rule_text"
 
-                # Extract and remove the first rule
-                rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
-                #echo "Removing potentially malicious $chain rule number $rule_number for port $port in table $table..."
-                iptables -t $table -D "$chain" "$rule_number"
+                    # Extract and remove the first rule
+                    rule_number=$(echo "$deny_rules" | awk 'NR==1 {print $1}')
+                    #echo "Removing potentially malicious $chain rule number $rule_number for port $port in table $table..."
+                    iptables -t $table -D "$chain" "$rule_number"
+                done
             done
         done
     done
@@ -645,6 +650,7 @@ for i in "${!original_dirs[@]}"; do
             echo "  Live files differ from the backup. Restoring backup..."
             pad_string " Creating backup file of current (bad) files to: " "!" 55
             echo "    $backup_dir/bad_backup-$timestamp.zip "
+            chattr -R -i "$original_dir" #unimutable the file in case attackers messed with it. works on both directories and files
             #echo "  Creating backup file of current (bad) files to $backup_dir/bad_backup-$timestamp.zip..."
             new_backup_file_path="$backup_dir/bad_backup-$timestamp.zip"
             if [ -d "$original_dir" ]; then
