@@ -20,6 +20,13 @@
     - never
     - initial
     - setup
+  vars_prompt:
+  - name: blueteam_password
+    prompt: Enter blueteam user password 
+    private: true
+    confirm: true
+    # unsafe: true # If using special characters such as { or %, uncomment this line.
+    salt_size: 7
 
 # CHANGE USER TO BLUETEAM
 - name: Change user to blueteam
