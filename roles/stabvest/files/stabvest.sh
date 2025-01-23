@@ -128,19 +128,19 @@ miscdir3=""
 ############### PostGreSQL ###############
 #declare -a ports=( 5432 )
 ########## Ubuntu ##########
-#servicename="postgresql" # RHEL: postgresql-server
+#servicename="postgresql"
 #packagename="postgresql"
-#binarypath="/usr/lib/postgresql/<version>/bin/" # RHEL: /usr/pgsql-<version>/bin/
-#configdir="/etc/postgresql/" # RHEL: /var/lib/pgsql/
+#binarypath="/usr/lib/postgresql/<version>/bin/"
+#configdir="/etc/postgresql/"
 #contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
 #miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
 #miscdir3=""
 ########## RHEL ############
-#servicename="postgresql" # RHEL: postgresql-server
-#packagename="postgresql"
-#binarypath="/usr/lib/postgresql/<version>/bin/" # RHEL: /usr/pgsql-<version>/bin/
-#configdir="/etc/postgresql/" # RHEL: /var/lib/pgsql/
+#servicename="postgresql"
+#packagename="postgresql-server"
+#binarypath="/usr/pgsql-<version>/bin/"
+#configdir="/var/lib/pgsql/"
 #contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
 #miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
@@ -172,7 +172,7 @@ miscdir3=""
 
 
 # generic variables regardless of the service to back up
-backupdir="/usr/share/$servicename"
+backupdir="/usr/share/obvioustmp/$servicename"
 timestomp_start_year=2000
 timestomp_end_year=2005
 
@@ -295,7 +295,7 @@ if [ "$1" = "backup" ]; then
 
     timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
     echo ""
-    pad_string " Starting Service Mitigations Script - Backup Only Mode " "=" 65
+    pad_string " Starting Service Mitigations Script - Backup Only Mode " "=" 75
     #echo "------Starting Script - Backup Only Mode------"
     echo "  Time: $timestamp"
 
@@ -325,7 +325,7 @@ if [ "$1" = "backup" ]; then
     # Ensure arrays are the same length
     if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
         echo ""
-        pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 65
+        pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 75
         #echo "ERROR: Mismatched backup and original directory arrays."
         exit 1
     fi
@@ -336,7 +336,7 @@ if [ "$1" = "backup" ]; then
         is_single_file="${is_single_files[$i]}"
         
         echo ""
-        pad_string " Service Backup - $(basename "$backup_dir") " "=" 40
+        pad_string " Service Backup - $(basename "$backup_dir") " "=" 75
         #echo "     Service Backup - $(basename "$backup_dir")     "
         #echo ""
 
@@ -347,7 +347,7 @@ if [ "$1" = "backup" ]; then
             # If backup already exists, "archive" them by appending the current time to their name.
             new_filename="$backup_dir-$timestamp"
             #echo "  Found existing backup - archiving existing files to $new_filename..."
-            pad_string " Found existing backup - archiving existing files to: " "!" 65
+            pad_string " Found existing backup - archiving existing files to: " "!" 75
             echo "    $new_filename"
             mv "$backup_dir" "$new_filename"
         fi
@@ -387,14 +387,14 @@ exec > >(tee -a $backupdir/log.txt) 2>&1
 timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
 echo ""
 #echo "------Starting Service Mitigations Script------"
-pad_string " Starting Service Mitigations Script " "=" 65
+pad_string " Starting Service Mitigations Script " "=" 75
 echo "  Time: $timestamp"
 
 #####################################
 ############ Network ################
 #####################################
 echo ""
-pad_string " Network " "=" 35
+pad_string " Network " "=" 75
 #echo "     Network     "
 #echo ""
 # Check that machine has internet connectivity
@@ -407,7 +407,7 @@ if [ -z "$iface" ]; then
 else
     # Check if the interface is up
     if ! ip link show "$iface" | grep -q "state UP"; then
-        pad_string " Interface $iface is down, setting it to up. " "+" 55
+        pad_string " Interface $iface is down, setting it to up. " "+" 75
         #echo "  Interface $iface is down, setting it to up."
         ip link set "$iface" up
         sleep 0.5 # need to wait a second for interface to come online, otherwise next checks will still error out
@@ -416,8 +416,8 @@ else
 
     # Check if the interface has an IP address assigned
     if ! ip addr show "$iface" | grep -q "inet "; then
-        pad_string " ERROR: Interface $iface does not have an IP address. " "-" 60
-        pad_string " Operator must manually fix this error. " "-" 60
+        pad_string " ERROR: Interface $iface does not have an IP address. " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
         #echo "ERROR: Interface $iface does not have an IP address. Operator must manually fix this error."
         #exit 1
     fi
@@ -457,7 +457,7 @@ fi
 #####################################
 # we need this because sometimes theres random other files needed for it to run, such as helper executables (apachectl)
 echo ""
-pad_string " Service Install Status " "=" 35
+pad_string " Service Install Status " "=" 75
 #echo "     Service Install Status     "
 #echo ""
 # Check service status. If non-zero, its not found.
@@ -495,7 +495,7 @@ if ! dpkg -s "$packagename" 2>/dev/null | grep -q '^Status: install'; then #TODO
     systemctl start "$servicename"
     systemctl enable "$servicename"
     #echo "  Service $servicename reinstalled and started."
-    pad_string " Service $servicename reinstalled and started. " "+" 55
+    pad_string " Service $servicename reinstalled and started. " "+" 75
     #exit 0
 else
     echo "  Service $servicename is already installed and active."
@@ -505,7 +505,7 @@ fi
 ######### Service Status ############
 #####################################
 echo ""
-pad_string " Service Status " "=" 35
+pad_string " Service Status " "=" 75
 #echo "     Service Status     "
 #echo ""
 # Check if the service is running. If not running, start it.
@@ -520,11 +520,11 @@ else
     # Verify if the service started successfully
     if systemctl is-active --quiet "$servicename"; then
         #echo "  Service '$servicename' started successfully."
-        pad_string " Service '$servicename' started successfully. " "+" 55
+        pad_string " Service '$servicename' started successfully. " "+" 75
         #exit 0
     else
-        pad_string " ERROR: Failed to start service '$servicename'. " "-" 55
-        pad_string " Operator must manually fix this error. " "-" 55
+        pad_string " ERROR: Failed to start service '$servicename'. " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
         #echo "ERROR: Failed to start service '$servicename'. Operator must manually fix this error."
         #exit 1
     fi
@@ -534,7 +534,7 @@ fi
 ############# Firewall ##############
 #####################################
 echo ""
-pad_string " Firewall " "=" 35
+pad_string " Firewall " "=" 75
 #echo "     Firewall     "
 #echo ""
 echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftables)"
@@ -572,8 +572,8 @@ if ! systemctl status iptables &> /dev/null; then
     elif command -v dnf &> /dev/null; then
         dnf install -y iptables-services
     else
-        pad_string " ERROR: Package manager not supported. Install iptables-services manually. " "-" 80
-        pad_string " Operator must manually fix this error. " "-" 80
+        pad_string " ERROR: Package manager not supported. Install iptables-services manually. " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
         #echo "  ERROR: Package manager not supported. Install iptables-services manually. Operator must manually fix this error."
         #exit 1
     fi
@@ -629,7 +629,7 @@ for port in "${ports[@]}"; do
                     # Extract and display the full text of the first rule before removing it
                     rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
                     #echo "  $table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
-                    pad_string " Potentially malicious firewall rule found and deleted: " "+" 90
+                    pad_string " Potentially malicious firewall rule found and deleted: " "+" 75
                     echo "    $table table, $chain chain: "
                     echo "    $rule_text"
 
@@ -698,8 +698,8 @@ fi
 if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
     echo ""
     #echo "     Service Integrity     "
-    pad_string " Service Integrity " "=" 40
-    pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 65
+    pad_string " Service Integrity " "=" 75
+    pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 75
     #echo "ERROR: Mismatched backup and original directory arrays."
     exit 1
 fi
@@ -709,7 +709,7 @@ for i in "${!original_dirs[@]}"; do
     backup_dir="${backup_dirs[$i]}"
     
     echo ""
-    pad_string " Service Integrity - $(basename "$backup_dir") " "=" 40
+    pad_string " Service Integrity - $(basename "$backup_dir") " "=" 75
     #echo "     Service Integrity - $(basename "$backup_dir")     "
     #echo ""
 
@@ -733,7 +733,7 @@ for i in "${!original_dirs[@]}"; do
                 rm -rf "$backup_dir/tmp"
         else
             echo "  Live files differ from the backup. Restoring backup..."
-            pad_string " Creating backup file of current (bad) files to: " "!" 55
+            pad_string " Creating backup file of current (bad) files to: " "!" 75
             echo "    $backup_dir/bad_backup-$timestamp.zip "
             chattr -R -i "$original_dir" #unimutable the file in case attackers messed with it. works on both directories and files
             #echo "  Creating backup file of current (bad) files to $backup_dir/bad_backup-$timestamp.zip..."
@@ -764,13 +764,13 @@ for i in "${!original_dirs[@]}"; do
                 systemctl daemon-reload
             fi
             rm -rf "$backup_dir/tmp"
-            pad_string " File restore and service restart completed for $(basename "$backup_dir") section " "+" 70
+            pad_string " File restore and service restart completed for $(basename "$backup_dir") section " "+" 75
             #echo "  Service restarted and tmp files deleted."
             #exit 0
         fi
     else
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-        pad_string " No backup file found, making a new master backup at: " "!" 65
+        pad_string " No backup file found, making a new master backup at: " "!" 75
         echo "    $backup_dir/backup.zip"
         if [ -d "$original_dir" ]; then
         #echo "$file is a directory."
@@ -784,7 +784,7 @@ for i in "${!original_dirs[@]}"; do
 done
 
 echo ""
-pad_string " Service Mitigation Script Complete " "=" 65
+pad_string " Service Mitigation Script Complete " "=" 75
 echo ""
 echo ""
 echo ""
