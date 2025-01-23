@@ -44,12 +44,10 @@ Full example if youre backing up the webroot for apache2:
 
 TODO
 * test literally everything including timestamps
-* check default policy for iptables + find more iptables breaks + deconflict with team SOP (default deny policy)
 * freebsd compat (pf for firewall) - NOT NEEDED FOR 2025 (hopefully)
 * backup /usr/share folders? benchmark the processing power needed...
 * benchmark used cpu time and compare to frequency
-* ignore empty config fields
-* fix reinstall criteria
+* add all services
 
 Requirements:
 * Run this script with root access
@@ -380,13 +378,13 @@ fi
 #####################################
 ######### Service Install ###########
 #####################################
-# TODO: do we even need this? we already handle most parts of it by backing up the service file, binary, config, and data.
-: '
+# we need this because sometimes theres random other files needed for it to run, such as helper executables (apachectl)
 echo ""
 pad_string " Service Install Status " "=" 35
 #echo "     Service Install Status     "
 #echo ""
 # Check service status. If non-zero, its not found.
+: '
 installed="false"
 if command -v dpkg &> /dev/null; then
     if dpkg -l | grep -q "^ii  $packagename"; then
@@ -398,6 +396,8 @@ elif command -v rpm &> /dev/null; then
     fi
 fi
 if $installed == "false"; then
+'
+if ! dpkg -s "$packagename" 2>/dev/null | grep -q '^Status: install'; then #TODO rhel
     echo "  Service $servicename is not installed or unavailable. Reinstalling $packagename..."
 
     # Reinstall the package using apt, yum, or dnf
@@ -423,7 +423,6 @@ if $installed == "false"; then
 else
     echo "  Service $servicename is already installed and active."
 fi
-'
 
 #####################################
 ######### Service Status ############
@@ -437,6 +436,7 @@ if systemctl is-active --quiet "$servicename"; then
     echo "  Service $servicename is already running."
 else
     echo "  Service $servicename is not running. Attempting to start it..."
+    systemctl unmask "$servicename" # just in case
     systemctl start "$servicename"
     systemctl enable "$servicename"
 
@@ -470,14 +470,15 @@ declare -a chains=("INPUT" "OUTPUT" "PREROUTING" "POSTROUTING" "FORWARD") # not 
 ufw disable
 systemctl stop ufw
 systemctl disable ufw
+systemctl mask ufw
 
 # RHEL
-# TODO mask?
-# systemctl mask nftables
 systemctl stop firewalld
 systemctl disable firewalld
+systemctl mask firewalld
 systemctl stop nftables
 systemctl disable nftables
+systemctl mask nftables
 
 # Enable iptables if its not running on this system
 # Install iptables if not found
