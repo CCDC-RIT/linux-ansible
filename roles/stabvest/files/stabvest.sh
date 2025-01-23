@@ -59,8 +59,9 @@ Requirements:
 * Fill out the variables listed directly below this line. These determine the backup directory to use and the directories that should be included in the backup.
 '
 
-# Apache2
+############### Apache2 ###############
 declare -a ports=( 80 443 )
+########## Ubuntu ##########
 servicename="apache2"
 packagename="apache2"
 binarypath="/usr/sbin/apache2"
@@ -69,35 +70,73 @@ contentdir="/var/www/html"
 miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 miscdir2=""
 miscdir3=""
+########## RHEL ############
+#servicename="httpd"
+#packagename="httpd"
+#binarypath="/usr/sbin/httpd"
+#configdir="/etc/httpd/"
+#contentdir="/var/www/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 # /usr/share/apache2
 
-# Nginx
+############### Nginx ###############
 #declare -a ports=( 80 443 ) # use numbers only, no named alias like "http"
+########## Ubuntu ##########
 #servicename="nginx"
 #packagename="nginx"
 #binarypath="/usr/sbin/nginx"
 #configdir="/etc/nginx"
-#contentdir="/var/www/html" # UBUNTU
-#contentdir="/usr/share/nginx/htm" # RHEL
+#contentdir="/var/www/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="nginx"
+#packagename="nginx"
+#binarypath="/usr/sbin/nginx"
+#configdir="/etc/nginx"
+#contentdir="/usr/share/nginx/html"
 #miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
 #miscdir3=""
 # /usr/lib/nginx
 # /usr/share/nginx
 
-# MySQL
+############### MySQL ###############
 #declare -a ports=( 3306 )
+########## Ubuntu ##########
 #servicename="mysql"
 #packagename="mysql-server"
 #binarypath="/usr/bin/msql"
 #configdir="/etc/mysql"
-#contentdir="/var/lib/mysql"
+#contentdir="" # it's /var/lib/mysql, but data may change during comp so don't back it up... probably.
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="mysqld"
+#packagename="mysql-server"
+#binarypath="/usr/libexec/mysqld"
+#configdir="/etc/my.cnf"
+#contentdir="" # it's /var/lib/mysql, but data may change during comp so don't back it up... probably.
 #miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
 #miscdir3=""
 
-# PostGreSQL
+############### PostGreSQL ###############
 #declare -a ports=( 5432 )
+########## Ubuntu ##########
+#servicename="postgresql" # RHEL: postgresql-server
+#packagename="postgresql"
+#binarypath="/usr/lib/postgresql/<version>/bin/" # RHEL: /usr/pgsql-<version>/bin/
+#configdir="/etc/postgresql/" # RHEL: /var/lib/pgsql/
+#contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
 #servicename="postgresql" # RHEL: postgresql-server
 #packagename="postgresql"
 #binarypath="/usr/lib/postgresql/<version>/bin/" # RHEL: /usr/pgsql-<version>/bin/
@@ -107,13 +146,23 @@ miscdir3=""
 #miscdir2=""
 #miscdir3=""
 
-# InfluxDB
+############### InfluxDB ###############
 #declare -a ports=( 8086 8088 )
+########## Ubuntu ##########
 #servicename="influxdb"
 #packagename="influxdb2"
-#binarypath="/usr/bin/msql"
+#binarypath="/usr/bin/influxd"
 #configdir="/etc/influxdb"
-#contentdir=""# content is stored at the "dir=XYZ" line in the config file. however, we dont want to back up and restore it as it may change.
+#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
+#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="influxdb"
+#packagename="influxdb2"
+#binarypath="/usr/bin/influxd"
+#configdir="/etc/influxdb"
+#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
 #miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
 #miscdir3=""
