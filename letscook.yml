@@ -88,3 +88,11 @@
   tags:
     - never
     - initial
+
+- name: Finish me off scotty
+  hosts: all
+  become: yes
+  roles:
+    - keepTalkingImAlmostThere
+  tags:
+    - initial
