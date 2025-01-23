@@ -2,7 +2,9 @@
 
 fixes() {
     # For disabling rules, yes -> disabled and no -> enabled
-    change_rule_status "test" "yes"
+    create_rule "Default-Deny-All" "any" "any" "any" "any" "any" "any" "any" "deny"
+    change_rule_status "intrazone-default" "yes"
+    change_rule_status "interzone-default" "yes"
 }
 
 PUBLIC="Public"
@@ -162,10 +164,10 @@ commit_changes() {
 
 backup_changes() {
     # Ensure the backup directory exists
-    mkdir ~/asa
+    mkdir ~/asa/
     mkdir ~/asa/osa/
 
-    # Keep track of previous backups
+    # Keep track of (up to last 2) previous backups
     mv -b ~/asa/osa/running-config.xml ~/asa/osa/running-config-old.xml
     touch ~/asa/osa/running-config.xml
 
@@ -176,10 +178,23 @@ backup_changes() {
 }
 
 revert_changes() {
-    local backup_file="~/asa/osa/running-config.xml"
+    local iteration="$1"
+    local backup_file="~/asa/osa/running-config"
 
+    if [ "$iteration" -eq 1 ]; then
+        backup_file+=".xml"
+    elif [ "$iteration" -eq 2 ]; then
+        backup_file+="-old.xml"
+    elif [ "$iteration" -eq 3 ]; then
+        backup_file+="-old.xml~"
+    else
+        backup_file+=".xml"
+    fi
+
+    echo "Reverting changes from backup iteration $iteration"
     curl -k -F key=$API_KEY -F file=@$backup_file "https://$FIREWALL_IP/api/?type=import&category=configuration"
     curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<load><config><from>$backup_file</from></config></load>&key=$API_KEY"
+    echo ""
 }
 
 CHOICE=""
@@ -188,20 +203,20 @@ echo ""
 
 if [ "$CHOICE" = "f" ]; then
     fixes
-    commit_changes
-    exit
 elif [ "$CHOICE" = "i" ]; then
     initial
     the_rules_to_end_all_rule
-    commit_changes
-    exit
 elif [ "$CHOICE" = "b" ]; then
     backup_changes
-    exit
 elif [ "$CHOICE" = "r" ]; then
-    revert_changes
-    exit
+    ITERATION=""
+    read -s -p "Enter backup iteration number (1 is latest): " ITERATION
+    echo ""
+    revert_changes $ITERATION
 else
     echo "Invalid choice"
     exit
 fi
+
+commit_changes
+exit
