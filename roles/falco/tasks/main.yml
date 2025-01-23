@@ -1,0 +1,46 @@
+- name: Copy over Falco configuration failed
+  ansible.builtin.copy:
+    src: falco_config.yaml
+    dest: /etc/falco_config.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy over Falco rules files
+  ansible.builtin.copy:
+    src: falco_rules.yaml
+    dest: /etc/falco_rules.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install Helm
+  ansible.builtin.shell:
+    cmd: "curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash"
+    creates: /usr/local/bin/helm
+    register: helm_install
+
+- name: Fail if Helm installation failed
+  ansible.builtin.fail:
+    msg: "Helm installation failed!"
+  when: helm_install.rc != 0
+
+- name: Add Falco Helm repository
+  kubernetes.core.helm_repository:
+    name: falcosecurity
+    repo_url: https://falcosecurity.github.io/charts
+    state: present
+
+- name: Install Falco using Helm
+  kubernetes.core.helm:
+    name: falco
+    chart_ref: falcosecurity/falco
+    namespace: falco
+    create_namespace: true
+    values:
+      tty: true
+      rules_file: /etc/falco_rules.yaml
+      config_file: /etc/falco_config.yaml
+    update_repo_cache: true
+    force: true
+    
