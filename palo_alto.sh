@@ -179,21 +179,23 @@ backup_changes() {
 
 revert_changes() {
     local iteration="$1"
-    local backup_file="~/asa/osa/running-config"
+    local backup_file_path="$HOME/asa/osa/running-config"
 
     if [ "$iteration" -eq 1 ]; then
-        backup_file+=".xml"
+        backup_file_path+=".xml"
     elif [ "$iteration" -eq 2 ]; then
-        backup_file+="-old.xml"
+        backup_file_path+="-old.xml"
     elif [ "$iteration" -eq 3 ]; then
-        backup_file+="-old.xml~"
+        backup_file_path+="-old.xml~"
     else
-        backup_file+=".xml"
+        backup_file_path+=".xml"
     fi
 
+    local backup_file_name=(basename "$backup_file_path")
+
     echo "Reverting changes from backup iteration $iteration"
-    curl -k -F key=$API_KEY -F file=@$backup_file "https://$FIREWALL_IP/api/?type=import&category=configuration"
-    curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<load><config><from>$backup_file</from></config></load>&key=$API_KEY"
+    curl -k -F key=$API_KEY -F file=@$backup_file_path "https://$FIREWALL_IP/api/?type=import&category=configuration"
+    curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<load><config><from>$backup_file_name</from></config></load>&key=$API_KEY"
     echo ""
 }
 
@@ -210,7 +212,7 @@ elif [ "$CHOICE" = "b" ]; then
     backup_changes
 elif [ "$CHOICE" = "r" ]; then
     ITERATION=""
-    read -s -p "Enter backup iteration number (1 is latest): " ITERATION
+    read -p "Enter backup iteration number (1 is latest): " ITERATION
     echo ""
     revert_changes $ITERATION
 else
