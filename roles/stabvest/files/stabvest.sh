@@ -59,46 +59,120 @@ Requirements:
 * Fill out the variables listed directly below this line. These determine the backup directory to use and the directories that should be included in the backup.
 '
 
-# Apache2
+############### Apache2 ###############
 declare -a ports=( 80 443 )
+########## Ubuntu ##########
 servicename="apache2"
 packagename="apache2"
 binarypath="/usr/sbin/apache2"
 configdir="/etc/apache2"
 contentdir="/var/www/html"
+miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+miscdir2=""
+miscdir3=""
+########## RHEL ############
+#servicename="httpd"
+#packagename="httpd"
+#binarypath="/usr/sbin/httpd"
+#configdir="/etc/httpd/"
+#contentdir="/var/www/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 # /usr/share/apache2
 
-# Nginx
+############### Nginx ###############
 #declare -a ports=( 80 443 ) # use numbers only, no named alias like "http"
+########## Ubuntu ##########
 #servicename="nginx"
 #packagename="nginx"
 #binarypath="/usr/sbin/nginx"
 #configdir="/etc/nginx"
-#contentdir="/var/www/html" # UBUNTU
-#contentdir="/usr/share/nginx/htm" # RHEL
+#contentdir="/var/www/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="nginx"
+#packagename="nginx"
+#binarypath="/usr/sbin/nginx"
+#configdir="/etc/nginx"
+#contentdir="/usr/share/nginx/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 # /usr/lib/nginx
 # /usr/share/nginx
 
-# MySQL
+############### MySQL ###############
 #declare -a ports=( 3306 )
+########## Ubuntu ##########
 #servicename="mysql"
 #packagename="mysql-server"
 #binarypath="/usr/bin/msql"
 #configdir="/etc/mysql"
-#contentdir="/var/lib/mysql"
+#contentdir="" # it's /var/lib/mysql, but data may change during comp so don't back it up... probably.
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="mysqld"
+#packagename="mysql-server"
+#binarypath="/usr/libexec/mysqld"
+#configdir="/etc/my.cnf"
+#contentdir="" # it's /var/lib/mysql, but data may change during comp so don't back it up... probably.
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 
-# PostGreSQL
-#declare -a ports=( 3306 )
-#servicename="mysql"
-#packagename="mysql-server"
-#binarypath="/usr/bin/msql"
-#configdir="/etc/mysql"
-#contentdir="/usr/local/pgsql/data" # or /var/lib/postgresql/[version]/data/
+############### PostGreSQL ###############
+#declare -a ports=( 5432 )
+########## Ubuntu ##########
+#servicename="postgresql"
+#packagename="postgresql"
+#binarypath="/usr/lib/postgresql/<version>/bin/"
+#configdir="/etc/postgresql/"
+#contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="postgresql"
+#packagename="postgresql-server"
+#binarypath="/usr/pgsql-<version>/bin/"
+#configdir="/var/lib/pgsql/"
+#contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+
+############### InfluxDB ###############
+#declare -a ports=( 8086 8088 )
+########## Ubuntu ##########
+#servicename="influxdb"
+#packagename="influxdb2"
+#binarypath="/usr/bin/influxd"
+#configdir="/etc/influxdb"
+#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
+#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="influxdb"
+#packagename="influxdb2"
+#binarypath="/usr/bin/influxd"
+#configdir="/etc/influxdb"
+#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
+#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+
+# TODO docker??
 
 
 
 # generic variables regardless of the service to back up
-backupdir="/usr/share/$servicename"
+backupdir="/usr/share/obvioustmp/$servicename"
 timestomp_start_year=2000
 timestomp_end_year=2005
 
@@ -221,7 +295,7 @@ if [ "$1" = "backup" ]; then
 
     timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
     echo ""
-    pad_string " Starting Service Mitigations Script - Backup Only Mode " "=" 65
+    pad_string " Starting Service Mitigations Script - Backup Only Mode " "=" 75
     #echo "------Starting Script - Backup Only Mode------"
     echo "  Time: $timestamp"
 
@@ -251,7 +325,7 @@ if [ "$1" = "backup" ]; then
     # Ensure arrays are the same length
     if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
         echo ""
-        pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 65
+        pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 75
         #echo "ERROR: Mismatched backup and original directory arrays."
         exit 1
     fi
@@ -262,7 +336,7 @@ if [ "$1" = "backup" ]; then
         is_single_file="${is_single_files[$i]}"
         
         echo ""
-        pad_string " Service Backup - $(basename "$backup_dir") " "=" 40
+        pad_string " Service Backup - $(basename "$backup_dir") " "=" 75
         #echo "     Service Backup - $(basename "$backup_dir")     "
         #echo ""
 
@@ -273,7 +347,7 @@ if [ "$1" = "backup" ]; then
             # If backup already exists, "archive" them by appending the current time to their name.
             new_filename="$backup_dir-$timestamp"
             #echo "  Found existing backup - archiving existing files to $new_filename..."
-            pad_string " Found existing backup - archiving existing files to: " "!" 65
+            pad_string " Found existing backup - archiving existing files to: " "!" 75
             echo "    $new_filename"
             mv "$backup_dir" "$new_filename"
         fi
@@ -313,14 +387,14 @@ exec > >(tee -a $backupdir/log.txt) 2>&1
 timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
 echo ""
 #echo "------Starting Service Mitigations Script------"
-pad_string " Starting Service Mitigations Script " "=" 65
+pad_string " Starting Service Mitigations Script " "=" 75
 echo "  Time: $timestamp"
 
 #####################################
 ############ Network ################
 #####################################
 echo ""
-pad_string " Network " "=" 35
+pad_string " Network " "=" 75
 #echo "     Network     "
 #echo ""
 # Check that machine has internet connectivity
@@ -333,7 +407,7 @@ if [ -z "$iface" ]; then
 else
     # Check if the interface is up
     if ! ip link show "$iface" | grep -q "state UP"; then
-        pad_string " Interface $iface is down, setting it to up. " "+" 55
+        pad_string " Interface $iface is down, setting it to up. " "+" 75
         #echo "  Interface $iface is down, setting it to up."
         ip link set "$iface" up
         sleep 0.5 # need to wait a second for interface to come online, otherwise next checks will still error out
@@ -342,8 +416,8 @@ else
 
     # Check if the interface has an IP address assigned
     if ! ip addr show "$iface" | grep -q "inet "; then
-        pad_string " ERROR: Interface $iface does not have an IP address. " "-" 60
-        pad_string " Operator must manually fix this error. " "-" 60
+        pad_string " ERROR: Interface $iface does not have an IP address. " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
         #echo "ERROR: Interface $iface does not have an IP address. Operator must manually fix this error."
         #exit 1
     fi
@@ -383,7 +457,7 @@ fi
 #####################################
 # we need this because sometimes theres random other files needed for it to run, such as helper executables (apachectl)
 echo ""
-pad_string " Service Install Status " "=" 35
+pad_string " Service Install Status " "=" 75
 #echo "     Service Install Status     "
 #echo ""
 # Check service status. If non-zero, its not found.
@@ -421,7 +495,7 @@ if ! dpkg -s "$packagename" 2>/dev/null | grep -q '^Status: install'; then #TODO
     systemctl start "$servicename"
     systemctl enable "$servicename"
     #echo "  Service $servicename reinstalled and started."
-    pad_string " Service $servicename reinstalled and started. " "+" 55
+    pad_string " Service $servicename reinstalled and started. " "+" 75
     #exit 0
 else
     echo "  Service $servicename is already installed and active."
@@ -431,7 +505,7 @@ fi
 ######### Service Status ############
 #####################################
 echo ""
-pad_string " Service Status " "=" 35
+pad_string " Service Status " "=" 75
 #echo "     Service Status     "
 #echo ""
 # Check if the service is running. If not running, start it.
@@ -446,11 +520,11 @@ else
     # Verify if the service started successfully
     if systemctl is-active --quiet "$servicename"; then
         #echo "  Service '$servicename' started successfully."
-        pad_string " Service '$servicename' started successfully. " "+" 55
+        pad_string " Service '$servicename' started successfully. " "+" 75
         #exit 0
     else
-        pad_string " ERROR: Failed to start service '$servicename'. " "-" 55
-        pad_string " Operator must manually fix this error. " "-" 55
+        pad_string " ERROR: Failed to start service '$servicename'. " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
         #echo "ERROR: Failed to start service '$servicename'. Operator must manually fix this error."
         #exit 1
     fi
@@ -460,7 +534,7 @@ fi
 ############# Firewall ##############
 #####################################
 echo ""
-pad_string " Firewall " "=" 35
+pad_string " Firewall " "=" 75
 #echo "     Firewall     "
 #echo ""
 echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftables)"
@@ -498,8 +572,8 @@ if ! systemctl status iptables &> /dev/null; then
     elif command -v dnf &> /dev/null; then
         dnf install -y iptables-services
     else
-        pad_string " ERROR: Package manager not supported. Install iptables-services manually. " "-" 80
-        pad_string " Operator must manually fix this error. " "-" 80
+        pad_string " ERROR: Package manager not supported. Install iptables-services manually. " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
         #echo "  ERROR: Package manager not supported. Install iptables-services manually. Operator must manually fix this error."
         #exit 1
     fi
@@ -540,10 +614,10 @@ for port in "${ports[@]}"; do
                     # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
                     # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
                     # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
-                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E '$action' | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is. TODO THIS DOESNT SEARCH FOR DROP AAAAAA. also redirect
+                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "$action" | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is. TODO THIS DOESNT SEARCH FOR DROP AAAAAA. also redirect
                     if [ -z "$deny_rules" ]; then
                         # If no regular rules remain, check for drop all rules (do not contain a specific port). If its also empty, we're done.
-                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E '$action' | grep -Evi 'dpt:|spt:|port')
+                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
                         if [ -z "$deny_rules" ]; then
                             break
                         fi
@@ -555,8 +629,8 @@ for port in "${ports[@]}"; do
                     # Extract and display the full text of the first rule before removing it
                     rule_text=$(echo "$deny_rules" | awk 'NR==1 {print $0}')
                     #echo "  $table table, $chain chain: Potentially malicious firewall rule found and deleted: $rule_text"
-                    pad_string " Potentially malicious firewall rule found and deleted: " "+" 90
-                    echp "    $table table, $chain chain: "
+                    pad_string " Potentially malicious firewall rule found and deleted: " "+" 75
+                    echo "    $table table, $chain chain: "
                     echo "    $rule_text"
 
                     # Extract and remove the first rule
@@ -583,39 +657,49 @@ fi
 # Initialize arrays
 original_dirs=()
 backup_dirs=()
-is_single_files=()
 
 # Add config variables to arrays only if they are not empty
 if [ -n "$servicename" ]; then
     original_dirs+=("/lib/systemd/system/$servicename.service")
     backup_dirs+=("$backupdir/systemd")
-    is_single_files+=(true)
 fi
 
 if [ -n "$binarypath" ]; then
     original_dirs+=("$binarypath")
     backup_dirs+=("$backupdir/binary")
-    is_single_files+=(true)
 fi
 
 if [ -n "$configdir" ]; then
     original_dirs+=("$configdir")
     backup_dirs+=("$backupdir/config")
-    is_single_files+=(false)
 fi
 
 if [ -n "$contentdir" ]; then
     original_dirs+=("$contentdir")
     backup_dirs+=("$backupdir/data")
-    is_single_files+=(false)
+fi
+
+if [ -n "$miscdir1" ]; then
+    original_dirs+=("$miscdir1")
+    backup_dirs+=("$backupdir/misc1")
+fi
+
+if [ -n "$miscdir2" ]; then
+    original_dirs+=("$miscdir2")
+    backup_dirs+=("$backupdir/misc2")
+fi
+
+if [ -n "$miscdir3" ]; then
+    original_dirs+=("$miscdir3")
+    backup_dirs+=("$backupdir/misc3")
 fi
 
 # Ensure arrays are the same length
 if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
     echo ""
     #echo "     Service Integrity     "
-    pad_string " Service Integrity " "=" 40
-    pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 65
+    pad_string " Service Integrity " "=" 75
+    pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 75
     #echo "ERROR: Mismatched backup and original directory arrays."
     exit 1
 fi
@@ -623,10 +707,9 @@ fi
 for i in "${!original_dirs[@]}"; do
     original_dir="${original_dirs[$i]}"
     backup_dir="${backup_dirs[$i]}"
-    is_single_file="${is_single_files[$i]}"
     
     echo ""
-    pad_string " Service Integrity - $(basename "$backup_dir") " "=" 40
+    pad_string " Service Integrity - $(basename "$backup_dir") " "=" 75
     #echo "     Service Integrity - $(basename "$backup_dir")     "
     #echo ""
 
@@ -644,12 +727,13 @@ for i in "${!original_dirs[@]}"; do
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
         unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp" # TODO what's the resulting timestamps on this? Not that it matters...
 
-        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(lsattr "$original_dir") <(lsattr "$backup_dir/tmp$original_dir") > /dev/null; then
-            echo "  Live files match the backup files. No action needed."
-            rm -rf "$backup_dir/tmp"
+        # Compare content of all files, and compare file permissions of all files
+        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(find "$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) <(find "$backup_dir/tmp$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) &> /dev/null; then
+                echo "  Live files match the backup files. No action needed."
+                rm -rf "$backup_dir/tmp"
         else
             echo "  Live files differ from the backup. Restoring backup..."
-            pad_string " Creating backup file of current (bad) files to: " "!" 55
+            pad_string " Creating backup file of current (bad) files to: " "!" 75
             echo "    $backup_dir/bad_backup-$timestamp.zip "
             chattr -R -i "$original_dir" #unimutable the file in case attackers messed with it. works on both directories and files
             #echo "  Creating backup file of current (bad) files to $backup_dir/bad_backup-$timestamp.zip..."
@@ -665,10 +749,12 @@ for i in "${!original_dirs[@]}"; do
 
             echo "  Restoring known good configuration..."
             # Now that we have an extra backup, attempt to restore the "good" config.
-            rm -rf "$original_dir"
-            if [ "$is_single_file" = false ] ; then
+            if [ -d "$original_dir" ]; then
+                rm -rf "$original_dir"
                 mkdir -p "$original_dir" # this breaks if its just one file, so only do it if its a dir
                 # no need for timestomp. What would we even timestomp it to? It's too hard to store that info and would be confusing.
+            else 
+                rm -rf "$original_dir"
             fi
             #absolute path funnies
             #unzip -q "$backup_dir/backup.zip" -d "$original_dir"
@@ -678,13 +764,13 @@ for i in "${!original_dirs[@]}"; do
                 systemctl daemon-reload
             fi
             rm -rf "$backup_dir/tmp"
-            pad_string " File restore and service restart completed for $(basename "$backup_dir") section " "+" 70
+            pad_string " File restore and service restart completed for $(basename "$backup_dir") section " "+" 75
             #echo "  Service restarted and tmp files deleted."
             #exit 0
         fi
     else
         # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-        pad_string " No backup file found, making a new master backup at: " "!" 65
+        pad_string " No backup file found, making a new master backup at: " "!" 75
         echo "    $backup_dir/backup.zip"
         if [ -d "$original_dir" ]; then
         #echo "$file is a directory."
@@ -698,7 +784,7 @@ for i in "${!original_dirs[@]}"; do
 done
 
 echo ""
-pad_string " Service Mitigation Script Complete " "=" 65
+pad_string " Service Mitigation Script Complete " "=" 75
 echo ""
 echo ""
 echo ""
@@ -707,3 +793,5 @@ echo ""
 timestomp_recursive "$backupdir"
 random_date=$(generate_random_date)
 touch -t "$random_date" "$(dirname $backupdir)" #do the dir holding the backup dir too. will have a sus timestamp compared to the others but whatever
+
+# note to self: 12 hrs of operation with 60sec cycles under moderate circumstances produces 30k lines of logs, 1.5mb. moderate = constant restore of all watched directories

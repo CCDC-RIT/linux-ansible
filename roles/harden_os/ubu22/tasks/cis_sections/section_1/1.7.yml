@@ -38,6 +38,7 @@
   when:
     - rule_1_7_2
     - desktop_required
+  ignore_errors: yes
 
 - name: "1.7.3 | PATCH | Ensure GDM disable-user-list option is enabled"
   block:
@@ -88,6 +89,7 @@
     - rule_1_7_3
     - desktop_required
     - not prelim_dconf_system_db | length == 0
+  ignore_errors: true
 
 - name: "1.7.4 | PATCH | Ensure GDM screen locks when the user is idle"
   block:
@@ -125,6 +127,7 @@
   when:
     - rule_1_7_4
     - desktop_required
+  ignore_errors: true
 
 - name: "1.7.5 | PATCH | Ensure GDM screen locks cannot be overridden"
   block:
@@ -148,6 +151,7 @@
   when:
     - rule_1_7_5
     - desktop_required
+  ignore_errors: yes
 
 - name: "1.7.6 | PATCH | Ensure GDM automatic mounting of removable media is disabled"
   block:
@@ -171,6 +175,7 @@
   when:
     - rule_1_7_6
     - desktop_required
+  ignore_errors: yes
 
 - name: "1.7.7 | PATCH | Ensure GDM disabling automatic mounting of removable media is not overridden"
   block:
@@ -194,6 +199,7 @@
   when:
     - rule_1_7_7
     - desktop_required
+  ignore_errors: yes
 
 - name: "1.7.8 | PATCH | Ensure GDM autorun-never is enabled"
   block:
@@ -217,6 +223,7 @@
   when:
     - rule_1_7_8
     - desktop_required
+  ignore_errors: yes
 
 - name: "1.7.9 | PATCH | Ensure GDM autorun-never is not overridden"
   block:
@@ -240,6 +247,7 @@
   when:
     - rule_1_7_9
     - desktop_required
+  ignore_errors: yes
 
 - name: "1.7.10 | PATCH | Ensure XDCMP is not enabled"
   ansible.builtin.lineinfile:
@@ -249,3 +257,4 @@
   when:
     - rule_1_7_10
     - desktop_required
+  ignore_errors: yes

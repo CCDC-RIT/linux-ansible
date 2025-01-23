@@ -164,6 +164,8 @@ rule_7_2_8: true      # 7.2.8         Ensure no duplicate group names exist
 rule_7_2_9: true      # 7.2.9         Ensure local interactive user home directories are configured
 rule_7_2_10: true     # 7.2.10        Ensure local interactive user dot files access is configured
 
+# this should be the path from the main playbook to the templates directory
+templates_dir: roles/harden_os/ubu22/templates
 
 # the role discovers dynamically (in tasks/main.yml) whether it
 # is executed on a container image and sets the variable

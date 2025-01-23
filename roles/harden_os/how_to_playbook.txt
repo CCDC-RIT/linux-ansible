@@ -1,12 +1,25 @@
 - hosts: all
   become: true  # Assuming you need elevated privileges
 
+
+  handlers:
+    - name: Include ubu22 handlers
+      include_tasks: roles/harden_os/ubu22/handlers/main.yml
+
   roles:
     - role: harden_os
       vars:
         ubu22_defaults: "{{ lookup('file', 'roles/harden_os/ubu22/defaults/main.yml') }}"
 
   tasks:
+    - name: register is_container
+      set_fact:
+        is_target_container: false
+
+    - name: register is_container
+      set_fact:
+        ansible_dir: "{{ ansible_env.PWD }}"
+
     - name: Include ubu22 defaults
       include_vars:
         file: roles/harden_os/ubu22/defaults/main.yml
@@ -21,7 +34,3 @@
 
     - name: Include ubu22 tasks
       include_tasks: roles/harden_os/ubu22/tasks/main.yml
-
-  handlers:
-    - name: Include ubu22 handlers
-      include_tasks: roles/harden_os/ubu22/handlers/main.yml
