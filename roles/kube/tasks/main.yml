@@ -12,12 +12,12 @@
     group: root
     mode: '0600'
 
-# - name: CIS 1.1.5 + 1.1.6 - Ensure that the kube-scheduler file ownership is set to root:root and permissions are set to 600
-#   ansible.builtin.file:
-#     path: /etc/kubernetes/manifests/kube-scheduler.yaml
-#     owner: root
-#     group: root
-#     mode: '0600'
+- name: CIS 1.1.5 + 1.1.6 - Ensure that the kube-scheduler file ownership is set to root:root and permissions are set to 600
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests/kube-scheduler.yaml
+    owner: root
+    group: root
+    mode: '0600'
 
 # - name : CIS 1.1.7 + 1.1.8 - Ensure that the etcd file ownership is set to root:root and permissions are set to 600
 #   ansible.builtin.file:
