@@ -6,12 +6,6 @@
     path: /etc/systemd/coredump.conf
   register: prelim_systemd_coredump
 
-# for 1.8
-- name: "PRELIM | Discover Gnome Desktop Environment"
-  ansible.builtin.stat:
-    path: /usr/share/gnome/gnome-version.xml
-  register: prelim_gnome_present
-
 # for 3.1
 - name: "PRELIM | AUDIT | Wireless adapter pre-requisites"
   block:

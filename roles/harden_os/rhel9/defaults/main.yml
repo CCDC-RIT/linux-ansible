@@ -2,7 +2,7 @@
 
 ### Section 1         #             Package mgmt, Additional Process Hardening, Config system wide Crypto, Command Line Warning Banners, and GNOME Display Manager
 section_1: true       #             
-section_1_2: true     #             
+section_1_2: true     #           
 section_1_5: true     #             
 section_1_6: true     #             
 section_1_7: true     #             
@@ -88,6 +88,10 @@ rule_3_3_11: true     # 3.3.11        Ensure IPv6 router advertisements are not 
 
 ### Section 5         #
 section_5: true       #
+section_5_1: true     #
+section_5_2: true     #
+section_5_3: true     #
+section_5_4: true     #
 ## section 5.1        # 5.1         Configure SSH Server
 rule_5_1_1: true      # 5.1.1         Ensure permissions on /etc/ssh/sshd_config are configured
 rule_5_1_2: true      # 5.1.2         Ensure permissions on SSH private host key files are configured
@@ -304,7 +308,7 @@ warning_banner: Authorized uses only. All activity may be monitored and reported
 
 # for 1.8
 # determines if a gui is needed/used
-gui: "{{ prelim_gnome_present.stat.exists | default(false) }}"
+gui: true
 
 # for 1.8
 # this variable specifies the GNOME configuration database file to which configurations are written.

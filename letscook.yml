@@ -67,27 +67,18 @@
     - initial
     - audit
 
-- name: Harden OS
-  hosts: all
-  become: yes
-  roles:
-    - harden_os
-  tags:
-    - never
-    - initial
-    - harden
-
 - name: Harden Kube Controller
-  hosts: "{{ kube_controller }}"
+  hosts: kube_controller
   become: yes
   roles:
     - kube
   tags:
     - never
     - kube
+    - initial
 
 - name: Deploy Falco to the Cluster
-  hosts: "{{ kube_controller }}"
+  hosts: kube_controller 
   become: yes
   roles:
     - falco
@@ -95,7 +86,8 @@
     - never
     - kube
     - falco
-  
+    - initial
+
 - name: Install Braeden's Python scripts 
   hosts: all
   become: yes
@@ -114,6 +106,16 @@
   tags:
     - never
     - initial
+
+- name: Harden OS
+  hosts: all
+  become: yes
+  roles:
+    - harden_os
+  tags:
+    - never
+    - initial
+    - harden
 
 - name: Finish me off scotty
   hosts: all

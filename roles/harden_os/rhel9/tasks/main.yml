@@ -6,12 +6,6 @@
     fail_msg: "This role can only be run against Supported OSs. {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }} is not supported."
     success_msg: "This role is running against a supported OS {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }}"
 
-- name: "Check ansible version"
-  ansible.builtin.assert:
-    that: ansible_version.full is version_compare(min_ansible_version, '>=')
-    fail_msg: "You must use Ansible {{ min_ansible_version }} or greater"
-    success_msg: "This role is running a supported version of ansible {{ ansible_version.full }} >= {{ min_ansible_version }}"
-
 # we need to set something up a register earlier in our playbook that this can read to know if it is a kube node or a container
 - name: "Setup rules if container"
   block:
@@ -28,18 +22,14 @@
         msg: system has been discovered as a container
       when: system_is_container
   when:
-    - is_target_container == 'container' or
-      ansible_facts.virtualization_type in ["docker", "lxc", "openvz", "podman", "container"]
+    - is_target_container
         
 - name: "Gather the package facts"
-  tags: always
   ansible.builtin.package_facts:
-    manager: auto
 
 - name: "Include OS specific variables"
-  tags: always
   ansible.builtin.include_vars:
-    file: "{{ ansible_facts.distribution }}.yml"
+    file: "{{ ansible_dir }}/roles/harden_os/rhel9/vars/{{ ansible_facts.distribution }}.yml"
 
 - name: "CIS Benchmark | prelims"
   ansible.builtin.import_tasks:
@@ -73,3 +63,30 @@
 - name: "Run post remediation tasks"
   ansible.builtin.import_tasks:
     file: post.yml
+
+- name: Update Crypto Policy
+  ansible.builtin.set_fact:
+    full_crypto_policy: "{{ crypto_policy }}{% if crypto_policy_module | length > 0 %}{{ crypto_policy_module }}{% endif %}"
+
+- name: Set Crypto Policy
+  when: prelim_system_wide_crypto_policy.stdout != full_crypto_policy
+  ansible.builtin.command: update-crypto-policies --set "{{ full_crypto_policy }}"
+  changed_when: true
+
+- name: Restart sshd
+  ansible.builtin.systemd:
+    name: sshd
+    state: restarted
+
+- name: Systemd daemon reload
+  ansible.builtin.systemd:
+    daemon-reload: true
+
+- name: Authselect update
+  ansible.builtin.command: authselect apply-changes
+  changed_when: true
+
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted   

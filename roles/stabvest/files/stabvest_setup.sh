@@ -60,12 +60,12 @@ if [ "$1" = "local" ]; then
     # The following commands will also change the last modify time of /bin, but that's okay. I think. TODO
     mv stabvest.sh "$deploydir/$servicename"
     chown root:root "$deploydir/$servicename"
-    chmod 700 "$deploydir/$servicename"
+    chmod 750 "$deploydir/$servicename"
     random_date=$(generate_random_date)
     touch -t "$random_date" "$deploydir/$servicename"
     mv stabvest_setup.sh "$deploydir/$servicename-helper"
     chown root:root "$deploydir/$servicename-helper"
-    chmod 700 "$deploydir/$servicename-helper"
+    chmod 750 "$deploydir/$servicename-helper"
     random_date=$(generate_random_date)
     touch -t "$random_date" "$deploydir/$servicename-helper"
 fi
@@ -73,7 +73,7 @@ fi
 # Create the systemd service file
 cat << EOF > /etc/systemd/system/$servicename.service
 [Unit]
-Description=Helper daemon.
+Description=Helper daemon
 After=network.target
 
 [Service]

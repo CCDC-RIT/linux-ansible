@@ -34,7 +34,6 @@
     path: /etc/systemd/coredump.conf
     regexp: '^Storage\s*=\s*(?!none).*'
     line: 'Storage=none'
-  notify: Systemd daemon reload
   when:
     - rule_1_5_4
     - prelim_systemd_coredump.stat.exists
