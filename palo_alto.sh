@@ -176,7 +176,7 @@ backup_changes() {
 }
 
 revert_changes() {
-    local backup_dir="/$HOME/asa/osa/"
+    local backup_dir="$HOME/asa/osa"
     local backups
     local index
     local selected_backup
@@ -206,11 +206,11 @@ revert_changes() {
     done
 
     echo "Restoring configuration..."
-    curl -k -X GET "https://${PA_HOST}/api/?type=import&category=configuration&key=${PA_KEY}" \
+    curl -k -X GET "https://${FIREWALL_IP}/api/?type=import&category=configuration&key=${API_KEY}" \
         --form "file=@${selected_backup}"
 
     echo "Loading configuration..."
-    curl -k -X GET "https://${PA_HOST}/api/?type=op&cmd=<load><config><from>${selected_backup}</from></config></load>&key=${PA_KEY}"
+    curl -k -X GET "https://${FIREWALL_IP}/api/?type=op&cmd=<load><config><from>${selected_backup}</from></config></load>&key=${API_KEY}"
     echo ""
 }
 
@@ -236,10 +236,7 @@ menu() {
                 break
                 ;;
             "r")
-                local ITERATION=""
-                read -p "Enter backup iteration number (1 is latest): " ITERATION
-                echo ""
-                revert_changes "$ITERATION"
+                revert_changes
                 break
                 ;;
             *)
