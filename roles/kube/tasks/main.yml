@@ -93,11 +93,11 @@
       regexp: '(?<!\-)\-\-anonymous-auth=.*'
       replace: '--anonymous-auth=false'
 
-# - name: CIS 1.2.6 - Ensure that the --authorization-mode argument is not set to AlwaysAllow
-#   replace:
-#     path: /etc/kubernetes/manifests/kube-apiserver.yaml
-#     regexp: '(?<!\-)\-\-authorization-mode=.*'
-#     replace: '--authorization-mode=Node,RBAC'
+- name: CIS 1.2.6 - Ensure that the --authorization-mode argument is not set to AlwaysAllow
+  replace:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '(?<!\-)\-\-authorization-mode=.*'
+    replace: '--authorization-mode=Node,RBAC'
   
 # - name: CIS 1.2.10 - Ensure that the admission control plugin AlwaysAdmit is not set
 #   lineinfile:
