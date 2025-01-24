@@ -2,7 +2,6 @@
 
 fixes() {
     # For disabling rules, yes -> disabled and no -> enabled
-    create_rule "Default-Deny-All" "any" "any" "any" "any" "any" "any" "any" "deny"
     change_rule_status "intrazone-default" "yes"
     change_rule_status "interzone-default" "yes"
 }
@@ -202,20 +201,16 @@ backup_changes() {
     echo ""
 }
 
-
 revert_changes() {
     local iteration="$1"
     local backup_file_path="$HOME/asa/osa/running-config"
 
-    if [ "$iteration" -eq 1 ]; then
-        backup_file_path+=".xml"
-    elif [ "$iteration" -eq 2 ]; then
-        backup_file_path+="-old.xml"
-    elif [ "$iteration" -eq 3 ]; then
-        backup_file_path+="-old.xml~"
-    else
-        backup_file_path+=".xml"
-    fi
+    case "$iteration" in
+        1)  backup_file_path+=".xml" ;;
+        2)  backup_file_path+="-old.xml" ;;
+        3)  backup_file_path+="-old.xml~" ;;
+        *)  backup_file_path+=".xml" ;;  # Default case
+    esac
 
     local backup_file_name=(basename "$backup_file_path")
 
@@ -225,26 +220,40 @@ revert_changes() {
     echo ""
 }
 
-CHOICE=""
-read -p "Are you (i)nitializing, (f)ixing, (b)acking up, or (r)everting? " CHOICE
-echo ""
+menu() {
+    local CHOICE=""
+    
+    while true; do
+        read -p "Are you (i)nitializing, (f)ixing, (b)acking up, or (r)everting? " CHOICE
+        echo ""
 
-if [ "$CHOICE" = "f" ]; then
-    fixes
-elif [ "$CHOICE" = "i" ]; then
-    initial
-    the_rules_to_end_all_rule
-elif [ "$CHOICE" = "b" ]; then
-    backup_changes
-elif [ "$CHOICE" = "r" ]; then
-    ITERATION=""
-    read -p "Enter backup iteration number (1 is latest): " ITERATION
-    echo ""
-    revert_changes $ITERATION
-else
-    echo "Invalid choice"
-    exit
-fi
+        case "$CHOICE" in
+            "f")
+                fixes
+                break
+                ;;
+            "i")
+                initial
+                the_rules_to_end_all_rule
+                break
+                ;;
+            "b")
+                backup_changes
+                break
+                ;;
+            "r")
+                local ITERATION=""
+                read -p "Enter backup iteration number (1 is latest): " ITERATION
+                echo ""
+                revert_changes "$ITERATION"
+                break
+                ;;
+            *)
+                echo "Invalid choice."
+                ;;
+        esac
+    done
+}
 
 commit_changes
 exit
