@@ -96,7 +96,7 @@
     - name: "5.2.7 | remove users from group"
       ansible.builtin.lineinfile:
         path: /etc/group
-        regexp: '^{{ _sugroup }}(:.:.*:).*$'
+        regexp: '^{{ discovered_sugroup }}(:.:.*:).*$'
         line: '{{ sugroup }}\g<1>'
         backrefs: true
 
