@@ -1,3 +1,8 @@
+- name: Install curl
+  ansible.builtin.package:
+    name: curl
+    state: present
+
 - name: Copy over Falco configuration file
   ansible.builtin.copy:
     src: falco.yaml
