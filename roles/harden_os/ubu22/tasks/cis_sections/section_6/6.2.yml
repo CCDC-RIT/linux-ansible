@@ -1,4 +1,11 @@
 ---
+- name: "6.2.1.1.x | Ensure that /etc/systemd/journald.conf.d exists"
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
 
 - name: "6.2.1.1.1 | PATCH | Ensure journald service is enabled and active"
   ansible.builtin.systemd:

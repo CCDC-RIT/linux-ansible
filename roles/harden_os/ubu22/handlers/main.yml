@@ -71,9 +71,9 @@
     - system_reboot_enabled | bool
 
 - name: Restart auditd
-  when: discovered_audit_rules_updated is defined
   ansible.builtin.command: service auditd restart  # noqa command-instead-of-module
   changed_when: true
+  when: discovered_audit_rules_updated is defined
 
 - name: Reload ufw
   community.general.ufw:

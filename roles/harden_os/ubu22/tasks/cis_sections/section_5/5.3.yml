@@ -175,6 +175,14 @@
       when: discovered_faillock_rootlock_files.stdout | length > 0
   when: rule_5_3_3_1_3
 
+- name: "5.3.3.2.x | Ensure /etc/security/pwquality.conf.d exists"
+  ansible.builtin.file:
+    path: /etc/security/pwquality.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: "5.3.3.2.1 | PATCH | Ensure password number of changed characters is configured"
   block:
     - name: "5.3.3.2.1 | Remove difok from conf files except expected file"
@@ -455,7 +463,7 @@
         path: "/usr/share/pam-configs/pam_unix"
         regexp: "(md5|bigcrypt|sha256|blowfish|gost_yescrypt|sha512|yescrypt)"
         replace: 'yescrypt'
-        when: discovered_pam_remember.stdout | length > 0
+      when: discovered_pam_remember.stdout | length > 0
       notify: Pam_auth_update_pwunix
   when: rule_5_3_3_4_3
 
