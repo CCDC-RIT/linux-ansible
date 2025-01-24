@@ -41,6 +41,7 @@
     group: etcd
     mode: '700'
     state: directory
+  ignore_errors: true #May be using a different storage backend, so etcd data directory might not exist OR no etcd user exists
 
 - name: CIS 1.1.13 + 1.1.14 - Ensure that the admin.conf file ownership is set to root:root and permissions are set to 600
   ansible.builtin.file:
