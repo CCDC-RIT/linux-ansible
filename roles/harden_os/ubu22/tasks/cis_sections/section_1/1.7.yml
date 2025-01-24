@@ -118,7 +118,7 @@
 
     - name: "1.7.4 | session script"
       ansible.builtin.template:
-        src: etc/dconf/db/00-screensaver.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-screensaver.j2"
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-screensaver"
         owner: root
         group: root
@@ -142,7 +142,7 @@
 
     - name: "1.7.5 | make lockfile"
       ansible.builtin.template:
-        src: etc/dconf/db/00-screensaver_lock.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-screensaver_lock.j2"
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks/00-screensaver"
         owner: root
         group: root
@@ -166,7 +166,7 @@
 
     - name: "1.7.6 | session script"
       ansible.builtin.template:
-        src: etc/dconf/db/00-media-automount.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-media-automount.j2"
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-media-automount"
         owner: root
         group: root
@@ -190,7 +190,7 @@
 
     - name: "1.7.7 | make lockfile"
       ansible.builtin.template:
-        src: etc/dconf/db/00-automount_lock.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-automount_lock.j2"
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks/00-automount_lock"
         owner: root
         group: root
@@ -214,7 +214,7 @@
 
     - name: "1.7.8 | session script"
       ansible.builtin.template:
-        src: etc/dconf/db/00-media-autorun.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-media-autorun.j2"
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-media-autorun"
         owner: root
         group: root
@@ -238,7 +238,7 @@
 
     - name: "1.7.9 | make lockfile"
       ansible.builtin.template:
-        src: etc/dconf/db/00-autorun_lock.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-autorun_lock.j2"
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks/00-autorun_lock"
         owner: root
         group: root
