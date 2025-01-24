@@ -206,8 +206,9 @@ revert_changes() {
     done
 
     echo "Restoring configuration..."
-    curl -k -X GET "https://${FIREWALL_IP}/api/?type=import&category=configuration&key=${API_KEY}" \
-        --form "file=@${selected_backup}"
+    curl -k -X POST "https://${FIREWALL_IP}/api/?type=import&category=configuration&key=${API_KEY}" \
+     --form "file=@${selected_backup}"
+    echo ""
 
     selected_backup=$(basename $selected_backup)
 
