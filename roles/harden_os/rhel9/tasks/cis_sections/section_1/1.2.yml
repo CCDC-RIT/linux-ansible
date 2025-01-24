@@ -92,7 +92,6 @@
   ansible.builtin.package:
     name: "*"
     state: latest
-  notify: Change_requires_reboot
   when:
     - rule_1_2_2_1
     - not system_is_ec2

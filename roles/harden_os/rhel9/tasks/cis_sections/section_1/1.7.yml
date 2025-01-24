@@ -2,7 +2,7 @@
 
 - name: "1.7.1 | PATCH | Ensure message of the day is configured properly"
   ansible.builtin.template:
-    src: etc/motd.j2
+    src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/motd.j2"
     dest: /etc/motd
     owner: root
     group: root
@@ -11,7 +11,7 @@
 
 - name: "1.7.2 | PATCH | Ensure local login warning banner is configured properly"
   ansible.builtin.template:
-    src: etc/issue.j2
+    src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/issue.j2"
     dest: /etc/issue
     owner: root
     group: root
@@ -20,7 +20,7 @@
 
 - name: "1.7.3 | PATCH | Ensure remote login warning banner is configured properly"
   ansible.builtin.template:
-    src: etc/issue.net.j2
+    src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/issue.net.j2"
     dest: /etc/issue.net
     owner: root
     group: root

@@ -4,23 +4,19 @@
   ansible.builtin.debug:
     msg: "Captured in prelim to ensure not LEGACY. Runs handler to update"
   when: rule_1_6_1
-  notify:
-    - Update Crypto Policy
-    - Set Crypto Policy
 
 - name: "1.6.2 | PATCH | Ensure system wide crypto policy is not set in sshd configuration"
   ansible.builtin.lineinfile:
     path: /etc/sysconfig/sshd
     regexp: ^CRYPTO_POLICY\s*=
     state: absent
-  notify: Restart sshd
   when: rule_1_6_2
 
 - name: "1.6.3 | PATCH | Ensure system wide crypto policy disables sha1 hash and signature support | Add submodule exclusion"
   block:
     - name: "1.6.3"
       ansible.builtin.template:
-        src: etc/crypto-policies/policies/modules/NO-SHA1.pmod.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-SHA1.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-SHA1.pmod
         owner: root
         group: root
@@ -31,9 +27,6 @@
       ansible.builtin.set_fact:
         crypto_policy_module: "{{ crypto_policy_module + ':' + 'NO-SHA1' }}"
       changed_when: discovered_no_sha1_template is changed  # noqa: no-handler
-      notify:
-        - Update Crypto Policy
-        - Set Crypto Policy
   when:
     - rule_1_6_3
     - "'NO-SHA1' not in crypto_policy_module"
@@ -42,7 +35,7 @@
   block:
     - name: "1.6.4 | Add submodule exclusion"
       ansible.builtin.template:
-        src: etc/crypto-policies/policies/modules/NO-WEAKMAC.pmod.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-WEAKMAC.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-WEAKMAC.pmod
         owner: root
         group: root
@@ -53,9 +46,6 @@
       ansible.builtin.set_fact:
         crypto_policy_module: "{{ crypto_policy_module + ':' + 'NO-WEAKMAC' }}"
       changed_when: discovered_no_weakmac_template is changed  # noqa: no-handler
-      notify:
-        - Update Crypto Policy
-        - Set Crypto Policy
   when:
     - rule_1_6_4
     - "'NO-WEAKMAC' not in crypto_policy_module"
@@ -64,7 +54,7 @@
   block:
     - name: "1.6.5 | Add submodule exclusion"
       ansible.builtin.template:
-        src: etc/crypto-policies/policies/modules/NO-SSHCBC.pmod.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-SSHCBC.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-SSHCBC.pmod
         owner: root
         group: root
@@ -75,9 +65,6 @@
       ansible.builtin.set_fact:
         crypto_policy_module: "{{ crypto_policy_module + ':' + 'NO-SSHCBC' }}"
       changed_when: discovered_no_sshcbc_template is changed  # noqa: no-handler
-      notify:
-        - Update Crypto Policy
-        - Set Crypto Policy
   when:
     - rule_1_6_5
     - "'NO-SSHCBC' not in crypto_policy_module"
@@ -86,7 +73,7 @@
   block:
     - name: "1.6.6 | Add submodule exclusion"
       ansible.builtin.template:
-        src: etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod
         owner: root
         group: root
@@ -97,9 +84,6 @@
       ansible.builtin.set_fact:
         crypto_policy_module: "{{ crypto_policy_module + ':' + 'NO-SSHWEAKCIPHERS' }}"
       changed_when: discovered_no_sshweakciphers_template is changed  # noqa: no-handler
-      notify:
-        - Update Crypto Policy
-        - Set Crypto Policy
   when:
     - rule_1_6_6
     - "'NO-SSHWEAKCIPHERS' not in crypto_policy_module"
@@ -108,7 +92,7 @@
   block:
     - name: "1.6.7 | Add submodule exclusion"
       ansible.builtin.template:
-        src: etc/crypto-policies/policies/modules/NO-SSHETM.pmod.j2
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-SSHETM.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-SSHETM.pmod
         owner: root
         group: root
@@ -119,9 +103,6 @@
       ansible.builtin.set_fact:
         crypto_policy_module: "{{ crypto_policy_module + ':' + 'NO-SSHETM' }}"
       changed_when: discovered_no_sshetm_template is changed  # noqa: no-handler
-      notify:
-        - Update Crypto Policy
-        - Set Crypto Policy
   when:
     - rule_1_6_7
     - "'NO-SSHETM' not in crypto_policy_module"

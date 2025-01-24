@@ -71,7 +71,6 @@
     - allow_authselect_updates
 
 - name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled"
-  notify: Authselect update
   block:
     - name: "5.3.2.2 | Get current config"
       ansible.builtin.shell: |
@@ -101,7 +100,6 @@
     - name: "5.3.2.3 | Add feature if missing"
       ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-faillock with-pwquality with-pwhistory without-nullok"
       changed_when: true
-      notify: Authselect update
       when: discovered_authselect_current_quality.rc != 0
   when:
     - rule_5_3_2_3
@@ -120,7 +118,6 @@
     - name: "5.3.2.4 | enable feature"
       ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-pwquality with-pwhistory without-nullok"
       changed_when: true
-      notify: Authselect update
       when: discovered_authselect_current_history.rc != 0
   when:
     - rule_5_3_2_4
@@ -147,7 +144,6 @@
           - { regexp: '^(auth\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', after: '^auth.*pam_faillock.*preauth' }
           - { regexp: '^(password\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', before: '^password.*pam_deny.so' }
       when: "'system-auth:password' not in discovered_authselect_pam_unix.stdout"
-      notify: Authselect update
 
     - name: "5.3.2.5 | password-auth"
       ansible.builtin.lineinfile:
@@ -161,7 +157,6 @@
           - { regexp: '^(auth\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\2', after: '^auth.*pam_faillock.*preauth' }
           - { regexp: '^(password\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', before: '^password.*pam_deny.so' }
       when: "'password-auth:password' not in discovered_authselect_pam_unix.stdout"
-      notify: Authselect update
   when:
     - rule_5_3_2_5
     - disruption_high
@@ -196,7 +191,6 @@
       loop:
         - password
         - system
-      notify: Authselect update
       when:
         - allow_authselect_updates
         - disruption_high
@@ -234,7 +228,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_1_2
 
 - name: "5.3.3.1.3 | PATCH | Ensure password failed attempts lockout includes root account"
@@ -271,7 +264,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_1_3
 
 - name: "5.3.3.2.1 | PATCH | Ensure password number of changed characters is configured"
@@ -291,7 +283,7 @@
 
     - name: "5.3.3.2.1 | Ensure difok file exists"
       ansible.builtin.template:
-        src: "{{ passwd_difok_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_difok_file }}.j2"
         dest: "/{{ passwd_difok_file }}"
         owner: root
         group: root
@@ -320,7 +312,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_2_1
 
 - name: "5.3.3.2.2 | PATCH | Ensure password length is configured"
@@ -340,7 +331,7 @@
 
     - name: "5.3.3.2.2 | Ensure minlen file exists"
       ansible.builtin.template:
-        src: "{{ passwd_minlen_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_minlen_file }}.j2"
         dest: "/{{ passwd_minlen_file }}"
         owner: root
         group: root
@@ -369,7 +360,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_2_2
 
 - name: "5.3.3.2.3 | PATCH | Ensure password complexity is configured"
@@ -389,7 +379,7 @@
 
     - name: "5.3.3.2.3 | Ensure complexity file exists"
       ansible.builtin.template:
-        src: "{{ passwd_complex_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_complex_file }}.j2"
         dest: "/{{ passwd_complex_file }}"
         owner: root
         group: root
@@ -418,7 +408,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_2_3
 
 - name: "5.3.3.2.4 | PATCH | Ensure password same consecutive characters is configured"
@@ -436,7 +425,7 @@
 
     - name: "5.3.3.2.4 | Ensure maxrepeat file exists"
       ansible.builtin.template:
-        src: "{{ passwd_maxrepeat_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_maxrepeat_file }}.j2"
         dest: "/{{ passwd_maxrepeat_file }}"
         owner: root
         group: root
@@ -465,7 +454,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_2_4
 
 - name: "5.3.3.2.5 | PATCH | Ensure password maximum sequential characters is is configured"
@@ -485,7 +473,7 @@
 
     - name: "5.3.3.2.5 | Ensure maxsequence file exists"
       ansible.builtin.template:
-        src: "{{ passwd_maxsequence_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_maxsequence_file }}.j2"
         dest: "/{{ passwd_maxsequence_file }}"
         owner: root
         group: root
@@ -514,7 +502,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_2_5
 
 - name: "5.3.3.2.6 | PATCH | Ensure password dictionary check is enabled"
@@ -533,7 +520,7 @@
 
     - name: "5.3.3.2.6 | Ensure dictcheck file exists"
       ansible.builtin.template:
-        src: "{{ passwd_dictcheck_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_dictcheck_file }}.j2"
         dest: "/{{ passwd_dictcheck_file }}"
         owner: root
         group: root
@@ -550,7 +537,6 @@
       when:
         - not allow_authselect_updates
         - disruption_high
-      notify: Authselect update
 
     - name: "5.3.3.2.6 | Remove dictcheck from pam files AuthSelect"
       ansible.builtin.replace:
@@ -563,12 +549,11 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_2_6
 
 - name: "5.3.3.2.7 | PATCH | Ensure password quality is enforced for the root user"
   ansible.builtin.template:
-    src: "{{ passwd_quality_enforce_root_file }}.j2"
+    src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_quality_enforce_root_file }}.j2"
     dest: "/{{ passwd_quality_enforce_root_file }}"
     owner: root
     group: root
@@ -612,7 +597,6 @@
       when:
         - allow_authselect_updates
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_3_1
 
 - name: "5.3.3.3.2 | PATCH | Ensure password history is enforced for the root user"
@@ -652,7 +636,6 @@
         - allow_authselect_updates
         - discovered_pwhistory_enforce_for_root.stdout | length == 0
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_3_2
 
 - name: "5.3.3.3.3 | PATCH | Ensure pam_pwhistory includes use_authtok"
@@ -693,7 +676,6 @@
         - allow_authselect_updates
         - discovered_pwhistory_use_authtok.stdout | length == 0
         - disruption_high
-      notify: Authselect update
   when: rule_5_3_3_3_3
 
 - name: "5.3.3.4.1 | PATCH | Ensure pam_unix does not include nullok"
@@ -723,7 +705,6 @@
         - password
         - system
       when: allow_authselect_updates
-      notify: Authselect update
   when:
     - rule_5_3_3_4_1
     - disruption_high
@@ -755,7 +736,6 @@
         - password
         - system
       when: allow_authselect_updates
-      notify: Authselect update
   when:
     - rule_5_3_3_4_2
     - disruption_high
@@ -788,7 +768,6 @@
         - password
         - system
       when: allow_authselect_updates
-      notify: Authselect update
   when:
     - rule_5_3_3_4_3
     - disruption_high
@@ -823,7 +802,6 @@
         - password
         - system
       when: allow_authselect_updates
-      notify: Authselect update
   when:
     - rule_5_3_3_4_4
     - disruption_high

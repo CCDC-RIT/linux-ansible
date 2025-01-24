@@ -73,3 +73,30 @@
 - name: "Run post remediation tasks"
   ansible.builtin.import_tasks:
     file: post.yml
+
+ - name: Update Crypto Policy
+  ansible.builtin.set_fact:
+    full_crypto_policy: "{{ crypto_policy }}{% if crypto_policy_module | length > 0 %}{{ crypto_policy_module }}{% endif %}"
+
+- name: Set Crypto Policy
+  when: prelim_system_wide_crypto_policy.stdout != full_crypto_policy
+  ansible.builtin.command: update-crypto-policies --set "{{ full_crypto_policy }}"
+  changed_when: true
+
+- name: Restart sshd
+  ansible.builtin.systemd:
+    name: sshd
+    state: restarted
+
+- name: Systemd daemon reload
+  ansible.builtin.systemd:
+    daemon-reload: true
+
+- name: Authselect update
+  ansible.builtin.command: authselect apply-changes
+  changed_when: true
+
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted   
