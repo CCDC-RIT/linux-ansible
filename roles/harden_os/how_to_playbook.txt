@@ -1,16 +1,11 @@
 - hosts: all
   become: true  # Assuming you need elevated privileges
 
-
-  handlers:
-    - name: Include ubu22 handlers
-      include_tasks: roles/harden_os/ubu22/handlers/main.yml
-
   roles:
     - role: harden_os
       vars:
         ubu22_defaults: "{{ lookup('file', 'roles/harden_os/ubu22/defaults/main.yml') }}"
-
+        rhel9_defaults: "{{ lookup('file', 'roles/harden_os/rhel9/defaults/main.yml') }}"
   tasks:
     - name: register is_container
       set_fact:

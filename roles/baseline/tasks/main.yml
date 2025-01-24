@@ -1,5 +1,4 @@
 ---
-
 - name: Populate Service Facts
   ansible.builtin.service_facts:
 
@@ -21,10 +20,44 @@
 
 - name: Iterate over systemd services to compare them to baseline
   # Include baseline comparison task in services.yml and run it for every systemd services
-  include_tasks: services.yml
+  include_tasks: compare.yml
   # Loop over every service that is associated with systemd
-  loop: "{{ ansible_facts['services'].values() | selectattr('source', 'equalto', 'systemd') }}"
+  loop: "{{ ansible_facts['services'].values() | selectattr('source', 'equalto', 'systemd') | map(attribute='name') | list }}"
   loop_control:
-    label: "{{ item.name }}"
+    label: "{{ item }}"
+  vars:
+    baseline_file: "/tmp/service_baseline.txt"
+    audit_file: "{{ backup_dir }}/servicediff.txt"
 
+- name: Populate system_bins
+  ansible.builtin.find:
+    paths: /usr/bin
+    recurse: yes
+  register: system_bins
 
+- name: Copy bin baseline to /tmp
+  ansible.builtin.copy:
+    src: bin_baseline.txt
+    dest: /tmp/bin_baseline.txt
+
+- name: Create bin diff file
+  ansible.builtin.file:
+    path: "{{ backup_dir }}/bindiff.txt"
+    state: touch
+
+- name: Write header to bin diff file
+  ansible.builtin.copy: 
+    content: "Binaries in /usr/bin not present on base OS:"
+    dest: "{{ backup_dir }}/bindiff.txt"
+    force: true
+  
+- name: Iterate over files in /usr/bin to compare them to baseline
+  # Include baseline comparison task in services.yml and run it for every systemd services
+  include_tasks: compare.yml
+  # Loop over every service that is associated with systemd
+  loop: "{{ system_bins.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  vars:
+    baseline_file: "/tmp/bin_baseline.txt"
+    audit_file: "{{ backup_dir }}/bindiff.txt"
