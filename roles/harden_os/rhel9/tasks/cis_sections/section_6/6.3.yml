@@ -247,7 +247,7 @@
   ansible.builtin.debug:
     msg:
       - "Please run augenrules --load if you suspect there is a configuration that is not active"
-    when: rule_6_3_3_21
+  when: rule_6_3_3_21
 
 - name: Auditd | 6.3.3.x | Auditd controls updated
   ansible.builtin.debug:

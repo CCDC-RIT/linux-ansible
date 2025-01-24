@@ -92,7 +92,7 @@
       register: discovered_passwdlck_inactive_settings
 
     - name: "5.4.1.5 | Set default inactive setting"
-      ansible.builtin.command: useradd -D -f {{ _inactivelock.lock_days }}
+      ansible.builtin.command: useradd -D -f {{ inactivelock.lock_days }}
       changed_when: true
       when: discovered_passwdlck_inactive_settings.stdout | length == 0
 

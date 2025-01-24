@@ -34,6 +34,14 @@
         - discovered_journald_fileperms_override.stdout | length > 0
   when: rule_6_2_1_2
 
+- name: "6.2.1.x | ensure /etc/systemd/journal.conf.d exists"
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
 - name: "6.2.1.3 | PATCH | Ensure journald log file rotation is configured"
   block:
     - name: "6.2.1.3 | Add file"

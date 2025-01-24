@@ -535,6 +535,8 @@ pass_min_days: 7
 pass_warn_age: 7
 
 # for 5.4
+# This can break current connecting user access
+force_user_maxdays: false
 # this can break current connecting user access
 force_user_mindays: false
 # this can break current connecting user access
@@ -714,6 +716,21 @@ journald_runtimekeepfree: 100G
 # ATTENTION: Uncomment the keyword below when values are set!
 journald_maxfilesec: 1month
 
+# for 6.2
+# this variable expresses whether the system is used as a log server or not. If set to:
+#  - 'false', current system will act as a log CLIENT, thus it should NOT receive data from other hosts.
+#  - 'true', current system will act as a log SERVER, enabling centralised log management(by protecting log integrity
+# from local attacks on remote clients)
+system_is_log_server: false
+
+# for 6.2
+rsyslog_logrotate_rotated: weekly
+rsyslog_logrotate_keep: 4
+rsyslog_logrotate_compress: true
+rsyslog_logrotate_missingok: true
+rsyslog_logrotate_notifempty: true
+rsyslog_logrotate_create: true
+rsyslog_logrotate_create_opts: "0640 root adm"
 
 # for 6.3
 # this variable represents the audit backlog limit, i.e., the maximum number of audit records that the

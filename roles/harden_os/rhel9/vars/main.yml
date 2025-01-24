@@ -27,3 +27,16 @@ system_is_container: false
 # (de)activating rules or for other tasks(e.g. disabling Selinux or a specific
 # firewall-type).
 container_vars_file: is_container.yml
+
+aide_packages:
+  - aide
+# Aide initiate command for new DB creation
+aide_initiate_command: /usr/sbin/aide --init
+
+audit_bins:
+  - /sbin/auditctl
+  - /sbin/aureport
+  - /sbin/ausearch
+  - /sbin/autrace
+  - /sbin/auditd
+  - /sbin/augenrules
