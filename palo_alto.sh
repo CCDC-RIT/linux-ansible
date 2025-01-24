@@ -167,15 +167,12 @@ backup_changes() {
     local old_backup="$backup_dir/running-config-old.xml"
     local older_backup="$backup_dir/running-config-old.xml~"
 
-    echo "Removing old backups locally..."
-    rm -f "$older_backup" "$old_backup"
-
     echo "Rotating backups..."
     if [ -f "$old_backup" ]; then
         mv "$old_backup" "$older_backup"
     fi
     if [ -f "$backup_file" ]; then
-        mv "$backup_file" "$old_backup"
+        mv -b "$backup_file" "$old_backup"
     fi
 
     echo "Backing up configuration"
@@ -183,21 +180,8 @@ backup_changes() {
     curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > $backup_file
     echo ""
 
-    echo "Removing old backups from Palo Alto..."
-    for file in "running-config.xml" "running-config-old.xml" "running-config-old.xml~"; do
-        echo "Deleting $file from firewall..."
-        curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<delete><config><saved>$file</saved></config></delete>&key=$API_KEY"
-    done
-    echo ""
-
-    echo "Uploading new backups to Palo Alto..."
-    for file in "$backup_file" "$old_backup" "$older_backup"; do
-        if [ -f "$file" ]; then
-            filename=$(basename "$file")
-            echo "Uploading $filename..."
-            curl -k -F key="$API_KEY" -F file=@"$file" "https://$FIREWALL_IP/api/?type=import&category=configuration"
-        fi
-    done
+    echo "Uploading backup $(basename "$file")..."
+    curl -k -F key="$API_KEY" -F file=@"$backup_file" "https://$FIREWALL_IP/api/?type=import&category=configuration"
     echo ""
 }
 
@@ -209,7 +193,7 @@ revert_changes() {
         1)  backup_file_path+=".xml" ;;
         2)  backup_file_path+="-old.xml" ;;
         3)  backup_file_path+="-old.xml~" ;;
-        *)  backup_file_path+=".xml" ;;  # Default case
+        *)  backup_file_path+=".xml" ;;
     esac
 
     local backup_file_name=(basename "$backup_file_path")
@@ -255,5 +239,6 @@ menu() {
     done
 }
 
+menu
 commit_changes
 exit
