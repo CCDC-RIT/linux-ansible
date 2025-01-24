@@ -99,12 +99,12 @@
     regexp: '(?<!\-)\-\-authorization-mode=.*'
     replace: '--authorization-mode=Node,RBAC'
   
-# - name: CIS 1.2.10 - Ensure that the admission control plugin AlwaysAdmit is not set
-#   lineinfile:
-#     path: /etc/kubernetes/manifests/kube-apiserver.yaml
-#     regexp: '^ *--enable-admission-plugins=.*'
-#     line: '--enable-admission-plugins=NamespaceLifecycle,NodeRestriction,ServiceAccount'
-#     state: present
+- name: CIS 1.2.10 - Ensure that the admission control plugin AlwaysAdmit is not set
+  lineinfile:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '^ *--enable-admission-plugins=.*'
+    line: '--enable-admission-plugins=NamespaceLifecycle,NodeRestriction,ServiceAccount'
+    state: present
 
 # - name: CIS 1.2.15 Ensure that the --profiling argument is set to false
 #   replace:
