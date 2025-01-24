@@ -38,8 +38,6 @@
     - disruption_high
     - pam_auth_unix
     - pam_create_pamunix_file
-  notify: Pam_auth_update_pwunix
-  ignore_errors: yes
 
 - name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled"
   ansible.builtin.template:
@@ -56,10 +54,6 @@
     - disruption_high
     - pam_auth_faillock
     - pam_create_faillock_files
-  notify:
-    - Pam_auth_update_pwfaillock
-    - Pam_auth_update_pwfaillock_notify
-  ignore_errors: yes
 
 - name: "5.3.2.3 | PATCH | Ensure pam_pwquality module is enabled"
   ansible.builtin.template:
@@ -72,8 +66,6 @@
     - rule_5_3_2_3
     - disruption_high
     - pam_create_pwquality_files
-  notify: Pam_auth_update_pwquality
-  ignore_errors: yes
 
 - name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled"
   ansible.builtin.template:
@@ -86,8 +78,6 @@
     - rule_5_3_2_4
     - disruption_high
     - pam_create_pwhistory_files
-  notify: Pam_auth_update_pwhistory
-  ignore_errors: yes
 
 - name: "5.3.3.1.1 | PATCH | Ensure password failed attempts lockout is configured"
   block:
@@ -393,8 +383,6 @@
         line: '\1\2\3 enforce_for_root'
         backrefs: true
       when: discovered_pwhistory_remember.stdout | length > 0
-      notify: Pam_auth_update_pwhistory
-      ignore_errors: yes
   when:
     - rule_5_3_3_3_2
     - disruption_high
@@ -414,8 +402,6 @@
         line: '\1\2\3 use_authtok'
         backrefs: true
       when: discovered_pwhistory_use_authtok.stdout | length > 0
-      notify: Pam_auth_update_pwhistory
-      ignore_errors: yes
   when:
     - rule_5_3_3_3_3
     - disruption_high
@@ -435,8 +421,6 @@
         replace: ''
       loop: "{{ discovered_pam_nullok.stdout_lines }}"
       when: discovered_pam_nullok.stdout | length > 0
-      notify: Pam_auth_update_pwunix
-      ignore_errors: yes
   when:
     - rule_5_3_3_4_1
     - disruption_high
@@ -455,8 +439,6 @@
         regexp: remember=\d+
         replace: ''
       when: discovered_pam_remember.stdout | length > 0
-      notify: Pam_auth_update_pwunix
-      ignore_errors: yes
   when: rule_5_3_3_4_2
 
 - name: "5.3.3.4.3 | PATCH | Ensure pam_unix includes a strong password hashing algorithm"
@@ -473,8 +455,6 @@
         regexp: "(md5|bigcrypt|sha256|blowfish|gost_yescrypt|sha512|yescrypt)"
         replace: 'yescrypt'
       when: discovered_pam_remember.stdout | length > 0
-      notify: Pam_auth_update_pwunix
-      ignore_errors: yes
   when: rule_5_3_3_4_3
 
 - name: "5.3.3.4.4 | PATCH | Ensure pam_unix includes use_authtok"
