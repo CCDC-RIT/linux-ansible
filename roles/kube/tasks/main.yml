@@ -87,11 +87,11 @@
   with_fileglob:
     - "/etc/kubernetes/pki/*.key"
 
-# - name: CIS 1.2.1 - Ensure that the --anonymous-auth argument is set to false
-#   replace:
-#       path: /etc/kubernetes/manifests/kube-apiserver.yaml
-#       regexp: '(?<!\-)\-\-anonymous-auth=.*'
-#       replace: '--anonymous-auth=false'
+- name: CIS 1.2.1 - Ensure that the --anonymous-auth argument is set to false
+  replace:
+      path: /etc/kubernetes/manifests/kube-apiserver.yaml
+      regexp: '(?<!\-)\-\-anonymous-auth=.*'
+      replace: '--anonymous-auth=false'
 
 # - name: CIS 1.2.6 - Ensure that the --authorization-mode argument is not set to AlwaysAllow
 #   replace:
