@@ -27,7 +27,7 @@
 
     - name: "1.8.2 | gdm profile"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/gdm.d/01-banner-message.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/dconf/db/gdm.d/01-banner-message.j2"
         dest: /etc/dconf/db/gdm.d/01-banner-message
         owner: root
         group: root
@@ -80,7 +80,7 @@
 
     - name: "1.8.4 | Make conf file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-screensaver.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/dconf/db/00-screensaver.j2"
         dest: "/etc/dconf/db/{{ dconf_db_name }}.d/00-screensaver"
         owner: root
         group: root
@@ -101,7 +101,7 @@
 
     - name: "1.8.5 | Make lock file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-screensaver_lock.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/dconf/db/00-screensaver_lock.j2"
         dest: "/etc/dconf/db/{{ dconf_db_name }}.d/locks/00-screensaver_lock"
         owner: root
         group: root
@@ -112,7 +112,7 @@
 
 - name: "1.8.6 | PATCH | Ensure GDM automatic mounting of removable media is disabled"
   ansible.builtin.template:
-    src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-media-automount.j2"
+    src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/dconf/db/00-media-automount.j2"
     dest: "/etc/dconf/db/{{ dconf_db_name }}.d/00-media-automount"
     owner: root
     group: root
@@ -133,7 +133,7 @@
 
     - name: "1.8.7 | Make lock file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-automount_lock.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/dconf/db/00-automount_lock.j2"
         dest: "/etc/dconf/db/{{ dconf_db_name }}.d/locks/00-automount_lock"
         owner: root
         group: root
@@ -154,7 +154,7 @@
 
     - name: "1.8.8 | Make conf file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-media-autorun.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/dconf/db/00-media-autorun.j2"
         dest: "/etc/dconf/db/{{ dconf_db_name }}.d/00-media-autorun"
         owner: root
         group: root
@@ -175,7 +175,7 @@
 
     - name: "1.8.9 | Make lockfile"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/dconf/db/00-autorun_lock.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/dconf/db/00-autorun_lock.j2"
         dest: "/etc/dconf/db/{{ dconf_db_name }}.d/locks/00-autorun_lock"
         owner: root
         group: root

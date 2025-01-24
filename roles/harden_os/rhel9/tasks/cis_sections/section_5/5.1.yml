@@ -54,7 +54,7 @@
   block:
     - name: "5.1.4 | Add submodule exclusion"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod
         owner: root
         group: root
@@ -71,7 +71,7 @@
   block:
     - name: "5.1.5 | Add submodule exclusion"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-SHA1.pmod.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/crypto-policies/policies/modules/NO-SHA1.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-SHA1.pmod
         owner: root
         group: root
@@ -88,7 +88,7 @@
   block:
     - name: "5.1.6 | Add submodule exclusion"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/crypto-policies/policies/modules/NO-SSHWEAKMACS.pmod.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/crypto-policies/policies/modules/NO-SSHWEAKMACS.pmod.j2"
         dest: /etc/crypto-policies/policies/modules/NO-SSHWEAKMACS.pmod
         owner: root
         group: root

@@ -283,7 +283,7 @@
 
     - name: "5.3.3.2.1 | Ensure difok file exists"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_difok_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/{{ passwd_difok_file }}.j2"
         dest: "/{{ passwd_difok_file }}"
         owner: root
         group: root
@@ -331,7 +331,7 @@
 
     - name: "5.3.3.2.2 | Ensure minlen file exists"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_minlen_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/{{ passwd_minlen_file }}.j2"
         dest: "/{{ passwd_minlen_file }}"
         owner: root
         group: root
@@ -379,7 +379,7 @@
 
     - name: "5.3.3.2.3 | Ensure complexity file exists"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_complex_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/{{ passwd_complex_file }}.j2"
         dest: "/{{ passwd_complex_file }}"
         owner: root
         group: root
@@ -425,7 +425,7 @@
 
     - name: "5.3.3.2.4 | Ensure maxrepeat file exists"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_maxrepeat_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/{{ passwd_maxrepeat_file }}.j2"
         dest: "/{{ passwd_maxrepeat_file }}"
         owner: root
         group: root
@@ -473,7 +473,7 @@
 
     - name: "5.3.3.2.5 | Ensure maxsequence file exists"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_maxsequence_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/{{ passwd_maxsequence_file }}.j2"
         dest: "/{{ passwd_maxsequence_file }}"
         owner: root
         group: root
@@ -520,7 +520,7 @@
 
     - name: "5.3.3.2.6 | Ensure dictcheck file exists"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_dictcheck_file }}.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/{{ passwd_dictcheck_file }}.j2"
         dest: "/{{ passwd_dictcheck_file }}"
         owner: root
         group: root
@@ -553,7 +553,7 @@
 
 - name: "5.3.3.2.7 | PATCH | Ensure password quality is enforced for the root user"
   ansible.builtin.template:
-    src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/{{ passwd_quality_enforce_root_file }}.j2"
+    src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/{{ passwd_quality_enforce_root_file }}.j2"
     dest: "/{{ passwd_quality_enforce_root_file }}"
     owner: root
     group: root

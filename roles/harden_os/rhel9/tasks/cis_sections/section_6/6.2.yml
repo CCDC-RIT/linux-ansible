@@ -38,7 +38,7 @@
   block:
     - name: "6.2.1.3 | Add file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/systemd/journald.conf.d/rotation.conf.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/systemd/journald.conf.d/rotation.conf.j2"
         dest: /etc/systemd/journald.conf.d/rotation.conf
         owner: root
         group: root
@@ -114,7 +114,7 @@
   block:
     - name: "6.2.2.2 | Add file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/systemd/journald.conf.d/forwardtosyslog.conf.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/systemd/journald.conf.d/forwardtosyslog.conf.j2"
         dest: /etc/systemd/journald.conf.d/forwardtosyslog.conf
         owner: root
         group: root
@@ -131,7 +131,7 @@
   block:
     - name: "6.2.2.3 | Add file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/systemd/journald.conf.d/storage.conf.j2"  # Added to the same file as 6.2.1.1.4
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"  # Added to the same file as 6.2.1.1.4
         dest: /etc/systemd/journald.conf.d/storage.conf
         owner: root
         group: root
@@ -148,7 +148,7 @@
   block:
     - name: "6.2.2.4 | Add file"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/systemd/journald.conf.d/storage.conf.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"
         dest: /etc/systemd/journald.conf.d/storage.conf
         owner: root
         group: root
@@ -334,7 +334,7 @@
 
     - name: "6.2.3.8 | set rsyslog conf"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/roles/harden_os/ubu22/templates/etc/logrotate.d/rsyslog.conf.j2"
+        src: "{{ ansible_dir }}/roles/harden_os/rhel9/templates/etc/logrotate.d/rsyslog.conf.j2"
         dest: /etc/logrotate.d/rsyslog.conf
         owner: root
         group: root

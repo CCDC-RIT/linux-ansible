@@ -2,7 +2,7 @@
 
 ### Section 1         #             Package mgmt, Additional Process Hardening, Config system wide Crypto, Command Line Warning Banners, and GNOME Display Manager
 section_1: true       #             
-section_1_2: true     #             
+section_1_2: true     #           
 section_1_5: true     #             
 section_1_6: true     #             
 section_1_7: true     #             
