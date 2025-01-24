@@ -79,13 +79,13 @@
   with_fileglob:
     - "/etc/kubernetes/pki/*.crt"
 
-# - name: CIS 1.1.21 - Ensure that the Kubernetes PKI key file permissions are set to 600 or more restrictive
-#   ansible.builtin.file:
-#     path: "{{ item }}"
-#     mode: '0600'
-#     state: file
-#   with_fileglob:
-#     - "/etc/kubernetes/pki/*.key"
+- name: CIS 1.1.21 - Ensure that the Kubernetes PKI key file permissions are set to 600 or more restrictive
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0600'
+    state: file
+  with_fileglob:
+    - "/etc/kubernetes/pki/*.key"
 
 # - name: CIS 1.2.1 - Ensure that the --anonymous-auth argument is set to false
 #   replace:
