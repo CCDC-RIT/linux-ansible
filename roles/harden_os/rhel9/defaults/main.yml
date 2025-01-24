@@ -304,7 +304,7 @@ warning_banner: Authorized uses only. All activity may be monitored and reported
 
 # for 1.8
 # determines if a gui is needed/used
-gui: "{{ prelim_gnome_present.stat.exists | default(false) }}"
+gui: true
 
 # for 1.8
 # this variable specifies the GNOME configuration database file to which configurations are written.
