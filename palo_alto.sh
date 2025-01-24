@@ -221,20 +221,6 @@ revert_changes() {
     echo ""
 }
 
-harden() {
-    echo "Disabling insecure access protocols"
-    curl -k -X GET "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
-        --data-urlencode "xpath=/config/mgt-config" \
-        --data-urlencode "element=<service>
-            <disable-http>yes</disable-http>
-            <disable-snmp>yes</disable-snmp>
-            <disable-telnet>yes</disable-telnet>
-        </service>"
-    echo ""
-}
-
-
-
 menu() {
     local CHOICE=""
     
