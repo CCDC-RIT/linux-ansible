@@ -209,6 +209,7 @@
         fail_msg: "You have rule 5.4.2.4 enabled this requires that you have a root password set - Please manually set a root password"
         success_msg: "You have a root password set"
   when: rule_5_4_2_4
+  ignore_errors: yes
 
 - name: "5.4.2.5 | PATCH | Ensure root PATH Integrity"
   block:

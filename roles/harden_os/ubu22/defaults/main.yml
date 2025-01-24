@@ -237,6 +237,15 @@ pam_create_pwquality_files: true
 # allow new file to be created or overwrite existing with same name
 pam_create_pwhistory_files: true
 
+# for 5.3
+# this variable represents the number of password change cycles, after which
+# a user can re-use a password. # CIS requires a value of 24 or more.
+pamd_pwhistory_remember: 24
+
+# for 5.3
+# passwd_hash_algo is the hashing algorithm used
+passwd_hash_algo: yescrypt
+
 # for 6.2
 # these variable specifies how much disk space the journal may use up at most
 # specify values in bytes or use K, M, G, T, P, E as units for the specified sizes.
@@ -252,6 +261,19 @@ journald_runtimekeepfree: 100G
 # `year`, `month`, `week`, `day`, `h` or `m` to override the default time unit of seconds.
 # ATTENTION: Uncomment the keyword below when values are set!
 journald_maxfilesec: 1month
+
+# for 6.2/7.2?
+# if min/maxx UIDs are to be discovered automatically,
+# set this variable to `true`, otherwise to `false`.
+discover_int_uid: false
+# this variable sets the minimum number from which to search for UID
+# note that the value will be dynamically overwritten if variable `dicover_int_uid` has
+# been set to `true`.
+min_int_uid: 1000
+# this variable sets the maximum number at which the search stops for UID
+# Note that the value will be dynamically overwritten if variable `dicover_int_uid` has
+# been set to `true`.
+max_int_uid: 65533
 
 # for pam password complexity
 passwd_minlen_value: 14 # minlen = minimum password length

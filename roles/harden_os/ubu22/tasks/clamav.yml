@@ -19,7 +19,7 @@
   when: clamav_install.changed
   register: freshclam_result
   notify: Restart clamav-daemon
-  ignore_errors: true
+  ignore_errors: yes
   failed_when:
     - freshclam_result is failed
     - freshclam_result.stderr.find('locked by another process') != -1

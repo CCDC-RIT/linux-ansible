@@ -171,8 +171,7 @@
             these files further."
       when:
         - discovered_homedir_dot_files.stdout | length > 0
-          
-  #do this manually if needed
+
     - name: "7.2.10 | Changes files if configured"
       ansible.builtin.file:
         path: "{{ item }}"
@@ -180,7 +179,7 @@
       with_items: "{{ discovered_homedir_dot_files.stdout_lines }}"
       when:
         - discovered_homedir_dot_files.stdout | length > 0
-        - flase
+        - false
   when:
     - rule_7_2_10
     - disruption_high
