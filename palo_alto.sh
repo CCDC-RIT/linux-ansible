@@ -109,30 +109,30 @@ create_service() {
 }
 
 initial() {
-    # All win out to dc
-    # UDP: 53
-
-    # DC out
-    # UDP: 53
-
-    # All win to CA
-    # TCP: 135
-    # UDP: 135
-
-    # from ansible to all win 
-    # TCP: 5985, 5986
-    # from all outside to all win
-    # TCP: 3389
-    # UDP: 3389
-    # From All Win to Wazuh and Graylog 
-    # TCP: 1514, 1515, 80, 443
+    create_service "tcp" "22"
+    create_service "tcp" "80"
     create_service "tcp" "88"
     create_service "tcp" "135"
     create_service "tcp" "389"
+    create_service "tcp" "443"
     create_service "tcp" "445"
     create_service "tcp" "464"
     create_service "tcp" "636"
+    create_service "tcp" "1514"
+    create_service "tcp" "1515"
+    create_service "tcp" "1516"
     create_service "tcp" "3268"
+    create_service "tcp" "3389"
+    create_service "tcp" "5985"
+    create_service "tcp" "5986"
+    create_service "tcp" "8086"
+    create_service "tcp" "8088"
+    create_service "tcp" "9000"
+    create_service "tcp" "9200"
+    create_service "tcp" "9300"
+    create_service "tcp" "9300-9400"
+    create_service "tcp" "27017"
+    create_service "tcp" "55000"
 
     create_service "udp" "53"
     create_service "udp" "88"
@@ -142,16 +142,20 @@ initial() {
     create_service "udp" "445"
     create_service "udp" "464"
     create_service "udp" "636"
+    create_service "udp" "3389"
 }
 
 the_rules_to_end_all_rule() {
-    # All Win to DC
-    # TCP: 88,135,389,445,464,636,3268
-    # UDP: 53,88,123,135,389,445,464,636
-    create_rule "All-Win-DMZ-To-DC-Private-TCP" "DMZ" "Private" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
-    create_rule "All-Win-DMZ-To-DC-Private-UDP" "DMZ" "Private" "any" "any" "udp-53 udp-88 udp-123 udp-135 udp-389 udp-445 udp-464 udp-636" "any" "allow"
-    create_rule "All-Win-Private-To-DC-DMZ-TCP" "Private" "DMZ" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
-    create_rule "All-Win-Private-To-DC-DMZ-UDP" "Private" "DMZ" "any" "any" "udp-53 udp-88 udp-123 udp-135 udp-389 udp-445 udp-464 udp-636" "any" "allow"
+    create_rule "All-Win-To-DC-TCP" "any" "any" "any" "any" "tcp-88 tcp-135 tcp-389 tcp-445 tcp-464 tcp-636 tcp-3268" "any" "allow"
+    create_rule "All-Win-To-DC-UDP" "any" "any" "any" "any" "udp-53 udp-88 udp-123 udp-135 udp-389 udp-445 udp-464 udp-636" "any" "allow"
+    create_rule "All-To-Ansible-TCP" "any" "any" "any" "any" "tcp-5985 tcp-5986" "any" "allow"
+    create_rule "All-To-RDP-TCP" "any" "any" "any" "any" "tcp-3389" "any" "allow"
+    create_rule "All-To-RDP-UDP" "any" "any" "any" "any" "udp-3389" "any" "allow"
+    create_rule "All-To-Web-TCP" "any" "any" "any" "any" "tcp-80 tcp-443" "any" "allow"
+    create_rule "All-To-SSH-TCP" "any" "any" "any" "any" "tcp-22" "any" "allow"
+    create_rule "All-To-Graylog-TCP" "any" "any" "any" "any" "tcp-9000 tcp-9200 tcp-9300 tcp-27017" "any" "allow"
+    create_rule "All-To-Wazuh-TCP" "any" "any" "any" "any" "tcp-443 tcp-1514 tcp-1515 tcp-1516 tcp-9200 tcp-9300-9400 tcp-55000" "any" "allow"
+    create_rule "All-To-InfluxDB-TCP" "any" "any" "any" "any" "tcp-8086 tcp-8088" "any" "allow"
 }
 
 commit_changes() {
