@@ -29,7 +29,7 @@
   ansible.builtin.shell:
     cmd: "curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash"
     creates: /usr/local/bin/helm
-    register: helm_install
+  register: helm_install
 
 - name: Fail if Helm installation failed
   ansible.builtin.fail:

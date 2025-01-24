@@ -19,12 +19,12 @@
     group: root
     mode: '0600'
 
-# - name : CIS 1.1.7 + 1.1.8 - Ensure that the etcd file ownership is set to root:root and permissions are set to 600
-#   ansible.builtin.file:
-#     path: /etc/kubernetes/manifests/etcd.yaml
-#     owner: root
-#     group: root
-#     mode: '0600'
+- name : CIS 1.1.7 + 1.1.8 - Ensure that the etcd file ownership is set to root:root and permissions are set to 600
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests/etcd.yaml
+    owner: root
+    group: root
+    mode: '0600'
 
 # - name: CIS 1.1.9 + 1.1.10 - Ensure that the flannel file ownership is set to root:root and permissions are set to 600
 #   ansible.builtin.file:
