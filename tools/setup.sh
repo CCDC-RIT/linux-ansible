@@ -7,6 +7,9 @@ sudo apt-get install -y python3-pip libffi-dev libssl-dev git sshpass
 # install required python modules
 pip3 install pywinrm pypsrp ansible passlib
 
+# Install Ansible-cmdb for inventory
+pip install ansible-cmdb
+
 echo "export PATH=$HOME/.local/bin:\$PATH" >> ~/.bashrc
 
 # make directories
@@ -24,5 +27,3 @@ cp /opt/id_ed25519.pub $HOME/.ssh/id_ed25519.pub
 ansible-galaxy collection install kubernetes.core
 
 echo 'Ensure that you source ~/.bashrc! Or just run this: export PATH=$HOME/.local/bin:\$PATH'
-# Install Ansible-cmdb for inventory
-pip install ansible-cmdb

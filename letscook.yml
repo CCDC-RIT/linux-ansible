@@ -77,6 +77,27 @@
     - initial
     - harden
 
+- name: Harden Kube Controller
+  hosts: "{{ kube_controller }}"
+  become: yes
+  roles:
+    - kube
+  tags:
+    - never
+    - kube
+
+- name: Deploy Falco to the Cluster
+  hosts: "{{ kube_controller }}"
+  become: yes
+  roles:
+    - falco
+  tags:
+    - never
+    - kube
+    - falco
+  
+
+
 - name: Install Braeden's Python scripts 
   hosts: all
   become: yes
