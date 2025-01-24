@@ -209,6 +209,8 @@ revert_changes() {
     curl -k -X GET "https://${FIREWALL_IP}/api/?type=import&category=configuration&key=${API_KEY}" \
         --form "file=@${selected_backup}"
 
+    selected_backup=$(basename $selected_backup)
+
     echo "Loading configuration..."
     curl -k -X GET "https://${FIREWALL_IP}/api/?type=op&cmd=<load><config><from>${selected_backup}</from></config></load>&key=${API_KEY}"
     echo ""
