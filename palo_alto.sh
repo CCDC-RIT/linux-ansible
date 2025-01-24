@@ -163,17 +163,7 @@ commit_changes() {
 
 backup_changes() {
     local backup_dir="$HOME/asa/osa"
-    local backup_file="$backup_dir/running-config.xml"
-    local old_backup="$backup_dir/running-config-old.xml"
-    local older_backup="$backup_dir/running-config-old.xml~"
-
-    echo "Rotating backups..."
-    if [ -f "$old_backup" ]; then
-        mv "$old_backup" "$older_backup"
-    fi
-    if [ -f "$backup_file" ]; then
-        mv -b "$backup_file" "$old_backup"
-    fi
+    local backup_file="$backup_dir/running-config-$(date).xml"
 
     echo "Backing up configuration"
     sleep 1
@@ -186,21 +176,41 @@ backup_changes() {
 }
 
 revert_changes() {
-    local iteration="$1"
-    local backup_file_path="$HOME/asa/osa/running-config"
+    local backup_dir="/$HOME/asa/osa/"
+    local backups
+    local index
+    local selected_backup
 
-    case "$iteration" in
-        1)  backup_file_path+=".xml" ;;
-        2)  backup_file_path+="-old.xml" ;;
-        3)  backup_file_path+="-old.xml~" ;;
-        *)  backup_file_path+=".xml" ;;
-    esac
+    backups=($(ls -t "$backup_dir"/*.xml 2>/dev/null))
 
-    local backup_file_name=(basename "$backup_file_path")
+    if [[ ${#backups[@]} -eq 0 ]]; then
+        echo "Error: No backup files found in $backup_dir"
+        return 1
+    fi
 
-    echo "Reverting changes from backup iteration $iteration"
-    curl -k -F key=$API_KEY -F file=@$backup_file_path "https://$FIREWALL_IP/api/?type=import&category=configuration"
-    curl -k -X GET "https://$FIREWALL_IP/api/?type=op&cmd=<load><config><from>$backup_file_name</from></config></load>&key=$API_KEY"
+    echo "Available Palo Alto Backup Files:"
+    for i in "${!backups[@]}"; do
+        echo "$((i + 1)). ${backups[$i]}"
+    done
+
+    while true; do
+        read -p "Enter the number of the backup to restore (1-${#backups[@]}): " index
+
+        if [[ "$index" =~ ^[0-9]+$ ]] && (( index >= 1 && index <= ${#backups[@]} )); then
+            selected_backup="${backups[$index-1]}"
+            echo "Selected backup: $selected_backup"
+            break
+        else
+            echo "Invalid input. Please enter a number between 1 and ${#backups[@]}."
+        fi
+    done
+
+    echo "Restoring configuration..."
+    curl -k -X GET "https://${PA_HOST}/api/?type=import&category=configuration&key=${PA_KEY}" \
+        --form "file=@${selected_backup}"
+
+    echo "Loading configuration..."
+    curl -k -X GET "https://${PA_HOST}/api/?type=op&cmd=<load><config><from>${selected_backup}</from></config></load>&key=${PA_KEY}"
     echo ""
 }
 
