@@ -57,12 +57,12 @@
     group: root
     mode: '0600'
 
-# - name: CIS 1.1.17 + 1.1.18 - Ensure that the controller-manager.conf file ownership is set to root:root and permissions are set to 600
-#   ansible.builtin.file:
-#     path: /etc/kubernetes/controller-manager.conf
-#     owner: root
-#     group: root
-#     mode: '0600'
+- name: CIS 1.1.17 + 1.1.18 - Ensure that the controller-manager.conf file ownership is set to root:root and permissions are set to 600
+  ansible.builtin.file:
+    path: /etc/kubernetes/controller-manager.conf
+    owner: root
+    group: root
+    mode: '0600'
 
 # - name: CIS 1.1.19 - Ensure that the Kubernetes PKI directory and file ownership is set to root:root
 #   ansible.builtin.file:
