@@ -68,10 +68,6 @@
   ansible.builtin.import_tasks:
     file: ssh.yml
 
-- name: AIDE
-  ansible.builtin.import_tasks:
-    file: aide.yml
-
 - name: Reboot system
   block:
     - name: Reboot system if not skipped
