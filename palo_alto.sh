@@ -163,7 +163,7 @@ commit_changes() {
 
 backup_changes() {
     local backup_dir="$HOME/asa/osa"
-    local backup_file="$backup_dir/running-config-$(date +%Y-%m-%d_%H-%M-%S).xml"
+    local backup_file="$backup_dir/running-config-$(date +%d_%H-%M).xml"
 
     echo "Backing up configuration"
     sleep 1
