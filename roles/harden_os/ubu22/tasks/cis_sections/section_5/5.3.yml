@@ -70,7 +70,7 @@
 - name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled"
   ansible.builtin.template:
     src: '{{ ansible_dir }}/roles/harden_os/ubu22/templates/usr/share/pam-configs/pwhistory.j2'
-    dest: '/usr/share/pam-configs/pwhistory }}'
+    dest: '/usr/share/pam-configs/pwhistory'
     owner: root
     group: root
     mode: 'go-rwx'

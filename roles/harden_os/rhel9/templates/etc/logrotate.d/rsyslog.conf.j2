@@ -1,0 +1,11 @@
+/var/log/rsyslog/*.log {
+    {{ rsyslog_logrotate_rotated }}
+    rotate {{ rsyslog_logrotate_keep }}
+    {% if rsyslog_logrotate_compress %}compress{% else %}nocompress{% endif %}
+    {% if rsyslog_logrotate_missingok %}missingok{% else %}missingok{% endif %}
+    {% if rsyslog_logrotate_notifempty %}notifempty{% else %}ifempty{% endif %}
+    {% if rsyslog_logrotate_create %}create {{ rsyslog_logrotate_create_opts }}{% endif %}
+    postrotate
+        /usr/bin/systemctl reload rsyslog.service >/dev/null || true
+    endscript
+}
