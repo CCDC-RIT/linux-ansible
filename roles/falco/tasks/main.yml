@@ -1,7 +1,7 @@
-- name: Copy over Falco configuration failed
+- name: Copy over Falco configuration file
   ansible.builtin.copy:
-    src: falco_config.yaml
-    dest: /etc/falco_config.yaml
+    src: falco.yaml
+    dest: /etc/falco-config.yaml
     owner: root
     group: root
     mode: '0644'
@@ -9,10 +9,16 @@
 - name: Copy over Falco rules files
   ansible.builtin.copy:
     src: falco_rules.yaml
-    dest: /etc/falco_rules.yaml
+    dest: /etc/falco-rules.yaml
     owner: root
     group: root
     mode: '0644'
+
+- name: Load Wazuh Manager IP into Falco config file
+  ansible.builtin.replace:
+    path: /etc/falco/falco.yaml
+    regexp: '<WAZUH_MANAGER_IP>'  # Match the placeholder
+    replace: "{{ wazuh_manager_ip }}"  # Replace with the variable value
 
 - name: Install Helm
   ansible.builtin.shell:
@@ -39,8 +45,7 @@
     create_namespace: true
     values:
       tty: true
-      rules_file: /etc/falco_rules.yaml
-      config_file: /etc/falco_config.yaml
+      rules_file: /etc/falco-rules.yaml
+      config_file: /etc/falco-config.yaml
     update_repo_cache: true
     force: true
-    
