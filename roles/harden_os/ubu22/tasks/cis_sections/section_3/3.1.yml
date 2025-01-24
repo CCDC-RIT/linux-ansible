@@ -9,8 +9,6 @@
         replace: '\1ipv6.disable=1\2'
       register: discovered_ipv6disable_replaced
       when: ipv6_disable == 'grub'
-      notify: Grub update
-      ignore_errors: yes
 
     - name: "3.1.1 | Check grub cmdline linux"
       ansible.builtin.shell: grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | cut -f2 -d'"'
@@ -29,8 +27,6 @@
         - ipv6_disable == 'grub'
         - discovered_ipv6disable_replaced is not changed
         - "'ipv6.disable' not in discovered_grub_cmdline_settings.stdout"
-      notify: Grub update
-      ignore_errors: yes
 
     - name: "3.1.1 | Remove net.ipv6.conf.all.disable_ipv6"
       ansible.builtin.template:
@@ -42,8 +38,6 @@
       loop:
         - etc/sysctl.d/60-disable_ipv6.conf
       when: ipv6_disable == 'sysctl'
-      notify: Flush ipv6 route table
-      ignore_errors: yes
   when:
     - rule_3_1_1
     - not ipv6_required
