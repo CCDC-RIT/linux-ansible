@@ -24,3 +24,6 @@ echo 'Ensure that you source ~/.bashrc! Or just run this: export PATH=$HOME/.loc
 
 # Install required ansible collections
 ansible-galaxy collection install kubernetes.core
+
+# Install Ansible-cmdb for inventory
+pip install ansible-cmdb
