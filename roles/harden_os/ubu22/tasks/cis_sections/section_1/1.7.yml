@@ -89,7 +89,7 @@
     - rule_1_7_3
     - desktop_required
     - not prelim_dconf_system_db | length == 0
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: "1.7.4 | PATCH | Ensure GDM screen locks when the user is idle"
   block:
@@ -127,7 +127,7 @@
   when:
     - rule_1_7_4
     - desktop_required
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: "1.7.5 | PATCH | Ensure GDM screen locks cannot be overridden"
   block:

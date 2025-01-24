@@ -53,6 +53,7 @@
         group: root
         mode: 'go-wx'
       notify: Reload systemctl
+      ignore_errors: yes
 
     - name: "1.5.3 | coredump.conf"
       ansible.builtin.lineinfile:

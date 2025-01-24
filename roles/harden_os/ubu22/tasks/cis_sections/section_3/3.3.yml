@@ -12,6 +12,7 @@
         reload: true
         ignoreerrors: true
       notify: Flush ipv4 route table
+      ignore_errors: yes
 
     - name: "3.3.1 | IPv6 settings"
       ansible.posix.sysctl:
@@ -24,6 +25,7 @@
         ignoreerrors: true
       when: ipv6_disable == 'sysctl'
       notify: Flush ipv6 route table
+      ignore_errors: yes
   when: rule_3_3_1
 
 - name: "3.3.2 | PATCH | Ensure packet redirect sending is disabled"
@@ -40,6 +42,7 @@
     - net.ipv4.conf.default.send_redirects
   when: rule_3_3_2
   notify: Flush ipv4 route table
+  ignore_errors: yes
 
 - name: "3.3.3 | PATCH | Ensure bogus ICMP responses are ignored"
   ansible.posix.sysctl:
@@ -52,6 +55,7 @@
     ignoreerrors: true
   when: rule_3_3_3
   notify: Flush ipv4 route table
+  ignore_errors: yes
 
 - name: "3.3.4 | PATCH | Ensure broadcast ICMP requests are ignored"
   ansible.posix.sysctl:
@@ -64,6 +68,7 @@
     ignoreerrors: true
   when: rule_3_3_4
   notify: Flush ipv4 route table
+  ignore_errors: yes
 
 - name: "3.3.5 | PATCH | Ensure ICMP redirects are not accepted"
   block:
@@ -80,6 +85,7 @@
         - net.ipv4.conf.all.accept_redirects
         - net.ipv4.conf.default.accept_redirects
       notify: Flush ipv4 route table
+      ignore_errors: yes
 
     - name: "3.3.5 | IPv6 settings"
       ansible.posix.sysctl:
@@ -95,6 +101,7 @@
         - net.ipv6.conf.default.accept_redirects
       when: ipv6_disable == 'sysctl'
       notify: Flush ipv6 route table
+      ignore_errors: yes
   when: rule_3_3_5
 
 - name: "3.3.6 | PATCH | Ensure secure ICMP redirects are not accepted"
@@ -111,6 +118,7 @@
     - net.ipv4.conf.default.secure_redirects
   when: rule_3_3_6
   notify: Flush ipv4 route table
+  ignore_errors: yes
 
 - name: "3.3.7 | PATCH | Ensure Reverse Path Filtering is enabled"
   ansible.posix.sysctl:
@@ -126,6 +134,7 @@
     - net.ipv4.conf.default.rp_filter
   when: rule_3_3_7
   notify: Flush ipv4 route table
+  ignore_errors: yes
 
 - name: "3.3.8 | PATCH | Ensure source routed packets are not accepted"
   block:
@@ -142,6 +151,7 @@
         - net.ipv4.conf.all.accept_source_route
         - net.ipv4.conf.default.accept_source_route
       notify: Flush ipv4 route table
+      ignore_errors: yes
 
     - name: "3.3.8 | IPv6 settings"
       ansible.posix.sysctl:
@@ -157,6 +167,7 @@
         - net.ipv6.conf.default.accept_source_route
       when: ipv6_disable == 'sysctl'
       notify: Flush ipv6 route table
+      ignore_errors: yes
   when: rule_3_3_8
 
 - name: "3.3.9 | PATCH | Ensure suspicious packets are logged"
@@ -173,6 +184,7 @@
     - net.ipv4.conf.default.log_martians
   when: rule_3_3_9
   notify: Flush ipv4 route table
+  ignore_errors: yes
 
 - name: "3.3.10 | PATCH | Ensure tcp syn cookies is enabled"
   ansible.posix.sysctl:
@@ -185,6 +197,7 @@
     ignoreerrors: true
   when: rule_3_3_10
   notify: Flush ipv4 route table
+  ignore_errors: yes
 
 - name: "3.3.11 | PATCH | Ensure IPv6 router advertisements are not accepted"
   ansible.posix.sysctl:
@@ -202,3 +215,4 @@
     - rule_3_3_11
     - ipv6_required
   notify: Flush ipv6 route table
+  ignore_errors: yes
