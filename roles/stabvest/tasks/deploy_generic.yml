@@ -1,3 +1,7 @@
+# CUSTOMIZE THE FOLLOWING:
+# timestomp time (default 2208281023 )
+# service name (default obvioustmp )
+
 ---
 - name: Copy the Bash script to the target machine
   copy:
@@ -42,7 +46,7 @@
 #    dest: /etc/systemd/system/obvioustmp.service
 #    content: |
 #      [Unit]
-#      Description=Database daemon for man-db.
+#      Description=Database daemon for obvioustmp.
 #      After=network.target
 #
 #      [Service]

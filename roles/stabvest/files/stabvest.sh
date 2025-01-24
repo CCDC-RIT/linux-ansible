@@ -43,33 +43,30 @@ Full example if youre backing up the webroot for apache2:
     touch -t 1808281821 "/usr/share/fonts/roboto-mono/apache/content/backup.zip"
 
 TODO
-* test literally everything including timestamps
-* freebsd compat (pf for firewall) - NOT NEEDED FOR 2025 (hopefully)
-* backup /usr/share folders? benchmark the processing power needed...
 * benchmark used cpu time and compare to frequency
-* add all services
-* limit to max number of lines
+* test on rhel
+* get drew to break it again
 
 Requirements:
 * Run this script with root access
 * This script file must be automatically executed every 60 seconds in some manner (cronjob/service). See the accompying setup script for suggestions.
-* This script file should be set to 0700 or similar permissions, and it is recommended to timestomp it to an innocuous value.
+* This script file should be set to 0750 or similar permissions, and it is recommended to timestomp it to an innocuous value.
 * Only iptables is intended to be active, no other firewalls (as others are automatically disabled by this script)
 * Each instance of this script can only be used on one service at a time. For additional instances, make a copy of this script and make sure to change the backup path, and have a separate form of persistance running this script (i.e. for two critical services, have two services running two copies of this script)
 * Fill out the variables listed directly below this line. These determine the backup directory to use and the directories that should be included in the backup.
 '
 
 ############### Apache2 ###############
-declare -a ports=( 80 443 )
+#declare -a ports=( 80 443 )
 ########## Ubuntu ##########
-servicename="apache2"
-packagename="apache2"
-binarypath="/usr/sbin/apache2"
-configdir="/etc/apache2"
-contentdir="/var/www/html"
-miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
-miscdir2=""
-miscdir3=""
+#servicename="apache2"
+#packagename="apache2"
+#binarypath="/usr/sbin/apache2"
+#configdir="/etc/apache2"
+#contentdir="/var/www/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 ########## RHEL ############
 #servicename="httpd"
 #packagename="httpd"
@@ -474,7 +471,7 @@ elif command -v rpm &> /dev/null; then
 fi
 if $installed == "false"; then
 '
-if ! dpkg -s "$packagename" 2>/dev/null | grep -q '^Status: install'; then #TODO rhel
+if { command -v dpkg &> /dev/null && ! dpkg -s "$packagename" 2>/dev/null | grep -q '^Status: install'; } || { command -v rpm &> /dev/null && ! rpm -q "$packagename" &> /dev/null; }; then
     echo "  Service $servicename is not installed or unavailable. Reinstalling $packagename..."
 
     # Reinstall the package using apt, yum, or dnf
@@ -541,9 +538,8 @@ echo "  Disabling unwanted firewall managers if found... (ufw, firewalld, nftabl
 
 ## iptables tables to check
 declare -a tables=("filter" "nat" "mangle" "raw" "security") # NAT cant have drop rules but whatev. RAW INPUT doesnt exist. Raw cant seem to drop packets.
-declare -a chains=("INPUT" "OUTPUT" "PREROUTING" "POSTROUTING" "FORWARD") # not all tables have these chains but i cant think of a better way to do this
+declare -a chains=("INPUT" "OUTPUT" "PREROUTING" "POSTROUTING" "FORWARD") # not all tables have these chains but i cant think of a better way to do this. Also cant do custom chains unless you know the name
 declare -a actions=("DROP" "REDIRECT" "TARPIT")
-# TODO: we currently have no feasible way to check arbitrary user defined chains (including UFW chains)!
 
 ufw disable
 systemctl stop ufw
@@ -560,31 +556,43 @@ systemctl mask nftables
 
 # Enable iptables if its not running on this system
 # Install iptables if not found
-# TODO: ubuntu compat (not a service...)
-: '
-echo "  Ensuring that iptables is installed and active..."
-if ! systemctl status iptables &> /dev/null; then
-    # Reinstall the package using apt, yum, or dnf
-    if command -v apt &> /dev/null; then
-        apt install -y iptables-services
-    elif command -v yum &> /dev/null; then
-        yum install -y iptables-services
-    elif command -v dnf &> /dev/null; then
-        dnf install -y iptables-services
+if ! command -v "iptables" &> /dev/null; then
+    echo "iptables is not installed. Attempting to install it..."
+
+    # Determine which package manager is available and install iptables
+    if command -v "apt" &> /dev/null; then
+        #echo "Using apt to install iptables..."
+        apt install -y iptables &> /dev/null
+    elif command -v "dnf" &> /dev/null; then
+        #echo "Using dnf to install iptables..."
+        dnf install -y iptables iptables-services iptables-utils &> /dev/null
+    elif command -v "yum" &> /dev/null; then
+        #echo "Using yum to install iptables..."
+        yum install -y iptables-services &> /dev/null
+    else
+        echo "ERROR: No supported package manager found (apt, dnf, or yum). Install iptables manually."
+        exit 1
+    fi
+
+    # Verify installation
+    if command_exists iptables; then
+        echo "iptables was successfully installed."
     else
         pad_string " ERROR: Package manager not supported. Install iptables-services manually. " "-" 75
-        pad_string " Operator must manually fix this error. " "-" 75
-        #echo "  ERROR: Package manager not supported. Install iptables-services manually. Operator must manually fix this error."
-        #exit 1
     fi
 fi
-# Enable iptables if not active
-if ! systemctl is-active --quiet iptables; then
-    #todo unmask
-    systemctl start iptables
-    systemctl enable iptables
+
+# Check if iptables service is available before enabling
+if systemctl list-units --type=service --all | grep -q 'iptables.service'; then
+    # Enable iptables if not active
+    if ! systemctl is-active --quiet iptables; then
+        systemctl unmask iptables
+        systemctl start iptables
+        systemctl enable iptables
+    fi
+#else
+    #echo "iptables service not available on this system (likely Ubuntu)."
 fi
-'
 
 echo ""
 pad_string " Backed up iptables IPv4 rules to: " "!" 75
@@ -598,7 +606,7 @@ iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
 #Setup variable
 rules_removed=false
 
-echo "  Checking for iptables rules that block traffic on the scored service's port..."
+echo "  Checking for iptables rules blocking scored traffic or all traffic... "
 # Loop through all provided ports
 for port in "${ports[@]}"; do
     # Loop through provided iptables tables
@@ -614,10 +622,10 @@ for port in "${ports[@]}"; do
                     # Rules blocking one port (without -m multiport) will have "spt:##" or "spt:##"
                     # Rules using -m multiport (regardless multiple ports are specified or not) will use the format "sports ##" or "dports ##"
                     # Using -n means that we always get numeric ports even if the user used an alias like http when adding the rule
-                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "$action" | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is. TODO THIS DOESNT SEARCH FOR DROP AAAAAA. also redirect
+                    deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is.
                     if [ -z "$deny_rules" ]; then
                         # If no regular rules remain, check for drop all rules (do not contain a specific port). If its also empty, we're done.
-                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2>/dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
+                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
                         if [ -z "$deny_rules" ]; then
                             break
                         fi
@@ -725,7 +733,7 @@ for i in "${!original_dirs[@]}"; do
         rm -rf "$backup_dir/tmp"
         mkdir -p "$backup_dir/tmp"
         # absolute path funnies: will create "$backup_dir/tmp/etc/apache2" if doing apache2 config
-        unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp" # TODO what's the resulting timestamps on this? Not that it matters...
+        unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp"
 
         # Compare content of all files, and compare file permissions of all files
         if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(find "$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) <(find "$backup_dir/tmp$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) &> /dev/null; then
