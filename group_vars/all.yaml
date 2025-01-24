@@ -3,8 +3,10 @@
 # scoring_ip: # uncomment only when we know the scoring IP, otherwise skip
 backup_dir: "/usr/share/fonts/roboto-mono"
 quarantine: "/usr/share/fonts/quar-mono"
-ansible_control_ip: "172.20.242.69"
-firewall_logging: false
+# ansible_control_ip: "172.20.242.69"
+ansible_control_ip: "10.0.10.156"
+firewall_logging: true
+logging_ports: [9000, 9020]
 
 packet_users:
   - harold

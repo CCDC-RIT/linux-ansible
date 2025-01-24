@@ -1,0 +1,21 @@
+---
+- name: Allow logging communication from other connected boxes to the logging manager
+  ansible.builtin.iptables:
+    chain: INPUT
+    source: "{{ item[0] }}"
+    protocol: tcp
+    destination_port: "{{ item[1] }}"
+    jump: ACCEPT
+  delegate_to: "{{ groups['logging'][0] }}"
+  loop: "{{ groups['all'] | product(logging_ports) | list }}"
+  when: firewall_logging
+
+- name: Allow output to the logging manager box
+  ansible.builtin.iptables:
+    chain: OUTPUT
+    protocol: tcp
+    destination_port: "{{ item }}"
+    destination: "{{ groups['logging'][0] }}"
+    jump: ACCEPT
+  loop: "{{ logging_ports }}"
+  when: firewall_logging

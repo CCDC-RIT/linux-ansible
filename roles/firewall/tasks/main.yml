@@ -6,3 +6,7 @@
 - name: Secure that shit (heavy)
   include_tasks: iptables_heavy.yml
   when: scoring_ip is defined
+
+- name: firewall
+  include_tasks: iptables_logging.yml
+  when: firewall_logging is true

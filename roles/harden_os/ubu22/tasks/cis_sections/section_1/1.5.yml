@@ -52,7 +52,6 @@
         owner: root
         group: root
         mode: 'go-wx'
-      notify: Reload systemctl
 
     - name: "1.5.3 | coredump.conf"
       ansible.builtin.lineinfile:
