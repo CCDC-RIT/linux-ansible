@@ -2,4 +2,4 @@
 - name: Inventory | RIT CCDC
   hosts: all
   roles:
-    - inventory
+    - dynamic_inventory
