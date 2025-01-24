@@ -32,3 +32,11 @@ aide_packages:
   - aide
 # Aide initiate command for new DB creation
 aide_initiate_command: /usr/sbin/aide --init
+
+audit_bins:
+  - /sbin/auditctl
+  - /sbin/aureport
+  - /sbin/ausearch
+  - /sbin/autrace
+  - /sbin/auditd
+  - /sbin/augenrules
