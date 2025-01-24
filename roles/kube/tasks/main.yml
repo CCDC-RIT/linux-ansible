@@ -64,12 +64,12 @@
     group: root
     mode: '0600'
 
-# - name: CIS 1.1.19 - Ensure that the Kubernetes PKI directory and file ownership is set to root:root
-#   ansible.builtin.file:
-#     path: /etc/kubernetes/pki
-#     owner: root
-#     group: root
-#     state: directory
+- name: CIS 1.1.19 - Ensure that the Kubernetes PKI directory and file ownership is set to root:root
+  ansible.builtin.file:
+    path: /etc/kubernetes/pki
+    owner: root
+    group: root
+    state: directory
 
 # - name: CIS 1.1.20 - Ensure that the Kubernetes PKI certificate file permissions are set to 600 or more restrictive
 #   ansible.builtin.file:
