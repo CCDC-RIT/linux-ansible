@@ -21,7 +21,7 @@
 
 - name: Load Wazuh Manager IP into Falco config file
   ansible.builtin.replace:
-    path: /etc/falco/falco.yaml
+    path: /etc/falco.yaml
     regexp: '<WAZUH_MANAGER_IP>'  # Match the placeholder
     replace: "{{ wazuh_manager_ip }}"  # Replace with the variable value
 
