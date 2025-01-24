@@ -224,7 +224,7 @@ revert_changes() {
 harden() {
     echo "Disabling insecure access protocols"
     curl -k -X GET "https://$FIREWALL_IP/api/?type=config&action=set&key=$API_KEY" \
-        --data-urlencode "xpath=/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system" \
+        --data-urlencode "xpath=/config/mgt-config" \
         --data-urlencode "element=<service>
             <disable-http>yes</disable-http>
             <disable-snmp>yes</disable-snmp>
