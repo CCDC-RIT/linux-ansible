@@ -24,12 +24,10 @@
     - { chain: INPUT }
     - { chain: OUTPUT }
 
-- name: Allow SSH from Ansible (INPUT - Destination Port 22)
+- name: Allow all traffic from Ansible
   iptables: 
     chain: INPUT
-    protocol: tcp
     source: "{{ ansible_control_ip }}"
-    destination_port: "22"
     jump: ACCEPT
 
 - name: Allow SSH from Ansible (OUTPUT - Source Port 22)
