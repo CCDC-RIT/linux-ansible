@@ -163,14 +163,14 @@ commit_changes() {
 
 backup_changes() {
     local backup_dir="$HOME/asa/osa"
-    local backup_file="$backup_dir/running-config-$(date).xml"
+    local backup_file="$backup_dir/running-config-$(date +%Y-%m-%d_%H-%M-%S).xml"
 
     echo "Backing up configuration"
     sleep 1
-    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > $backup_file
+    curl -kG "https://$FIREWALL_IP/api/?type=export&category=configuration&key=$API_KEY" > "$backup_file"
     echo ""
 
-    echo "Uploading backup $(basename "$file")..."
+    echo "Uploading backup $(basename "$backup_file")..."
     curl -k -F key="$API_KEY" -F file=@"$backup_file" "https://$FIREWALL_IP/api/?type=import&category=configuration"
     echo ""
 }
