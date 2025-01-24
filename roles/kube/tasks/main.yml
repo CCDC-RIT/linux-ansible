@@ -5,112 +5,112 @@
     group: root
     mode: '0600'
 
-- name: CIS 1.1.3 + 1.1.4 - Ensure that the kube-controller-manager file ownership is set to root:root and permissions are set to 600
-  ansible.builtin.file:
-    path: /etc/kubernetes/manifests/kube-controller-manager.yaml
-    owner: root
-    group: root
-    mode: '0600'
+# - name: CIS 1.1.3 + 1.1.4 - Ensure that the kube-controller-manager file ownership is set to root:root and permissions are set to 600
+#   ansible.builtin.file:
+#     path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+#     owner: root
+#     group: root
+#     mode: '0600'
 
-- name: CIS 1.1.5 + 1.1.6 - Ensure that the kube-scheduler file ownership is set to root:root and permissions are set to 600
-  ansible.builtin.file:
-    path: /etc/kubernetes/manifests/kube-scheduler.yaml
-    owner: root
-    group: root
-    mode: '0600'
+# - name: CIS 1.1.5 + 1.1.6 - Ensure that the kube-scheduler file ownership is set to root:root and permissions are set to 600
+#   ansible.builtin.file:
+#     path: /etc/kubernetes/manifests/kube-scheduler.yaml
+#     owner: root
+#     group: root
+#     mode: '0600'
 
-- name : CIS 1.1.7 + 1.1.8 - Ensure that the etcd file ownership is set to root:root and permissions are set to 600
-  ansible.builtin.file:
-    path: /etc/kubernetes/manifests/etcd.yaml
-    owner: root
-    group: root
-    mode: '0600'
+# - name : CIS 1.1.7 + 1.1.8 - Ensure that the etcd file ownership is set to root:root and permissions are set to 600
+#   ansible.builtin.file:
+#     path: /etc/kubernetes/manifests/etcd.yaml
+#     owner: root
+#     group: root
+#     mode: '0600'
 
-- name: CIS 1.1.9 + 1.1.10 - Ensure that the flannel file ownership is set to root:root and permissions are set to 600
-  ansible.builtin.file:
-    path: /etc/kube-flannel/net-conf.json
-    owner: root
-    group: root
-    mode: '0600'
-  ignore_errors: true #May be using a different CNI, so flannel file might not exist
+# - name: CIS 1.1.9 + 1.1.10 - Ensure that the flannel file ownership is set to root:root and permissions are set to 600
+#   ansible.builtin.file:
+#     path: /etc/kube-flannel/net-conf.json
+#     owner: root
+#     group: root
+#     mode: '0600'
+#   ignore_errors: true #May be using a different CNI, so flannel file might not exist
 
-- name: CIS 1.1.11 + 1.1.12 - Ensure that the etcd data directory ownership is set to etcd:etcd and permissions are set to 700
-  ansible.builtin.file:
-    path: /var/lib/etcd
-    owner: etcd
-    group: etcd
-    mode: '700'
-    state: directory
-  ignore_errors: true #May be using a different storage backend, so etcd data directory might not exist OR no etcd user exists
+# - name: CIS 1.1.11 + 1.1.12 - Ensure that the etcd data directory ownership is set to etcd:etcd and permissions are set to 700
+#   ansible.builtin.file:
+#     path: /var/lib/etcd
+#     owner: etcd
+#     group: etcd
+#     mode: '700'
+#     state: directory
+#   ignore_errors: true #May be using a different storage backend, so etcd data directory might not exist OR no etcd user exists
 
-- name: CIS 1.1.13 + 1.1.14 - Ensure that the admin.conf file ownership is set to root:root and permissions are set to 600
-  ansible.builtin.file:
-    path: /etc/kubernetes/admin.conf
-    owner: root
-    group: root
-    mode: '0600'
+# - name: CIS 1.1.13 + 1.1.14 - Ensure that the admin.conf file ownership is set to root:root and permissions are set to 600
+#   ansible.builtin.file:
+#     path: /etc/kubernetes/admin.conf
+#     owner: root
+#     group: root
+#     mode: '0600'
 
-- name: CIS 1.1.15 + 1.1.16 - Ensure that the scheduler.conf file ownership is set to root:root and permissions are set to 600
-  ansible.builtin.file:
-    path: /etc/kubernetes/scheduler.conf
-    owner: root
-    group: root
-    mode: '0600'
+# - name: CIS 1.1.15 + 1.1.16 - Ensure that the scheduler.conf file ownership is set to root:root and permissions are set to 600
+#   ansible.builtin.file:
+#     path: /etc/kubernetes/scheduler.conf
+#     owner: root
+#     group: root
+#     mode: '0600'
 
-- name: CIS 1.1.17 + 1.1.18 - Ensure that the controller-manager.conf file ownership is set to root:root and permissions are set to 600
-  ansible.builtin.file:
-    path: /etc/kubernetes/controller-manager.conf
-    owner: root
-    group: root
-    mode: '0600'
+# - name: CIS 1.1.17 + 1.1.18 - Ensure that the controller-manager.conf file ownership is set to root:root and permissions are set to 600
+#   ansible.builtin.file:
+#     path: /etc/kubernetes/controller-manager.conf
+#     owner: root
+#     group: root
+#     mode: '0600'
 
-- name: CIS 1.1.19 - Ensure that the Kubernetes PKI directory and file ownership is set to root:root
-  ansible.builtin.file:
-    path: /etc/kubernetes/pki
-    owner: root
-    group: root
-    state: directory
+# - name: CIS 1.1.19 - Ensure that the Kubernetes PKI directory and file ownership is set to root:root
+#   ansible.builtin.file:
+#     path: /etc/kubernetes/pki
+#     owner: root
+#     group: root
+#     state: directory
 
-- name: CIS 1.1.20 - Ensure that the Kubernetes PKI certificate file permissions are set to 600 or more restrictive
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: '0600'
-    state: file
-  with_fileglob:
-    - "/etc/kubernetes/pki/*.crt"
+# - name: CIS 1.1.20 - Ensure that the Kubernetes PKI certificate file permissions are set to 600 or more restrictive
+#   ansible.builtin.file:
+#     path: "{{ item }}"
+#     mode: '0600'
+#     state: file
+#   with_fileglob:
+#     - "/etc/kubernetes/pki/*.crt"
 
-- name: CIS 1.1.21 - Ensure that the Kubernetes PKI key file permissions are set to 600 or more restrictive
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: '0600'
-    state: file
-  with_fileglob:
-    - "/etc/kubernetes/pki/*.key"
+# - name: CIS 1.1.21 - Ensure that the Kubernetes PKI key file permissions are set to 600 or more restrictive
+#   ansible.builtin.file:
+#     path: "{{ item }}"
+#     mode: '0600'
+#     state: file
+#   with_fileglob:
+#     - "/etc/kubernetes/pki/*.key"
 
-- name: CIS 1.2.1 - Ensure that the --anonymous-auth argument is set to false
-  replace:
-      path: /etc/kubernetes/manifests/kube-apiserver.yaml
-      regexp: '(?<!\-)\-\-anonymous-auth=.*'
-      replace: '--anonymous-auth=false'
+# - name: CIS 1.2.1 - Ensure that the --anonymous-auth argument is set to false
+#   replace:
+#       path: /etc/kubernetes/manifests/kube-apiserver.yaml
+#       regexp: '(?<!\-)\-\-anonymous-auth=.*'
+#       replace: '--anonymous-auth=false'
 
-- name: CIS 1.2.6 - Ensure that the --authorization-mode argument is not set to AlwaysAllow
-  replace:
-    path: /etc/kubernetes/manifests/kube-apiserver.yaml
-    regexp: '(?<!\-)\-\-authorization-mode=.*'
-    replace: '--authorization-mode=Node,RBAC'
+# - name: CIS 1.2.6 - Ensure that the --authorization-mode argument is not set to AlwaysAllow
+#   replace:
+#     path: /etc/kubernetes/manifests/kube-apiserver.yaml
+#     regexp: '(?<!\-)\-\-authorization-mode=.*'
+#     replace: '--authorization-mode=Node,RBAC'
   
-- name: CIS 1.2.10 - Ensure that the admission control plugin AlwaysAdmit is not set
-  lineinfile:
-    path: /etc/kubernetes/manifests/kube-apiserver.yaml
-    regexp: '^ *--enable-admission-plugins=.*'
-    line: '--enable-admission-plugins=NamespaceLifecycle,NodeRestriction,ServiceAccount'
-    state: present
+# - name: CIS 1.2.10 - Ensure that the admission control plugin AlwaysAdmit is not set
+#   lineinfile:
+#     path: /etc/kubernetes/manifests/kube-apiserver.yaml
+#     regexp: '^ *--enable-admission-plugins=.*'
+#     line: '--enable-admission-plugins=NamespaceLifecycle,NodeRestriction,ServiceAccount'
+#     state: present
 
-- name: CIS 1.2.15 Ensure that the --profiling argument is set to false
-  replace:
-    path: /etc/kubernetes/manifests/kube-apiserver.yaml
-    regexp: '(?<!\-)\-\-profiling.*'
-    replace: '--profiling=false'
+# - name: CIS 1.2.15 Ensure that the --profiling argument is set to false
+#   replace:
+#     path: /etc/kubernetes/manifests/kube-apiserver.yaml
+#     regexp: '(?<!\-)\-\-profiling.*'
+#     replace: '--profiling=false'
 
 
 
