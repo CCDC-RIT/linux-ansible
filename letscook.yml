@@ -66,9 +66,9 @@
     - never
     - initial
     - audit
-    
+
 - name: Harden Kube Controller
-  hosts: "{{ kube_controller }}"
+  hosts: kube_controller
   become: yes
   roles:
     - kube
@@ -78,7 +78,7 @@
     - initial
 
 - name: Deploy Falco to the Cluster
-  hosts: "{{ kube_controller }}"
+  hosts: kube_controller 
   become: yes
   roles:
     - falco
