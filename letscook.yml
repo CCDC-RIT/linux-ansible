@@ -67,6 +67,16 @@
     - initial
     - audit
 
+- name: Harden NGINX
+  hosts: nginx_server
+  become: yes
+  roles:
+    - nginx
+  tags:
+    - never
+    - nginx
+    - initial
+
 - name: Harden Kube Controller
   hosts: kube_controller
   become: yes
@@ -116,6 +126,14 @@
     - never
     - initial
     - harden
+
+- name: Perform system baseline
+  hosts: all
+  become: yes
+  roles:
+    - baseline
+  tags:
+    - baseline
 
 - name: Finish me off scotty
   hosts: all

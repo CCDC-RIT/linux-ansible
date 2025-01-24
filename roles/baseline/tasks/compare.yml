@@ -1,0 +1,24 @@
+---
+- name: Check if file is in baseline file
+  # Use block rescue for error handling
+  block:
+    - name: "Is {{ item }} a base binary/service?"
+      # Checks to see if the file is present in the baseline
+      ansible.builtin.lineinfile:
+        dest: "{{ baseline_file }}"
+        line: "{{ item }}"
+        state: present
+      check_mode: yes
+      register: check_loop
+      # loop automatically changes variables and outputs changed, we want OK output when service is found, so force not changed
+      changed_when: false
+      # This msg is outputted when the service is not found in the baseline file, fail when it is present
+      failed_when: check_loop.msg == "line added"
+      # no_log: true
+  rescue:
+    # Behavior when fail is thrown, add service name to bottom of defined audit file
+    - name: "{{ item }} is not in the baseline... auditing"
+      ansible.builtin.lineinfile:
+        dest: "{{ audit_file }}"
+        line: "{{ item }}"
+        insertafter: EOFs
