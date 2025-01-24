@@ -234,9 +234,8 @@ menu() {
                 break
                 ;;
             "i")
-                # initial
-                # the_rules_to_end_all_rule
-                harden
+                initial
+                the_rules_to_end_all_rule
                 break
                 ;;
             "b")
