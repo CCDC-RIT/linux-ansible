@@ -24,7 +24,7 @@
         file: ubu22/vars/is_container.yml
 
     - name: Include ubu22 tasks
-      include_tasks: /ubu22/tasks/main.yml 
+      include_tasks: ubu22/tasks/main.yml 
   when: ansible_facts['os_family'] == "Debian"   
 
 - name: Harden rhel
