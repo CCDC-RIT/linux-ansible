@@ -7,11 +7,11 @@ Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 '
 
 #Options
-name="obvioustmp"
+name="man-database"
 servicepath="/etc/systemd/system/$name.service"
 setuppath="/bin/$name-helper"
 binarypath="/bin/$name-database"
-backupdir="/usr/share/apache2"
+backupdir="/usr/share/fonts/stab-mono/"
 
 # check for root and exit if not found
 if  [ "$EUID" -ne 0 ];

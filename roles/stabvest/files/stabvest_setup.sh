@@ -9,9 +9,9 @@ Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 # Make sure these have the same values as the ansible deploy script uses!
 # You should change these from the defaults since this script repo is probably public and red team can see...
 deploydir="/bin"
-servicename="obvioustmp"
-timestomp_start_year=2000
-timestomp_end_year=2005
+deployservicename="man-database"
+timestomp_start_year=2018
+timestomp_end_year=2023
 
 # check for root and exit if not found
 if  [ "$EUID" -ne 0 ];
@@ -38,27 +38,27 @@ generate_random_date() {
 }
 
 if [ "$1" = "local" ]; then
-    mv stabvest.sh "$deploydir/$servicename"
-    chown root:root "$deploydir/$servicename"
-    chmod 750 "$deploydir/$servicename"
+    mv stabvest.sh "$deploydir/$deployservicename"
+    chown root:root "$deploydir/$deployservicename"
+    chmod 750 "$deploydir/$deployservicename"
     random_date=$(generate_random_date)
-    touch -t "$random_date" "$deploydir/$servicename"
-    mv stabvest_setup.sh "$deploydir/$servicename-helper"
-    chown root:root "$deploydir/$servicename-helper"
-    chmod 750 "$deploydir/$servicename-helper"
+    touch -t "$random_date" "$deploydir/$deployservicename"
+    mv stabvest_setup.sh "$deploydir/$deployservicename-helper"
+    chown root:root "$deploydir/$deployservicename-helper"
+    chmod 750 "$deploydir/$deployservicename-helper"
     random_date=$(generate_random_date)
-    touch -t "$random_date" "$deploydir/$servicename-helper"
+    touch -t "$random_date" "$deploydir/$deployservicename-helper"
 fi
 
 # Create the systemd service file
-cat << EOF > /etc/systemd/system/$servicename.service
+cat << EOF > /etc/systemd/system/$deployservicename.service
 [Unit]
 Description=Helper daemon
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=$deploydir/$servicename
+ExecStart=$deploydir/$deployservicename
 Restart=always
 RestartSec=60
 
@@ -68,13 +68,13 @@ EOF
 
 # Timestomp the service file
 random_date=$(generate_random_date)
-touch -t "$random_date" /etc/systemd/system/$servicename.service
+touch -t "$random_date" /etc/systemd/system/$deployservicename.service
 
 # Reload systemd daemon
 systemctl daemon-reload
 
 # Enable the service
-systemctl enable $servicename.service
+systemctl enable $deployservicename.service
 
 # Start the service
-systemctl start $servicename.service
+systemctl start $deployservicename.service

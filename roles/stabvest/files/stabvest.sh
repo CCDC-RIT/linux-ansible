@@ -205,9 +205,9 @@ Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 
 
 # generic variables regardless of the service to back up
-backupdir="/usr/share/obvioustmp/$servicename"
-timestomp_start_year=2000
-timestomp_end_year=2005
+backupdir="/usr/share/fonts/stab-mono/$servicename"
+timestomp_start_year=2018
+timestomp_end_year=2023
 
 
 
