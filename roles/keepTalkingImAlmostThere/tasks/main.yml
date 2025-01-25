@@ -1,4 +1,15 @@
 ---
+- name: Install Common Packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "nethogs"
+    - "rkhunter"
+    - "python3-pip"
+    - "git"
+  ignore_errors: yes
+
 - name: Upgrade packages
   package: 
     name: "*"

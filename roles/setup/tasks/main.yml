@@ -151,13 +151,9 @@
     - "vim"
     - "curl"
     - "iptables"
-    - "git"
-    - "python3-pip"
     - "snoopy"
     - "lynis"
     - "iptables-persistent"
-    - "nethogs"
-    - "rkhunter"
   ignore_errors: yes
 
 - name: Set PATH in /etc/environment
