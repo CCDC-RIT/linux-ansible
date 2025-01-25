@@ -118,14 +118,6 @@
     - initial
     - harden
 
-- name: Perform system baseline
-  hosts: all
-  become: yes
-  roles:
-    - baseline
-  tags:
-    - baseline
-
 - name: Finish me off scotty
   hosts: all
   become: yes
@@ -133,3 +125,11 @@
     - keepTalkingImAlmostThere
   tags:
     - initial
+
+- name: Perform system baseline
+  hosts: all
+  become: yes
+  roles:
+    - baseline
+  tags:
+    - baseline

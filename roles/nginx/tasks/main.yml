@@ -22,6 +22,11 @@
 - name: Backup NGINX config file remotely to the ansible controller
   ansible.builtin.fetch:
     src: "/etc/nginx/nginx.conf"
+    dest: "/opt/inventory"
+
+- name: Backup NGINX config file on to webserver
+  ansible.builtin.copy:
+    src: "/etc/nginx/nginx.conf"
     dest: "{{ backup_dir }}"
 
 - name: Disable server tokens

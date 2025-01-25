@@ -22,7 +22,7 @@
   # Include baseline comparison task in services.yml and run it for every systemd services
   include_tasks: compare.yml
   # Loop over every service that is associated with systemd
-  loop: "{{ ansible_facts['services'].values() | selectattr('source', 'equalto', 'systemd') | map(attribute='name') | list }}"
+  loop: "{{ ansible_facts['services'].values() | selectattr('source', 'equalto', 'systemd') | rejectattr('status', 'equalto', 'alias') | rejectattr('status', 'equalto', 'masked') | rejectattr('status', 'equalto', 'static') | rejectattr('status', 'equalto', 'disabled') | rejectattr('status', 'equalto', 'not-found') | map(attribute='name') | list }}"
   loop_control:
     label: "{{ item }}"
   vars:
@@ -52,12 +52,10 @@
     force: true
   
 - name: Iterate over files in /usr/bin to compare them to baseline
-  # Include baseline comparison task in services.yml and run it for every systemd services
   include_tasks: compare.yml
-  # Loop over every service that is associated with systemd
-  loop: "{{ system_bins.files }}"
+  loop: "{{ system_bins.files | map(attribute='path') | list }}"
   loop_control:
-    label: "{{ item.path }}"
+    label: "{{ item }}"
   vars:
     baseline_file: "/tmp/bin_baseline.txt"
     audit_file: "{{ backup_dir }}/bindiff.txt"
