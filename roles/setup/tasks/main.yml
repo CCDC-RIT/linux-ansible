@@ -6,6 +6,11 @@
     password: "{{ blueteam_password | password_hash('sha512') }}"
     shell: /bin/bash
 
+- name: Make blueteam group
+  ansible.builtin.group:
+    name: blueteam
+    state: present
+
 - name: Add blueteam user to admin groups
   ansible.builtin.user:
     name: blueteam
