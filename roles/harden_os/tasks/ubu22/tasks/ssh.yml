@@ -1,7 +1,7 @@
 ---
 - name: Copy SSHD Config
   copy:
-    src: "{{ ansible_dir }}/ubu22/files/sshd_config"
+    src: "{{ ansible_dir }}/tasks/ubu22/files/sshd_config"
     dest: /etc/ssh/sshd_config
     backup: yes
 

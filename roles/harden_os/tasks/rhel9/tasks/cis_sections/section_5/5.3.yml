@@ -283,7 +283,7 @@
 
     - name: "5.3.3.2.1 | Ensure difok file exists"
       ansible.builtin.template:
-        src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_difok_file }}.j2"
+        src: "{{ ansible_dir }}/tasks/rhel9/templates/{{ passwd_difok_file }}.j2"
         dest: "/{{ passwd_difok_file }}"
         owner: root
         group: root
