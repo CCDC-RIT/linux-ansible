@@ -1,63 +1,14 @@
 #!/bin/bash
+
 : '
-Name: StabVest
-Author: Guac0
-
-Provides a Security Orchestration, Automations, Response (SOAR)-analogue for service uptime.
-TLDR:
-    You put the stab vest on a critical service on a VM.
-    It does absolutely nothing until the service gets shanked (disabled by red team).
-    The vest stops the knife from penetrating and injuring the person, but the wearer still feels the impact and needs to take a minute to get their breath back (script fixes downed service during its next activation cycle).
-    This is done by automatically detecting symptoms of common service break methods and remediating them every 60 seconds (configurable).
-    It does NOT do anything to prevent Red Team from gaining access to the system, and it does NOT kick them out when they attempt to mess with the service.
-
-Supported breaks:
-* Service was stopped
-* Service was uninstalled
-* Firewall rule blocking service
-* Bad config file
-* Bad content file
-* Bad service binary
-* Bad systemd config file
-* Network interface down
-* Some additional breaks are also detected but cannot be automatically remediated. Available information about these is logged to "log.txt" in the root of the backup directory (see below).
-
-Log File Notes
-* Exists as "log.txt" in the root of $backupdir
-* Lines padded with "=" are section breaks
-* Lines padded with "!" are misc important information alerts, like paths of new backups
-* Lines padded with "+" are successful remediations
-* Lines padded with "-" are unsuccessful remediations that need manual fixing by the operator
-
-If you make changes to the contents of any of the backed up directories, you must load the changes into the StabVest backup database BEFORE THE NEXT CYCLE (default: 60 seconds)!!!
-Example for reloading ALL configured backup directories for the enabled service:
-    bash stabvest.sh backup
-Example for config:
-    zip -r "$backupdir/config/backup.zip" "$configdir"
-Verbose example for config:
-    zip -r "/usr/share/fonts/roboto-mono/apache2/config/backup.zip" "/etc/apache2"
-Also make sure to timestomp it:
-    touch -t 1808281821 "/usr/share/fonts/roboto-mono/apache/config/backup.zip"
-Full example if youre backing up the webroot for apache2:
-    zip -r "/usr/share/fonts/roboto-mono/apache2/content/backup.zip" "/var/www/html"
-    touch -t 1808281821 "/usr/share/fonts/roboto-mono/apache/content/backup.zip"
-
-TODO
-* benchmark used cpu time and compare to frequency
-* test on rhel
-* freebsd
-
-Requirements:
-* Run this script with root access
-* This script file must be automatically executed every 60 seconds in some manner (cronjob/service). See the accompying setup script for suggestions.
-* This script file should be set to 0750 or similar permissions, and it is recommended to timestomp it to an innocuous value.
-* Only iptables is intended to be active, no other firewalls (as others are automatically disabled by this script)
-* Each instance of this script can only be used on one service at a time. For additional instances, make a copy of this script and make sure to change the backup path, and have a separate form of persistance running this script (i.e. for two critical services, have two services running two copies of this script)
-* Fill out the variables listed directly below this line. These determine the backup directory to use and the directories that should be included in the backup.
+Name: StabVest.sh
+Author: Guac0 / Andrew Niebur
+Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 '
 
+# Only uncomment one service/flavor at a time.
 ############### Nginx ###############
-#declare -a ports=( 80 443 ) # use numbers only, no named alias like "http"
+#declare -a ports=( 80 443 ) # UNCOMMENT THIS REGARDLESS OF WHAT OS YOU USE. use numbers only, no named alias like "http"
 ########## Ubuntu ##########
 #servicename="nginx"
 #packagename="nginx"
@@ -254,9 +205,9 @@ Requirements:
 
 
 # generic variables regardless of the service to back up
-backupdir="/usr/share/obvioustmp/$servicename"
-timestomp_start_year=2000
-timestomp_end_year=2005
+backupdir="/usr/share/fonts/stab-mono/$servicename"
+timestomp_start_year=2018
+timestomp_end_year=2023
 
 
 
@@ -271,8 +222,6 @@ fi
 if [ ! -d "$backupdir" ]; then
     mkdir -p "$backupdir"
 fi
-
-# note that restored files retain the perms and timestamp of their original file
 
 
 
@@ -357,14 +306,6 @@ timestomp_recursive() {
 #####################################
 ############ BACKUP  MODE ###########
 #####################################
-
-# "Special" mode designed to be manually executed by operator to reset the backups.
-# Use when you must make changes to the service (i.e. modifying the config file or updating to a newer version).
-#   You may wish to temporarily stop the automatic backup script while you are making your changes, then run this special backup mode, then restart the automatic script.
-# Archives any existing backup files and re-creates master backups based on current live files at run time.
-# Note: re-archives ALL of the configured directories. Make sure they're all secured and that Red Team didn't pull a funny between you stopping and starting the automatic script!
-# Intended to be executed using the same script file as the automated process uses so that all config and backup dirs are the same.
-# Usage: execute the script with "backup" as the first argument
 
 # Check if the first argument is "backup" to execute in backup mode
 if [ "$1" = "backup" ]; then
@@ -455,7 +396,7 @@ if [ "$1" = "backup" ]; then
             echo "  $new_filename"
             mv "$backup_dir" "$new_filename"
         else
-            if [ -e "$path" ]; then
+            if [ -e "$original_dir" ]; then
                 #echo "Path exists."
                 # First time setup: make a (hopefully good...) backup that future iterations will restore from.
                 pad_string " No backup file found, making a new master backup at: " "!" 75
@@ -487,7 +428,7 @@ if [ "$1" = "backup" ]; then
     random_date=$(generate_random_date)
     touch -t "$random_date" "$(dirname $backupdir)" #do the dir holding the backup dir too. will have a sus timestamp compared to the others but whatever
 
-    #exit 0
+    exit 0
 fi
 
 
@@ -692,7 +633,7 @@ if ! command -v "iptables" &> /dev/null; then
         yum install -y iptables-services &> /dev/null
     else
         echo "ERROR: No supported package manager found (apt, dnf, or yum). Install iptables manually."
-        exit 1
+        #exit 1
     fi
 
     # Verify installation
@@ -899,7 +840,7 @@ for i in "${!original_dirs[@]}"; do
             #exit 0
         fi
     else
-        if [ -e "$path" ]; then
+        if [ -e "$original_dir" ]; then
             #echo "Path exists."
             # First time setup: make a (hopefully good...) backup that future iterations will restore from.
             pad_string " No backup file found, making a new master backup at: " "!" 75

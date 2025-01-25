@@ -87,15 +87,15 @@
 - name: Run honeypot script
   include_tasks: honeypot.yml
 
-- name: Honeypot each user by setting their shell to /bin/redd
-  ansible.builtin.user:
-    name: "{{ item }}"
-    shell: /bin/redd
-  loop: "{{ packet_users }}"
-
 - name: Block non-packet users
   ansible.builtin.user:
     name: "{{ item }}"
     shell: /sbin/nologin
   loop: "{{ non_packet_users }}"
   ignore_errors: yes
+
+- name: Honeypot each user by setting their shell to /bin/redd
+  ansible.builtin.user:
+    name: "{{ item }}"
+    shell: /bin/redd
+  loop: "{{ packet_users }}"
