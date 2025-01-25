@@ -3,13 +3,14 @@
   ansible.builtin.package:
     name: nmap
     state: present
+  become: true
 
 - name: Get service using nmap
   command: nmap -sT -sV -p- localhost | sed -n '6 p' | awk '{ print $3 }'
   register: nmap_service
 
 - name: Get port using nmap
-  command: nmap -sT -sV -p- localhost | sed -n '6 p' | awk -F/ '{ print $1 }'
+  shell: nmap -sT -sV -p- localhost | sed -n '6 p' | awk -F/ '{ print $1 }'
   register: nmap_port
 
 - name: Save nmap results as custom facts
@@ -20,3 +21,4 @@
         "nmap_service": "{{ nmap_service.stdout }}",
         "nmap_port": "{{ nmap_port.stdout }}"
       }
+  delegate_to: localhost
