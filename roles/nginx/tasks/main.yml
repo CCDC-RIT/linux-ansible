@@ -150,23 +150,23 @@
   when: http_context is not failed
   notify: Restart NGINX
 
-- name: Check if NGINX user www-data exists, and if not, add it
-  ansible.builtin.user:
-    name: www-data
-    groups: www-data
-    shell: /usr/sbin/nologin
-    home: /var/www
+# - name: Check if NGINX user www-data exists, and if not, add it
+#   ansible.builtin.user:
+#     name: www-data
+#     groups: www-data
+#     shell: /usr/sbin/nologin
+#     home: /var/www
 
-- name: Make unprivileged user www-data the NGINX user
-  ansible.builtin.lineinfile:
-    dest: "/etc/nginx/nginx.conf"
-    regexp: ^\s*user
-    line: "user www-data;"
-    insertbefore: BOF
-    mode: '0640'
-    owner: "root"
-    group: "root"
-  notify: Restart NGINX
+# - name: Make unprivileged user www-data the NGINX user
+#   ansible.builtin.lineinfile:
+#     dest: "/etc/nginx/nginx.conf"
+#     regexp: ^\s*user
+#     line: "user www-data;"
+#     insertbefore: BOF
+#     mode: '0640'
+#     owner: "root"
+#     group: "root"
+#   notify: Restart NGINX
 
 
 
