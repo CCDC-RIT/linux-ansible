@@ -78,7 +78,7 @@
     - initial
 
 # - name: Harden Kube Controller
-#   hosts: kube_controller
+#   hosts: kubemgr
 #   become: yes
 #   roles:
 #     - kube
@@ -88,7 +88,7 @@
 #     - initial
 
 - name: Deploy Falco to the Cluster
-  hosts: kube_controller 
+  hosts: kubemgr
   become: yes
   roles:
     - falco

@@ -1,0 +1,41 @@
+- name: Allow port 6443
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 6443
+    jump: ACCEPT
+
+- name: Allow port 2379
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 2379
+    jump: ACCEPT
+
+- name: Allow port 2380
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 2380
+    jump: ACCEPT
+
+- name: Allow port 10250
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 10250
+    jump: ACCEPT
+
+- name: Allow port 10257
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 10257
+    jump: ACCEPT
+
+- name: Allow port 10259
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 10259
+    jump: ACCEPT
