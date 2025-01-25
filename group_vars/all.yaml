@@ -6,7 +6,7 @@ quarantine: "/usr/share/fonts/quar-mono"
 # ansible_control_ip: "172.20.242.69"
 ansible_control_ip: "10.0.10.156"
 firewall_logging: true
-logging_ports: [9000, 9020]
+logging_ports: [1514, 1515, 1516, 55000, 9200, 443, 9000, 9020]
 
 packet_users:
   - harold
