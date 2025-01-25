@@ -21,7 +21,7 @@
 - name: Fetch the backup archive to the manager node
   fetch:
     src: "/opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
-    dest: "/opt/backups/system_backups"
+    dest: "backups/"
     flat: yes
   ignore_errors: yes
 
@@ -38,7 +38,7 @@
   delegate_to: localhost
   shell: |
     mv backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz \
-    backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
+    /opt/backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
   args:
     creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
   ignore_errors: yes
