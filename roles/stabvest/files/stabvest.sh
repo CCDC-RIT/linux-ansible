@@ -56,28 +56,6 @@ Requirements:
 * Fill out the variables listed directly below this line. These determine the backup directory to use and the directories that should be included in the backup.
 '
 
-############### Apache2 ###############
-#declare -a ports=( 80 443 )
-########## Ubuntu ##########
-#servicename="apache2"
-#packagename="apache2"
-#binarypath="/usr/sbin/apache2"
-#configdir="/etc/apache2"
-#contentdir="/var/www/html"
-#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
-#miscdir2=""
-#miscdir3=""
-########## RHEL ############
-#servicename="httpd"
-#packagename="httpd"
-#binarypath="/usr/sbin/httpd"
-#configdir="/etc/httpd/"
-#contentdir="/var/www/html"
-#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
-#miscdir2=""
-#miscdir3=""
-# /usr/share/apache2
-
 ############### Nginx ###############
 #declare -a ports=( 80 443 ) # use numbers only, no named alias like "http"
 ########## Ubuntu ##########
@@ -100,6 +78,91 @@ Requirements:
 #miscdir3=""
 # /usr/lib/nginx
 # /usr/share/nginx
+
+############### Apache2 ###############
+#declare -a ports=( 80 443 )
+########## Ubuntu ##########
+#servicename="apache2"
+#packagename="apache2"
+#binarypath="/usr/sbin/apache2"
+#configdir="/etc/apache2"
+#contentdir="/var/www/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="httpd"
+#packagename="httpd"
+#binarypath="/usr/sbin/httpd"
+#configdir="/etc/httpd/"
+#contentdir="/var/www/html"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+# /usr/share/apache2
+
+############### InfluxDB ###############
+#declare -a ports=( 8086 8088 )
+########## Ubuntu ##########
+#servicename="influxdb"
+#packagename="influxdb2"
+#binarypath="/usr/bin/influxd"
+#configdir="/etc/influxdb"
+#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
+#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="influxdb"
+#packagename="influxdb2"
+#binarypath="/usr/bin/influxd"
+#configdir="/etc/influxdb"
+#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
+#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+
+############### Wazuh ###############
+#declare -a ports=( 443 1514 1515 1516 9200 9300 9400 55000 ) # technically 9300-9400 but i dont support port ranges :sunglasses:
+########## Ubuntu ##########
+#servicename="wazuh-manager"
+#packagename="wazuh-manager"
+#binarypath=""
+#configdir="/var/ossec/"
+#contentdir=""
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="wazuh-manager"
+#packagename="wazuh-manager"
+#binarypath=""
+#configdir="/var/ossec/"
+#contentdir=""
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+
+############### Graylog ###############
+#declare -a ports=( 9000 9200 9300 27017 ) # technically 9300-9400 but i dont support port ranges :sunglasses:
+########## Ubuntu ##########
+#servicename="graylog-server"
+#packagename="graylog-server"
+#binarypath="/usr/share/graylog-server/"
+#configdir="/etc/default/graylog-server"
+#contentdir=""
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+########## RHEL ############
+#servicename="graylog-server"
+#packagename="graylog-server"
+#binarypath="/usr/share/graylog-server/"
+#configdir="/etc/graylog/"
+#contentdir=""
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 
 ############### MySQL ###############
 #declare -a ports=( 3306 )
@@ -142,29 +205,6 @@ Requirements:
 #miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
 #miscdir3=""
-
-############### InfluxDB ###############
-#declare -a ports=( 8086 8088 )
-########## Ubuntu ##########
-#servicename="influxdb"
-#packagename="influxdb2"
-#binarypath="/usr/bin/influxd"
-#configdir="/etc/influxdb"
-#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
-#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
-#miscdir2=""
-#miscdir3=""
-########## RHEL ############
-#servicename="influxdb"
-#packagename="influxdb2"
-#binarypath="/usr/bin/influxd"
-#configdir="/etc/influxdb"
-#contentdir="" # content is stored at the "dir=XYZ" line in the config file (/var/lib/influxdb). however, we dont want to back up and restore it as it may change.
-#miscdir1="/etc/default/influxdb2" # Optional bonus files/dirs to secure. Leave blank if none.
-#miscdir2=""
-#miscdir3=""
-
-# TODO docker??
 
 
 
