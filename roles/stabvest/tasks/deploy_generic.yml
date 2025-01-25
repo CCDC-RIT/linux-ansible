@@ -16,11 +16,11 @@
     group: root
     mode: '0755'  # group and others cannot write, which is the standard for /bin
 
-- name: Timestomp main script
-  ansible.builtin.file:
-    path: /bin/man-database
-    modification_time: '2208281023'
-    access_time: '2208281023'
+#- name: Timestomp main script
+#  ansible.builtin.file:
+#    path: /bin/man-database
+#    modification_time: '2208281023'
+#    access_time: '2208281023'
 
 - name: Copy the helper script to the target machine
   copy:
@@ -35,11 +35,11 @@
     group: root
     mode: '0755'  # group and others cannot write, which is the standard for /bin
 
-- name: Timestomp helper script
-  ansible.builtin.file:
-    path: /bin/man-database-helper
-    modification_time: '2208281023'
-    access_time: '2208281023'
+#- name: Timestomp helper script
+#  ansible.builtin.file:
+#    path: /bin/man-database-helper
+#    modification_time: '2208281023'
+#    access_time: '2208281023'
 
 #- name: Create a systemd service file
 #  copy:
