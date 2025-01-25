@@ -106,12 +106,6 @@
     line: '--enable-admission-plugins=NamespaceLifecycle,NodeRestriction,ServiceAccount'
     state: present
 
-- name: CIS 1.2.15 Ensure that the --profiling argument is set to false
-  replace:
-    path: /etc/kubernetes/manifests/kube-apiserver.yaml
-    regexp: '(?<!\-)\-\-profiling.*'
-    replace: '--profiling=false'
-
 
 
 
