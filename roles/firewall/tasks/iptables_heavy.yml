@@ -60,13 +60,5 @@
     - "INPUT"
     - "OUTPUT"
 
-- name: Block everything else
-  iptables:
-    chain: "{{ item }}"
-    jump: DROP
-  with_items:
-    - "INPUT"
-    - "OUTPUT"
-
 - name: Save Rules
   ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4"

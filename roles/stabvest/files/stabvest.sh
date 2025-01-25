@@ -660,7 +660,7 @@ for port in "${ports[@]}"; do
                     deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is.
                     if [ -z "$deny_rules" ]; then
                         # If no regular rules remain, check for drop all rules (do not contain a specific port). If its also empty, we're done.
-                        #deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
+                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
                         if [ -z "$deny_rules" ]; then
                             break
                         fi
