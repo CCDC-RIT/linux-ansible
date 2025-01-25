@@ -6,6 +6,33 @@
     path: /etc/systemd/coredump.conf
   register: prelim_systemd_coredump
 
+# for 1.6
+- name: "PRELIM | PATCH | Setup crypto-policy"
+  block:
+    - name: "PRELIM | PATCH | Install crypto-policies | pkgs present"
+      ansible.builtin.package:
+        name:
+          - crypto-policies
+          - crypto-policies-scripts
+        state: present
+
+    - name: "PRELIM | AUDIT | Gather system-wide crypto-policy"
+      ansible.builtin.command: 'update-crypto-policies --show'
+      changed_when: false
+      check_mode: false
+      register: prelim_system_wide_crypto_policy
+
+    - name: "PRELIM | AUDIT | Gather system-wide crypto-policy | set fact system policy"
+      ansible.builtin.set_fact:
+        current_crypto_policy: "{{ prelim_system_wide_crypto_policy.stdout.split(':')[0] }}"
+
+    - name: "PRELIM | AUDIT | Gather system-wide crypto-policy module | set fact system policy submodule"
+      when: "':' in prelim_system_wide_crypto_policy.stdout"
+      ansible.builtin.set_fact:
+        current_crypto_module: "{{ prelim_system_wide_crypto_policy.stdout.split(':')[1] }}"
+  when:
+    - rule_1_6_1
+
 # for 3.1
 - name: "PRELIM | AUDIT | Wireless adapter pre-requisites"
   block:
@@ -141,3 +168,4 @@
         prelim_min_int_uid: "{{ prelim_uid_min_id.stdout }}"
         prelim_max_int_uid: "{{ prelim_uid_max_id.stdout }}"
   when: discover_int_uid
+

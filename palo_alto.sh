@@ -121,18 +121,25 @@ initial() {
     create_service "tcp" "1514"
     create_service "tcp" "1515"
     create_service "tcp" "1516"
+    create_service "tcp" "2379-2380"
     create_service "tcp" "3268"
     create_service "tcp" "3389"
     create_service "tcp" "5555"
     create_service "tcp" "5985"
     create_service "tcp" "5986"
+    create_service "tcp" "6443"
     create_service "tcp" "8086"
     create_service "tcp" "8088"
     create_service "tcp" "9000"
     create_service "tcp" "9200"
     create_service "tcp" "9300"
     create_service "tcp" "9300-9400"
+    create_service "tcp" "10250"
+    create_service "tcp" "10256"
+    create_service "tcp" "10257"
+    create_service "tcp" "10259"
     create_service "tcp" "27017"
+    create_service "tcp" "30000-32767"
     create_service "tcp" "55000"
 
     create_service "udp" "53"
@@ -159,6 +166,7 @@ the_rules_to_end_all_rule() {
     create_rule "All-To-Wazuh-TCP" "any" "any" "any" "any" "tcp-443 tcp-1514 tcp-1515 tcp-1516 tcp-9200 tcp-9300-9400 tcp-55000" "any" "allow"
     create_rule "All-To-Wazuh-UDP" "any" "any" "any" "any" "udp-514" "any" "allow"
     create_rule "All-To-InfluxDB-TCP" "any" "any" "any" "any" "tcp-8086 tcp-8088" "any" "allow"
+    create_rule "All-To-Kubernetees-TCP" "any" "any" "any" "any" "tcp-6443 tcp-2379-2380 tcp-10250 tcp-10259 tcp-10257 tcp-10250 tcp-10256 tcp-30000-32767" "any" "allow"
 }
 
 commit_changes() {
