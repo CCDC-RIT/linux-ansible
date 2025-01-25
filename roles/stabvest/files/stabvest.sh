@@ -45,7 +45,8 @@ Full example if youre backing up the webroot for apache2:
 TODO
 * benchmark used cpu time and compare to frequency
 * test on rhel
-* get drew to break it again
+* freebsd
+* what if file is missing
 
 Requirements:
 * Run this script with root access
@@ -184,6 +185,15 @@ Requirements:
 #miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
 #miscdir3=""
+########## FreeBSD ############
+#servicename="mysql-server"
+#packagename="mysql-server"
+#binarypath="/usr/local/bin/mysqld"
+#configdir="/usr/local/etc/mysql"
+#contentdir="/tmp/atomic_spies.sql" # /var/db/mysql
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
 
 ############### PostGreSQL ###############
 #declare -a ports=( 5432 )
@@ -202,6 +212,42 @@ Requirements:
 #binarypath="/usr/pgsql-<version>/bin/"
 #configdir="/var/lib/pgsql/"
 #contentdir="/var/lib/postgresql/" # or /var/lib/postgresql/[version]/data/
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+
+############### vsftpd ###############
+#declare -a ports=( 20 21 990 )
+########## Ubuntu ##########
+#servicename="vsftpd"
+#packagename="vsftpd"
+#binarypath="/usr/sbin/vsftpd"
+#configdir="/etc/vsftpd.conf"
+#contentdir="/home/treasurer/content.txt"
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+
+############### Dovecot ###############
+#declare -a ports=( 110 143 993 995 )
+########## RHEL ##########
+#servicename="dovecot"
+#packagename="dovecot"
+#binarypath="/usr/sbin/dovecot"
+#configdir="/etc/dovecot/"
+#contentdir="" # or /var/mail/
+#miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
+#miscdir2=""
+#miscdir3=""
+
+############### PostFix ###############
+#declare -a ports=( 25 465 587 )
+########## RHEL ##########
+#servicename="postfix"
+#packagename="postfix"
+#binarypath="/usr/sbin/postfix"
+#configdir="/etc/postfix/"
+#contentdir="" # or /var/spool/postfix/
 #miscdir1="" # Optional bonus files/dirs to secure. Leave blank if none.
 #miscdir2=""
 #miscdir3=""
