@@ -1,0 +1,47 @@
+- name: register is_container
+  set_fact:
+    is_target_container: false
+
+- name: PWD for getting templates
+  set_fact:
+    ansible_dir: "{{ ansible_env.PWD }}"
+
+- name: Harden Ubuntu
+  block:
+    - name: Include ubu22 defaults
+      include_vars:
+        file: roles/harden_os/ubu22/defaults/main.yml
+
+    - name: Include ubu22 vars main.yml
+      include_vars:
+        file: roles/harden_os/ubu22/vars/main.yml  
+
+    - name: Include ubu22 vars is_container.yml
+      include_vars:
+        file: roles/harden_os/ubu22/vars/is_container.yml
+
+    - name: Include ubu22 tasks
+      include_tasks: roles/harden_os/ubu22/tasks/main.yml 
+  when: ansible_facts['os_family'] == "Debian"   
+
+- name: Harden rhel
+  block:
+    - name: Include rhel9 defaults
+      include_vars:
+        file: roles/harden_os/rhel9/defaults/main.yml
+  
+    - name: Include rhel9 vars main.yml
+      include_vars:
+        file: roles/harden_os/rhel9/vars/main.yml
+
+    - name: Include rhel9 vars is_container.yml
+      include_vars:
+        file: roles/harden_os/rhel9/vars/is_container.yml
+
+    - name: Include rhel9 vars Rocky.yml
+      include_vars:
+        file: roles/harden_os/rhel9/vars/Rocky.yml 
+
+    - name: Include rhel9 tasks
+      include_tasks: roles/harden_os/rhel9/tasks/main.yml
+  when: ansible_facts['os_family'] == "RedHat"
