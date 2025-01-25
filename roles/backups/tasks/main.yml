@@ -4,16 +4,19 @@
     path: "/var/backups/system_backups"
     state: directory
     mode: '0755'
+  ignore_errors: yes
 
 - name: Archive important directories on worker nodes
   command: >
     tar czf /var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /home /var/log /var/www
+  ignore_errors: yes
 
 - name: Fetch the backup archive to the manager node
   fetch:
     src: "/var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
     dest: "backups/"
     flat: yes
+  ignore_errors: yes
 
 - name: Ensure local backup directory exists on manager node
   delegate_to: localhost
@@ -22,6 +25,7 @@
     path: "backups"
     state: directory
     mode: '0755'
+  ignore_errors: yes
 
 - name: Move backups to a well-structured directory on manager node
   delegate_to: localhost
@@ -30,3 +34,4 @@
     backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
   args:
     creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+  ignore_errors: yes
