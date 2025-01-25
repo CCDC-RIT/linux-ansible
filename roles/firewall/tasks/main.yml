@@ -10,3 +10,11 @@
 - name: firewall
   include_tasks: iptables_logging.yml
   when: firewall_logging is true
+
+- name: kube worker
+  include_tasks: iptables_kube.yml
+  when: inventory_hostname in groups["kube"]
+
+- name: kube Manager
+  include_tasks: iptables_kubeMANAGER.yml
+  when: inventory_hostname in groups["kube-manager"]

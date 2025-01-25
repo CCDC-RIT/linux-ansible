@@ -77,15 +77,15 @@
     - nginx
     - initial
 
-- name: Harden Kube Controller
-  hosts: kube_controller
-  become: yes
-  roles:
-    - kube
-  tags:
-    - never
-    - kube
-    - initial
+# - name: Harden Kube Controller
+#   hosts: kube_controller
+#   become: yes
+#   roles:
+#     - kube
+#   tags:
+#     - never
+#     - kube
+#     - initial
 
 - name: Deploy Falco to the Cluster
   hosts: kube_controller 
