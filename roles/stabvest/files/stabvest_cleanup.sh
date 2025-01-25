@@ -1,14 +1,11 @@
 #!/bin/bash
+
 : '
 Name: StabVest_cleanup.sh
 Author: Guac0
-
-A development helper used for nuking all traces of StabVest from a system.
-Operator must know the location of all deployed StabVest files, this does not automatically search for them.
-
-TODO:
-* mode that keeps backups but deletes other files so that this can be used in comp
+Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 '
+
 #Options
 name="obvioustmp"
 servicepath="/etc/systemd/system/$name.service"

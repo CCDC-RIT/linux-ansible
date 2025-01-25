@@ -2,21 +2,8 @@
 
 : '
 Name: StabVest_Setup.sh
-Author: Guac0
-A helper program for SOAR to set up the service file on demand.
-
-You may wish to customize the following:
-* RestartSec, which controls the number of seconds between execution cycles. Default 60.
-* ExecStart, which is the path to the instance of stabvest.sh that you are using. Default "/bin/obvioustmp".
-* Various paths and parameters used to disguise this service as something normal. For example, by default this service is disguised as the fictional "obvioustmp" helper service.
-* The timestomp time, default $timestomp.
-
-Usage:
-* Deploy this script and the main stabvest script file to an innocuous location and filename on the target machine (set to 0755 or similar permissions).
-* Edit the stabvest script to have the desired backup location and service to backup.
-* Edit this script to have the correct path to the stabvest script (ExecStart)
-* Run this script with bash or similar.
-* If necessary, execution of stabvest can be paused/restarted by stopping/starting the service described in this file (default: obvioustmp).
+Author: Guac0 / Andrew Niebur
+Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 '
 
 # Make sure these have the same values as the ansible deploy script uses!
@@ -33,7 +20,6 @@ then
     exit 1
 fi
 
-# Function to generate a random time for timestomp between two given years
 generate_random_date() {
     # Generate a random year between given values
     local year=$(printf "%02d" $(( RANDOM % ($timestomp_end_year - $timestomp_start_year + 1) + $timestomp_start_year )))
@@ -47,17 +33,11 @@ generate_random_date() {
     local hour=$(printf "%02d" $(( RANDOM % 24 )))
     local minute=$(printf "%02d" $(( RANDOM % 60 )))
     local second=$(printf "%02d" $(( RANDOM % 60 )))
-    # Combine into the format for `touch -t`: [[CC]YY]MMDDhhmm[.ss]
     local random_date="${year_short}${month}${day}${hour}${minute}.${second}"
     echo "$random_date"
 }
 
-# Replaces ansible deploy if that is not available.
-# Assumes that this file is colocated with "stabvest.sh".
-# Moves this file and the main script to their deploy locations and timestomps them.
-# THIS FILE MUST BE EXECUTED BY PATH (not source) FOR MOVE TO WORK
 if [ "$1" = "local" ]; then
-    # The following commands will also change the last modify time of /bin, but that's okay. I think. TODO
     mv stabvest.sh "$deploydir/$servicename"
     chown root:root "$deploydir/$servicename"
     chmod 750 "$deploydir/$servicename"
@@ -69,7 +49,7 @@ if [ "$1" = "local" ]; then
     random_date=$(generate_random_date)
     touch -t "$random_date" "$deploydir/$servicename-helper"
 fi
-#todo sbin?
+
 # Create the systemd service file
 cat << EOF > /etc/systemd/system/$servicename.service
 [Unit]
