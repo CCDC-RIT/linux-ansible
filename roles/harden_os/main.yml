@@ -1,3 +1,6 @@
+- name: Gather ansible facts
+  ansible.builtin.package_facts:
+
 - name: register is_container
   set_fact:
     is_target_container: false
