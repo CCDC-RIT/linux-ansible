@@ -864,16 +864,23 @@ for i in "${!original_dirs[@]}"; do
             #exit 0
         fi
     else
-        # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-        pad_string " No backup file found, making a new master backup at: " "!" 75
-        echo "    $backup_dir/backup.zip"
-        if [ -d "$original_dir" ]; then
-        #echo "$file is a directory."
-            #only recurse if dir
-            zip -q -r "$backup_dir/backup.zip" "$original_dir"
+        if [ -e "$path" ]; then
+            #echo "Path exists."
+            # First time setup: make a (hopefully good...) backup that future iterations will restore from.
+            pad_string " No backup file found, making a new master backup at: " "!" 75
+            echo "    $backup_dir/backup.zip"
+            if [ -d "$original_dir" ]; then
+            #echo "$file is a directory."
+                #only recurse if dir
+                zip -q -r "$backup_dir/backup.zip" "$original_dir"
+            else
+                #echo "$file is not a directory."
+                zip -q "$backup_dir/backup.zip" "$original_dir"
+            fi
         else
-            #echo "$file is not a directory."
-            zip -q "$backup_dir/backup.zip" "$original_dir"
+            #echo "Path does not exist."
+            pad_string " Directory or file does not exist to back up, skipping. Dir: " "!" 75
+            echo "  $original_dir"
         fi
     fi
 done
