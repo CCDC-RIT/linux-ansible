@@ -17,4 +17,4 @@
 
 - name: kube Manager
   include_tasks: iptables_kubeMANAGER.yml
-  when: inventory_hostname in groups["kube-manager"]
+  when: inventory_hostname in groups["kubemgr"]
