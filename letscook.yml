@@ -36,6 +36,8 @@
     - name: Set Blueteam user
       set_fact:
         ansible_user: blueteam
+        ansible_password: "{{ blueteam_password }}"
+        ansible_sudo_password: "{{ blueteam_password }}"
 
 - name: Take Backups
   hosts: all
