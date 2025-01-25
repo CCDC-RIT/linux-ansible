@@ -28,6 +28,7 @@
   ansible.builtin.copy:
     src: "/etc/nginx/nginx.conf"
     dest: "{{ backup_dir }}"
+    remote_src: true
 
 - name: Disable server tokens
   ansible.builtin.lineinfile:
