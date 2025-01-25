@@ -594,11 +594,6 @@ if systemctl list-units --type=service --all | grep -q 'iptables.service'; then
     #echo "iptables service not available on this system (likely Ubuntu)."
 fi
 
-echo ""
-pad_string " Backed up iptables IPv4 rules to: " "!" 75
-echo "    $backupdir/iptables_rules_backup-$timestamp."
-#echo "  Backed up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp."
-echo ""
 # # Backup Old Rules ( iptables -t mangle-restore < /etc/ip_rules_old ) [for forensics and etc]
 iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
 #ip6tables-save >/etc/ip6_rules_old
@@ -625,7 +620,7 @@ for port in "${ports[@]}"; do
                     deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -E "dpt:$port|spt:$port|dports.*\b$port\b|sports.*\b$port\b") #thank you mr chatgpt for regex or whatev this is.
                     if [ -z "$deny_rules" ]; then
                         # If no regular rules remain, check for drop all rules (do not contain a specific port). If its also empty, we're done.
-                        deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
+                        #deny_rules=$(iptables -t $table -L $chain -v -n --line-numbers 2> /dev/null | grep -E "$action" | grep -Evi 'dpt:|spt:|port')
                         if [ -z "$deny_rules" ]; then
                             break
                         fi
@@ -654,7 +649,13 @@ done
 # If no rules were modified, then delete the backup as it is unneeded.
 if [ "$rules_removed" = false ]; then
     rm "$backupdir/iptables_rules_backup-$timestamp"
-    echo "  No rules were removed, iptables backup file deleted due to being redundant."
+    #echo "  No rules were removed, iptables backup file deleted due to being redundant."
+else 
+    echo ""
+    pad_string " Old iptables IPv4 rules backed up to: " "!" 75
+    echo "    $backupdir/iptables_rules_backup-$timestamp"
+    echo "  Restore them with sudo iptables-restore < $backupdir/iptables_rules_backup-$timestamp"
+    #echo "  Backed up iptables IPv4 rules to $backupdir/iptables_rules_backup-$timestamp."
 fi
 
 
@@ -736,7 +737,7 @@ for i in "${!original_dirs[@]}"; do
         unzip -q "$backup_dir/backup.zip" -d "$backup_dir/tmp"
 
         # Compare content of all files, and compare file permissions of all files
-        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(find "$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) <(find "$backup_dir/tmp$original_dir" -type f -exec stat -c "%n %A" {} \; | sort) &> /dev/null; then
+        if diff -qr "$original_dir" "$backup_dir/tmp$original_dir" &> /dev/null && diff <(find "$original_dir" -type f -exec stat -c "%A %U %G" {} \; | sort) <(find "$backup_dir/tmp$original_dir" -type f -exec stat -c "%A %U %G" {} \; | sort) &> /dev/null; then
                 echo "  Live files match the backup files. No action needed."
                 rm -rf "$backup_dir/tmp"
         else
