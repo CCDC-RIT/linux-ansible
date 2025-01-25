@@ -2,6 +2,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    #source: kubemgr
     destination_port: 10250
     jump: ACCEPT
 
@@ -9,6 +10,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    #source: kubemgr or kube workers
     destination_port: 10256
     jump: ACCEPT
 

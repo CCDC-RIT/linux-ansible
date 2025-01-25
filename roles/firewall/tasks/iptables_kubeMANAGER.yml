@@ -2,6 +2,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    #source: kubeworkers
     destination_port: 6443
     jump: ACCEPT
 
@@ -9,6 +10,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    #source: etcd servers
     destination_port: 2379
     jump: ACCEPT
 
@@ -16,6 +18,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    #source: etcd servers
     destination_port: 2380
     jump: ACCEPT
 
@@ -23,6 +26,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    #source: kubeworkers
     destination_port: 10250
     jump: ACCEPT
 
@@ -30,6 +34,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    source: 127.0.0.1
     destination_port: 10257
     jump: ACCEPT
 
@@ -37,5 +42,6 @@
   iptables:
     chain: INPUT
     protocol: tcp
+    source: 127.0.0.1
     destination_port: 10259
     jump: ACCEPT
