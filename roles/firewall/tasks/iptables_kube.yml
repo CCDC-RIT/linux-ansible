@@ -2,17 +2,25 @@
   iptables:
     chain: INPUT
     protocol: tcp
-    #source: kubemgr
     destination_port: 10250
     jump: ACCEPT
+  with_items: "{{ groups['kube'] }}"
+  loop_control:
+    loop_var: kube_ip
+  vars:
+    source: "{{ kube_ip }}"
 
 - name: Allow port 10256
   iptables:
     chain: INPUT
     protocol: tcp
-    #source: kubemgr or kube workers
     destination_port: 10256
     jump: ACCEPT
+  with_items: "{{ groups['kubemgr'] + groups['kube'] }}"
+  loop_control:
+    loop_var: kube_ip
+  vars:
+    source: "{{ kube_ip }}"
 
 - name: Allow NodePort default range
   iptables:

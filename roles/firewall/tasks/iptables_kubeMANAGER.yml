@@ -2,15 +2,20 @@
   iptables:
     chain: INPUT
     protocol: tcp
-    #source: kubeworkers
     destination_port: 6443
     jump: ACCEPT
+  with_items: "{{ groups['kube'] }}"
+  loop_control:
+    loop_var: kube_ip
+  vars:
+    source: "{{ kube_ip }}"
 
 - name: Allow port 2379
   iptables:
     chain: INPUT
     protocol: tcp
     #source: etcd servers
+    source: 127.0.0.1
     destination_port: 2379
     jump: ACCEPT
 
@@ -19,6 +24,7 @@
     chain: INPUT
     protocol: tcp
     #source: etcd servers
+    source: 127.0.0.1
     destination_port: 2380
     jump: ACCEPT
 
@@ -26,9 +32,13 @@
   iptables:
     chain: INPUT
     protocol: tcp
-    #source: kubeworkers
     destination_port: 10250
     jump: ACCEPT
+  with_items: "{{ groups['kube'] }}"
+  loop_control:
+    loop_var: kube_ip
+  vars:
+    source: "{{ kube_ip }}"
 
 - name: Allow port 10257
   iptables:
