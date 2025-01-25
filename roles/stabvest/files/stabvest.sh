@@ -396,7 +396,7 @@ if [ "$1" = "backup" ]; then
             echo "  $new_filename"
             mv "$backup_dir" "$new_filename"
         else
-            if [ -e "$path" ]; then
+            if [ -e "$original_dir" ]; then
                 #echo "Path exists."
                 # First time setup: make a (hopefully good...) backup that future iterations will restore from.
                 pad_string " No backup file found, making a new master backup at: " "!" 75
@@ -840,7 +840,7 @@ for i in "${!original_dirs[@]}"; do
             #exit 0
         fi
     else
-        if [ -e "$path" ]; then
+        if [ -e "$original_dir" ]; then
             #echo "Path exists."
             # First time setup: make a (hopefully good...) backup that future iterations will restore from.
             pad_string " No backup file found, making a new master backup at: " "!" 75
