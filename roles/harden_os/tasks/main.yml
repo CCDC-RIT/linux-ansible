@@ -5,6 +5,17 @@
   set_fact:
     is_target_container: false
 
+- name: register is_container
+  set_fact:
+    is_target_container: true
+  when: inventory_hostname in groups["kubemgr"]
+
+- name: register is_container
+  set_fact:
+    is_target_container: true
+  when: inventory_hostname in groups["kube"]
+
+
 - name: PWD for getting templates
   set_fact:
     ansible_dir: "{{ ansible_env.PWD }}/roles/harden_os/tasks"
