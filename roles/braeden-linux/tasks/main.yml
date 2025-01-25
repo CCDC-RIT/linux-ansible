@@ -10,12 +10,28 @@
     state: present
   ignore_errors: true
 
+- name: Policy Accept
+  ansible.builtin.iptables:
+    chain: "{{ item }}"
+    policy: ACCEPT
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
+
 - name: Install psutil required library with pip
   ansible.builtin.pip:
     name: psutil
     state: present
     executable: pip3
   ignore_errors: true
+
+- name: Policy Drop
+  ansible.builtin.iptables:
+    chain: "{{ item }}"
+    policy: DROP
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
 
 - name: Copy over connmon script
   ansible.builtin.copy:
