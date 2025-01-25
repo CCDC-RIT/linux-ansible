@@ -11,7 +11,7 @@
 
 - name: Filter out packet_users from users with shells
   set_fact:
-    non_packet_users: "{{ users_with_shells.stdout_lines | difference(packet_users) }}"
+    non_packet_users: "{{ users.stdout_lines | difference(packet_users) }}"
 
 - name: for each user, generate a new password using openssl and create a dict user -> password
   become: true
