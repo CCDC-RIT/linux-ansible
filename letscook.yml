@@ -10,16 +10,6 @@
     - never
     - initial
     - setup
-
-- name: Initial Run
-  hosts: all
-  become: yes
-  roles: 
-    - setup # create blue user, adds key to user, creates backup directory, installs common packages
-  tags:
-    - never
-    - initial
-    - setup
   vars_prompt:
   - name: blueteam_password
     prompt: Enter blueteam user password 
@@ -27,17 +17,6 @@
     confirm: true
     # unsafe: true # If using special characters such as { or %, uncomment this line.
     salt_size: 7
-
-# CHANGE USER TO BLUETEAM
-- name: Change user to blueteam
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Set Blueteam user
-      set_fact:
-        ansible_user: blueteam
-        ansible_password: "{{ blueteam_password }}"
-        ansible_sudo_password: "{{ blueteam_password }}"
 
 - name: Take Backups
   hosts: all
