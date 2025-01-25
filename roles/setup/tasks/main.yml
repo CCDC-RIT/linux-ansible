@@ -66,6 +66,7 @@
     line: "{{ item }}"
   with_items: "{{ build_hosts.split('\n') }}"
   when: build_hosts is defined
+  ignore_errors: true
   
 - name: Append hosts to /etc/hosts on ansible controller
   lineinfile:
