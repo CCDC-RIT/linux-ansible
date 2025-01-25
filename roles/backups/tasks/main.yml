@@ -1,4 +1,11 @@
 ---
+- name: Create /var/www directory
+  file:
+    path: /var/www
+    state: directory
+    mode: '0755'
+  ignore_errors: yes
+  
 - name: Create backup directory on worker nodes
   file:
     path: "/var/backups/system_backups"
