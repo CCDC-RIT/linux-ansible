@@ -8,7 +8,7 @@
 
 - name: Create backup directory on worker nodes
   file:
-    path: "/var/backups/system_backups"
+    path: "/opt/backups/system_backups"
     state: directory
     mode: '0755'
   ignore_errors: yes
@@ -20,8 +20,8 @@
 
 - name: Fetch the backup archive to the manager node
   fetch:
-    src: "/var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
-    dest: "backups/"
+    src: "/opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+    dest: "/opt/backups/system_backups"
     flat: yes
   ignore_errors: yes
 
