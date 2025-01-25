@@ -46,7 +46,6 @@ TODO
 * benchmark used cpu time and compare to frequency
 * test on rhel
 * freebsd
-* what if file is missing
 
 Requirements:
 * Run this script with root access
@@ -367,8 +366,6 @@ timestomp_recursive() {
 # Intended to be executed using the same script file as the automated process uses so that all config and backup dirs are the same.
 # Usage: execute the script with "backup" as the first argument
 
-# TODO THIS IS SO OUTDATED
-
 # Check if the first argument is "backup" to execute in backup mode
 if [ "$1" = "backup" ]; then
 
@@ -386,28 +383,51 @@ if [ "$1" = "backup" ]; then
     ######### MAKE THE BACKUPS ##########
     #####################################
 
-    original_dirs=(
-        "/lib/systemd/system/$servicename.service" #override?? /etc/systemd/system/apache2.service
-        "$binarypath"
-        "$configdir"
-        "$contentdir"
-    )
-    backup_dirs=(
-        "$backupdir/systemd"
-        "$backupdir/binary"
-        "$backupdir/config"
-        "$backupdir/data"
-    )
-    is_single_files=(
-        true
-        true
-        false
-        false
-    )
+    # Initialize arrays
+    original_dirs=()
+    backup_dirs=()
+
+    # Add config variables to arrays only if they are not empty
+    if [ -n "$servicename" ]; then
+        original_dirs+=("/lib/systemd/system/$servicename.service")
+        backup_dirs+=("$backupdir/systemd")
+    fi
+
+    if [ -n "$binarypath" ]; then
+        original_dirs+=("$binarypath")
+        backup_dirs+=("$backupdir/binary")
+    fi
+
+    if [ -n "$configdir" ]; then
+        original_dirs+=("$configdir")
+        backup_dirs+=("$backupdir/config")
+    fi
+
+    if [ -n "$contentdir" ]; then
+        original_dirs+=("$contentdir")
+        backup_dirs+=("$backupdir/data")
+    fi
+
+    if [ -n "$miscdir1" ]; then
+        original_dirs+=("$miscdir1")
+        backup_dirs+=("$backupdir/misc1")
+    fi
+
+    if [ -n "$miscdir2" ]; then
+        original_dirs+=("$miscdir2")
+        backup_dirs+=("$backupdir/misc2")
+    fi
+
+    if [ -n "$miscdir3" ]; then
+        original_dirs+=("$miscdir3")
+        backup_dirs+=("$backupdir/misc3")
+    fi
 
     # Ensure arrays are the same length
     if [ "${#original_dirs[@]}" -ne "${#backup_dirs[@]}" ]; then
         echo ""
+        #echo "     Service Integrity     "
+        pad_string " Service Integrity " "=" 75
         pad_string " ERROR: Mismatched backup and original directory arrays. " "-" 75
         #echo "ERROR: Mismatched backup and original directory arrays."
         exit 1
@@ -416,42 +436,57 @@ if [ "$1" = "backup" ]; then
     for i in "${!original_dirs[@]}"; do
         original_dir="${original_dirs[$i]}"
         backup_dir="${backup_dirs[$i]}"
-        is_single_file="${is_single_files[$i]}"
         
         echo ""
-        pad_string " Service Backup - $(basename "$backup_dir") " "=" 75
-        #echo "     Service Backup - $(basename "$backup_dir")     "
+        pad_string " Service Integrity - $(basename "$backup_dir") " "=" 75
+        #echo "     Service Integrity - $(basename "$backup_dir")     "
         #echo ""
 
-        # Create the backup directory if it doesn't exist (should NOT exist...)
+        # Create the backup directory if it doesn't exist
         if [ ! -d "$backup_dir" ]; then
             mkdir -p "$backup_dir"
-        else
+        fi
+        # Check if the original "bad" backup file already exists.
+        if [ -f "$backup_dir/backup.zip" ]; then
             # If backup already exists, "archive" them by appending the current time to their name.
             new_filename="$backup_dir-$timestamp"
             #echo "  Found existing backup - archiving existing files to $new_filename..."
             pad_string " Found existing backup - archiving existing files to: " "!" 75
-            echo "    $new_filename"
+            echo "  $new_filename"
             mv "$backup_dir" "$new_filename"
-        fi
-        # First time setup: make a (hopefully good...) backup that future iterations will restore from.
-        echo "  Making a new master backup at $backup_dir/backup.zip..."
-        if [ -d "$original_dir" ]; then
-            #echo "$file is a directory."
-            #only recurse if dir
-            zip -q -r "$backup_dir/backup.zip" "$original_dir"
         else
-            #echo "$file is not a directory."
-            zip -q "$backup_dir/backup.zip" "$original_dir"
+            if [ -e "$path" ]; then
+                #echo "Path exists."
+                # First time setup: make a (hopefully good...) backup that future iterations will restore from.
+                pad_string " No backup file found, making a new master backup at: " "!" 75
+                echo "    $backup_dir/backup.zip"
+                if [ -d "$original_dir" ]; then
+                #echo "$file is a directory."
+                    #only recurse if dir
+                    zip -q -r "$backup_dir/backup.zip" "$original_dir"
+                else
+                    #echo "$file is not a directory."
+                    zip -q "$backup_dir/backup.zip" "$original_dir"
+                fi
+            else
+                #echo "Path does not exist."
+                pad_string " Directory or file does not exist to back up, skipping. Dir: " "!" 75
+                echo "  $original_dir"
+            fi
         fi
     done
 
     # Do not perform regular script operations after all backups are finished.
     echo ""
-    echo "  Backup is finished to $backupdir. Script exiting..."
+    pad_string " Backup is finished to $backupdir. Script exiting " "=" 75
+    echo ""
+    echo ""
+    echo ""
     # Recursively timestomp backup dir before #exiting. Make sure to do this after all prints are done for the log file...
     timestomp_recursive "$backupdir"
-    touch -t "$timestomp" "$(dirname $backupdir)" #do the dir holding the backup dir too
+    random_date=$(generate_random_date)
+    touch -t "$random_date" "$(dirname $backupdir)" #do the dir holding the backup dir too. will have a sus timestamp compared to the others but whatever
+
     #exit 0
 fi
 
