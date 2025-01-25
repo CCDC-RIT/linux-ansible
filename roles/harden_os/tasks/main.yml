@@ -7,7 +7,7 @@
 
 - name: PWD for getting templates
   set_fact:
-    ansible_dir: "{{ ansible_env.PWD }}"
+    ansible_dir: "{{ ansible_env.PWD }}/roles/harden_os/tasks"
 
 - name: Harden Ubuntu
   block:

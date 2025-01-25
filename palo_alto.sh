@@ -123,6 +123,7 @@ initial() {
     create_service "tcp" "1516"
     create_service "tcp" "3268"
     create_service "tcp" "3389"
+    create_service "tcp" "5555"
     create_service "tcp" "5985"
     create_service "tcp" "5986"
     create_service "tcp" "8086"
@@ -141,6 +142,7 @@ initial() {
     create_service "udp" "389"
     create_service "udp" "445"
     create_service "udp" "464"
+    create_service "udp" "514"
     create_service "udp" "636"
     create_service "udp" "3389"
 }
@@ -153,8 +155,9 @@ the_rules_to_end_all_rule() {
     create_rule "All-To-RDP-UDP" "any" "any" "any" "any" "udp-3389" "any" "allow"
     create_rule "All-To-Web-TCP" "any" "any" "any" "any" "tcp-80 tcp-443" "any" "allow"
     create_rule "All-To-SSH-TCP" "any" "any" "any" "any" "tcp-22" "any" "allow"
-    create_rule "All-To-Graylog-TCP" "any" "any" "any" "any" "tcp-9000 tcp-9200 tcp-9300 tcp-27017" "any" "allow"
+    create_rule "All-To-Graylog-TCP" "any" "any" "any" "any" "tcp-5555" "tcp-9000 tcp-9200 tcp-9300 tcp-27017" "any" "allow"
     create_rule "All-To-Wazuh-TCP" "any" "any" "any" "any" "tcp-443 tcp-1514 tcp-1515 tcp-1516 tcp-9200 tcp-9300-9400 tcp-55000" "any" "allow"
+    create_rule "All-To-Wazuh-UDP" "any" "any" "any" "any" "udp-514" "any" "allow"
     create_rule "All-To-InfluxDB-TCP" "any" "any" "any" "any" "tcp-8086 tcp-8088" "any" "allow"
 }
 

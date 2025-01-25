@@ -29,7 +29,7 @@
 
 - name: "Include OS specific variables"
   ansible.builtin.include_vars:
-    file: "{{ ansible_dir }}/tasks/rhel9/vars/{{ ansible_facts.distribution }}.yml"
+    file: "{{ ansible_dir }}/rhel9/vars/{{ ansible_facts.distribution }}.yml"
 
 - name: "CIS Benchmark | prelims"
   ansible.builtin.import_tasks:

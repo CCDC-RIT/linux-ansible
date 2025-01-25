@@ -6,7 +6,7 @@
 
 - name: POST | Update sysctl
   ansible.builtin.template:
-    src: "{{ ansible_dir }}/tasks/rhel9/templates/etc/sysctl.d/{{ item }}.j2"
+    src: "{{ ansible_dir }}/rhel9/templates/etc/sysctl.d/{{ item }}.j2"
     dest: "/etc/sysctl.d/{{ item }}"
     owner: root
     group: root
