@@ -14,25 +14,26 @@ ri(){
 
     if [ -n "$i" ]; then
         case "$i" in 
-            cd*) # handle cd command
+            cd*)
                 directory="${i#cd }"
                 cd "$directory" 2>/dev/null
                 log
                 ;;
-            whoami*) # handle whoami
+            whoami*)
                 echo "root"
                 log
                 ;;
-            touch*) # handle touch
+            touch*)
                 echo "Too many open files"
+                echo "Why are you touching my banana?"
                 log
                 ;;
-            sed*) # handle sed
+            sed*)
                 echo "sed: Couldn't re-allocate memory"
                 log
                 ;;
-            cat*) # handle cat
-                echo "cat: No such file or directory"
+            cat*)
+                echo "cat: No such file or directory ~meow"
                 log
                 ;;
             vim*)
@@ -117,18 +118,35 @@ ri(){
                 ;;
             id*)
                 ID=($(id | sed "s/$USER/root/g"))
-			    echo "uid=0(root) gid=0(root) groups=0(root)"
+                echo "uid=0(root) gid=0(root) groups=0(root)"
                 log
                 ;;
-			echo*)
-			    $i 2>/dev/null
+            echo*)
+                $i 2>/dev/null
 
                 log
-				;;
-			exit*)
+                ;;
+            chmod*)
+                echo "chmod: arg1 arg2 banana"
+                log
+                ;;
+            chown*)
+                echo "chown: arg1 arg2 banana"
+                log
+                ;;
+            grep*)
+                echo "grep: banana"
+                echo "Why are you grepping my banana?"
+                log
+                ;;
+            which*)
+                echo "which: a person who wields magic"
+                log
+                ;;
+            exit*)
                 log
                 exit
-				;;
+                ;;
             *)
                 echo "-bash: command not found: $i"
                 logger "Honey - $i" 
