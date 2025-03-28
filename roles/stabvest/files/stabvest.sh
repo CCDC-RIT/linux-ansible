@@ -603,18 +603,23 @@ declare -a tables=("filter" "nat" "mangle" "raw" "security") # NAT cant have dro
 declare -a chains=("INPUT" "OUTPUT" "PREROUTING" "POSTROUTING" "FORWARD") # not all tables have these chains but i cant think of a better way to do this. Also cant do custom chains unless you know the name
 declare -a actions=("DROP" "REDIRECT" "TARPIT")
 
-ufw disable
-systemctl stop ufw
-systemctl disable ufw
-systemctl mask ufw
-
+if systemctl is-active --quiet ufw; then
+    ufw disable
+    systemctl stop ufw
+    systemctl disable ufw
+    systemctl mask ufw
+fi
 # RHEL
-systemctl stop firewalld
-systemctl disable firewalld
-systemctl mask firewalld
-systemctl stop nftables
-systemctl disable nftables
-systemctl mask nftables
+if systemctl is-active --quiet firewalld; then
+    systemctl stop firewalld
+    systemctl disable firewalld
+    systemctl mask firewalld
+fi
+if systemctl is-active --quiet nftables; then
+    systemctl stop nftables
+    systemctl disable nftables
+    systemctl mask nftables
+fi
 
 # Enable iptables if its not running on this system
 # Install iptables if not found
@@ -637,7 +642,7 @@ if ! command -v "iptables" &> /dev/null; then
     fi
 
     # Verify installation
-    if command_exists iptables; then
+    if command -v "iptables" &> /dev/null; then
         echo "iptables was successfully installed."
     else
         pad_string " ERROR: Package manager not supported. Install iptables-services manually. " "-" 75
