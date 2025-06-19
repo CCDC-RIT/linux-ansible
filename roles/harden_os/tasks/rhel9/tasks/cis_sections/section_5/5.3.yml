@@ -455,6 +455,7 @@
         - allow_authselect_updates
         - disruption_high
   when: rule_5_3_3_2_4
+  ignore_errors: yes
 
 - name: "5.3.3.2.5 | PATCH | Ensure password maximum sequential characters is is configured"
   block: 
@@ -550,6 +551,7 @@
         - allow_authselect_updates
         - disruption_high
   when: rule_5_3_3_2_6
+  ignore_errors: yes
 
 - name: "5.3.3.2.7 | PATCH | Ensure password quality is enforced for the root user"
   ansible.builtin.template:

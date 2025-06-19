@@ -19,9 +19,9 @@ mkdir -p /opt/audit
 mkdir -p /opt/inventory
 
 # make ssh key
-ssh-keygen -t ed25519 -C "ansible@rit-ccdc" -f /opt/id_ed25519 -N ""
-cp /opt/id_ed25519 $HOME/.ssh/id_ed25519
-cp /opt/id_ed25519.pub $HOME/.ssh/id_ed25519.pub
+ssh-keygen -t ed25519 -C "ansible@rit-ccdc" -f /opt/inventory -N ""
+cp /opt/inventory $HOME/.ssh/inventory
+cp /opt/inventory.pub $HOME/.ssh/inventory.pub
 
 # Install required ansible collections
 ansible-galaxy collection install kubernetes.core

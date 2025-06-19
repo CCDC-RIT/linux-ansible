@@ -22,10 +22,10 @@
   vars:
     source: "{{ kube_ip }}"
 
-- name: Allow NodePort default range
-  iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_ports: 
-     - "30000:32767"
-    jump: ACCEPT
+# - name: Allow NodePort default range
+#   iptables:
+#     chain: INPUT
+#     protocol: tcp
+#     destination_ports: 
+#      - "30000:32767"
+#     jump: ACCEPT

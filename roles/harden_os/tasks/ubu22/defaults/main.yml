@@ -1,6 +1,6 @@
 ---
 
-is_target_container: true
+# is_target_container: true
 
 ### Section 1         #             Package mgmt, Additional Process Hardening, Command Line Warning Banners, and GNOME Display Manager
 section_1: true       #             
@@ -11,7 +11,7 @@ section_1_7: true     #
 ## section 1.2        # 1.2         Package mgmt
 rule_1_2_1_1: true    # 1.2.1         Ensure GPG keys are configured
 rule_1_2_1_2: true    # 1.2.1         Ensure package manager repositories are configured
-rule_1_2_2_1: true    # 1.2.2         Ensure updates, patches, and aditional security software are installed
+rule_1_2_2_1: false    # 1.2.2         Ensure updates, patches, and aditional security software are installed
 ## section 1.5        # 1.5         Configure additional Process Hardening
 rule_1_5_1: true      # 1.5.1         Ensure address space layout randomization is enabled | set active kernel parameter
 rule_1_5_2: true      # 1.5.2         Ensure ptrace_scope is restricted
@@ -149,7 +149,7 @@ rule_7_1_7: true      # 7.1.7         Ensure permissions on /etc/gshadow are con
 rule_7_1_8: true      # 7.1.8         Ensure permissions on /etc/gshadow- are configured
 rule_7_1_9: true      # 7.1.9         Ensure permissions on /etc/shells are configured
 rule_7_1_10: true     # 7.1.10        Ensure permissions on /etc/security/opasswd are configured
-rule_7_1_11: true     # 7.1.11        Ensure world writable files and directories are secured
+rule_7_1_11: false     # 7.1.11        Ensure world writable files and directories are secured
 rule_7_1_12: true     # 7.1.12        Ensure no files or directories without an owner and a group exist
 rule_7_1_13: true     # 7.1.13        Ensure SUID and SGID files are reviewed
 ## section 7.2        # 7.2         Local User and Group Settings
@@ -197,7 +197,7 @@ ipv6_required: false
 # if it is set to `true`, Network Manager is installed during the "prelim" section of
 # the role. If set to `false`, Network Manager is not installed. Bear in mind that without
 # it, ensuring that wireless interfaces are disabled will not be possible!
-install_network_manager: true
+install_network_manager: false
 
 # for section 3.3
 # this variable governs the mechanism of how the disabling of IPV6 is carried out.

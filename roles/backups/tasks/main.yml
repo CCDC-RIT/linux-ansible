@@ -15,7 +15,7 @@
 
 - name: Archive important directories on worker nodes
   command: >
-    tar czf /var/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /home /var/www
+    tar czf /opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /bin /usr/lib/systemd
   ignore_errors: yes
 
 - name: Fetch the backup archive to the manager node

@@ -15,10 +15,9 @@
     is_target_container: true
   when: inventory_hostname in groups["kube"]
 
-
 - name: PWD for getting templates
   set_fact:
-    ansible_dir: "{{ ansible_env.PWD }}/roles/harden_os/tasks"
+    ansible_dir: "{{ role_path }}/tasks"
 
 - name: Harden Ubuntu
   block:
@@ -29,10 +28,6 @@
     - name: Include ubu22 vars main.yml
       include_vars:
         file: ubu22/vars/main.yml  
-
-    - name: Include ubu22 vars is_container.yml
-      include_vars:
-        file: ubu22/vars/is_container.yml
 
     - name: Include ubu22 tasks
       include_tasks: ubu22/tasks/main.yml 
@@ -47,14 +42,6 @@
     - name: Include rhel9 vars main.yml
       include_vars:
         file: rhel9/vars/main.yml
-
-    - name: Include rhel9 vars is_container.yml
-      include_vars:
-        file: rhel9/vars/is_container.yml
-
-    - name: Include rhel9 vars Rocky.yml
-      include_vars:
-        file: rhel9/vars/Rocky.yml 
 
     - name: Include rhel9 tasks
       include_tasks: rhel9/tasks/main.yml

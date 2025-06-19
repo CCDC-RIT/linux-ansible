@@ -1,4 +1,12 @@
 ---
+- name: Policy Accept
+  ansible.builtin.iptables:
+    chain: "{{ item }}"
+    policy: ACCEPT
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
+
 - name: Install Common Packages
   package:
     name: "{{ item }}"
@@ -15,3 +23,46 @@
     name: "*"
     state: latest
   when: ansible_facts['os_family'] == 'Debian'
+
+###### External Audit Scripts #######
+- name: Copy Linpeas
+  copy:
+    src: linpeas.sh
+    dest: /tmp/linpeas.sh
+
+- name: Run Linpeas Audit
+  shell: curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > linpeas.txt
+  # ignore_errors: true
+
+- name: Run Lynis Audit
+  shell: lynis audit system > lynis.txt
+  # ignore_errors: true
+
+- name: Store Audit Script Output onto local Ansible Box
+  fetch:
+    src: audit_log.txt
+    dest: /opt/inventory/{{ ansible_hostname }}-audit.txt
+    flat: yes
+    fail_on_missing: no
+
+- name: Store Linpeas Output onto local Ansible Box
+  fetch:
+    src: linpeas.txt
+    dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
+    flat: yes
+    fail_on_missing: no
+    
+- name: Store Lynis Output onto local Ansible Box
+  fetch:
+    src: lynis.txt
+    dest: /opt/inventory/{{ ansible_hostname }}-lynis.txt
+    flat: yes
+    fail_on_missing: no
+
+- name: Policy Drop
+  ansible.builtin.iptables:
+    chain: "{{ item }}"
+    policy: DROP
+  with_items:
+    - "INPUT"
+    - "OUTPUT"

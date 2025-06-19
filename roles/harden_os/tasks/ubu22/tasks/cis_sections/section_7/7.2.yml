@@ -154,6 +154,7 @@
       loop: "{{ prelim_interactive_users_home.stdout_lines }}"
       when: not system_is_container
   when: rule_7_2_9
+  ignore_errors: yes
 
 - name: "7.2.10 | PATCH | Ensure local interactive user dot files access is configured"
   block:

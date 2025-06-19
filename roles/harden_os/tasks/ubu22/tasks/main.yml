@@ -20,7 +20,7 @@
 
     - name: Load variable for container
       ansible.builtin.include_vars:
-        file: "{{ container_vars_file }}"
+        file: "{{ ansible_dir }}/ubu22/vars/{{ container_vars_file }}"
 
     - name: Output if discovered is a container
       when: system_is_container
@@ -60,9 +60,9 @@
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
 
-- name: ClamAV
-  ansible.builtin.import_tasks: 
-    file: clamav.yml
+# - name: ClamAV
+#   ansible.builtin.import_tasks: 
+#     file: clamav.yml
 
 - name: SSH
   ansible.builtin.import_tasks:

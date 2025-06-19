@@ -32,6 +32,7 @@
         current_crypto_module: "{{ prelim_system_wide_crypto_policy.stdout.split(':')[1] }}"
   when:
     - rule_1_6_1
+  ignore_errors: true
 
 # for 3.1
 - name: "PRELIM | AUDIT | Wireless adapter pre-requisites"

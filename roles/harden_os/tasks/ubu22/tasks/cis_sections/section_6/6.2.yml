@@ -145,3 +145,4 @@
         - "/var/log/sssd*"
         - "/var/log/SSSD*"
   when: rule_6_2_2_1
+  ignore_errors: yes

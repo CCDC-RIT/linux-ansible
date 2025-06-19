@@ -1,3 +1,11 @@
+- name: Policy Accept
+  ansible.builtin.iptables:
+    chain: "{{ item }}"
+    policy: ACCEPT
+  with_items:
+    - "INPUT"
+    - "OUTPUT"
+
 - name: Make sure python3 is installed
   ansible.builtin.package:
     name: python3
@@ -9,14 +17,6 @@
     name: python3-pip
     state: present
   ignore_errors: true
-
-- name: Policy Accept
-  ansible.builtin.iptables:
-    chain: "{{ item }}"
-    policy: ACCEPT
-  with_items:
-    - "INPUT"
-    - "OUTPUT"
 
 - name: Install psutil required library with pip
   ansible.builtin.pip:

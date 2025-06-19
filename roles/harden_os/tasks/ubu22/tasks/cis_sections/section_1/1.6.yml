@@ -4,7 +4,7 @@
   block:
     - name: "1.6.1 | motd"
       ansible.builtin.template:
-        src: etc/motd.j2
+        src: "{{ ansible_dir }}/ubu22/templates/etc/motd.j2"
         dest: /etc/motd
         owner: root
         group: root
@@ -26,7 +26,7 @@
   block:
     - name: "1.6.2 | issue"
       ansible.builtin.template:
-        src: etc/issue.j2
+        src: "{{ ansible_dir }}/ubu22/templates/etc/issue.j2"
         dest: /etc/issue
         owner: root
         group: root
@@ -41,7 +41,7 @@
   block:
     - name: "1.6.3 | issue.net"
       ansible.builtin.template:
-        src: etc/issue.net.j2
+        src: "{{ ansible_dir }}/ubu22/templates/etc/issue.net.j2"
         dest: /etc/issue.net
         owner: root
         group: root

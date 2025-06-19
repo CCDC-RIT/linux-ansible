@@ -93,8 +93,11 @@
 - name: lsof Remote
   shell: lsof -i
   register: lsofremote
+  ignore_errors: true
+
 - name: LOG lsof Remote
   shell: bash /root/append_to_audit_log.sh "lsof Remote" "{{ lsofremote.stdout }}"
+  ignore_errors: true
 
 - name: Potential Rootkit Signs
   shell: |
@@ -159,8 +162,11 @@
     lsof | grep -i -E 'raw|pcap' || true
     lsof | grep /proc/sys/net/ipv4 || true
   register: lsofraw
+  ignore_errors: true
+
 - name: LOG lsof Raw
   shell: bash /root/append_to_audit_log.sh "lsof Raw" "{{ lsofraw.stdout }}"
+  ignore_errors: true
 
 - name: Processes
   shell: ps af && /root/append_to_audit_log.sh "Processes" ""
@@ -205,12 +211,15 @@
     cat /etc/sudoers | grep !AUTH
     find / -type f \( -name ".rhosts" -o -name ".shosts" -o -name "hosts.equiv" \) -exec ls -l {} \;
   register: authbackdoors
+  ignore_errors: true
+
 - name: LOG Auth Backdoors
   shell: bash /root/append_to_audit_log.sh "Auth Backdoors" "{{ authbackdoors.stdout }}"
 
 - name: Check /etc/sudoers.d directory for any non-commented out line
-  shell: cat /etc/sudoers.d/* | grep -v '^#'
+  shell: "grep -r -v '^#' /etc/sudoers.d"
   register: sudoersd
+  ignore_errors: true
 
 - name: LOG /etc/sudoers.d directory for any non-commented out line
   shell: bash /root/append_to_audit_log.sh "Check /etc/sudoers.d directory for any non-commented out line" "{{ sudoersd.stdout }}"
@@ -223,12 +232,18 @@
     find /bin -xdev -mmin -10 -ls 2> /dev/null
     find /sbin -xdev -mmin -10 -ls 2> /dev/null
   register: filesmodified
+  ignore_errors: true
+
 - name: LOG Files Modified in Last 10 Min
   shell: bash /root/append_to_audit_log.sh "Files Modified in Last 10 Min" "{{ filesmodified.stdout }}"
+  ignore_errors: true
 
 - name: Repositories
   shell: cat /etc/apt/sources.list | grep -Ev "##|#"
   register: repos
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: true
+
 - name: LOG Repositories
   shell: bash /root/append_to_audit_log.sh "Repositories" "{{ repos.stdout }}"
 
@@ -254,38 +269,3 @@
 #   register: malware
 # - name: LOG Malware? (Debian)
 #   shell: bash /root/append_to_audit_log.sh "Malware? (Debian)" "{{ malware.stdout }}"
-
-###### External Audit Scripts #######
-- name: Copy Linpeas
-  copy:
-    src: linpeas.sh
-    dest: /tmp/linpeas.sh
-
-- name: Run Linpeas Audit
-  shell: curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > linpeas.txt
-  # ignore_errors: true
-
-- name: Run Lynis Audit
-  shell: lynis audit system > lynis.txt
-  # ignore_errors: true
-
-- name: Store Audit Script Output onto local Ansible Box
-  fetch:
-    src: audit_log.txt
-    dest: /opt/inventory/{{ ansible_hostname }}-audit.txt
-    flat: yes
-    fail_on_missing: no
-
-- name: Store Linpeas Output onto local Ansible Box
-  fetch:
-    src: linpeas.txt
-    dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
-    flat: yes
-    fail_on_missing: no
-    
-- name: Store Lynis Output onto local Ansible Box
-  fetch:
-    src: lynis.txt
-    dest: /opt/inventory/{{ ansible_hostname }}-lynis.txt
-    flat: yes
-    fail_on_missing: no

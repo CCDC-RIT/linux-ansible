@@ -35,6 +35,7 @@
   when:
     - rule_1_8_2
     - gui
+  ignore_errors: yes
 
 - name: "1.8.3 | PATCH | Ensure GDM disable-user-list option is enabled"
   ansible.builtin.lineinfile:

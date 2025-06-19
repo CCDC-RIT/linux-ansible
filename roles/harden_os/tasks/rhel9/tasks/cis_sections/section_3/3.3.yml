@@ -104,6 +104,7 @@
            msg: "Control being set via Handler 'update sysctl' which writes to /etc/sysctl.d/60-netipv6_sysctl.conf"
           when: ipv6_required
   when: rule_3_3_6
+  ignore_errors: yes
 
 - name: "3.3.7 | PATCH | Ensure Reverse Path Filtering is enabled"
   block:

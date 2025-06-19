@@ -12,7 +12,7 @@ rule_1_2_1_1: true    # 1.2.1.1       Ensure GPG keys are configured
 rule_1_2_1_2: true    # 1.2.1.2       Ensure gpgcheck is globally activated
 rule_1_2_1_3: true    # 1.2.1.3       Ensure repo_gpgcheck is globally activated
 rule_1_2_1_4: true    # 1.2.1.4       Ensure package manager repositories are configured
-rule_1_2_2_1: true    # 1.2.2.1       Ensure updates, patches, and additional security software are installed
+rule_1_2_2_1: false    # 1.2.2.1       Ensure updates, patches, and additional security software are installed
 ## section 1.5        # 1.5         Additional Process Hardening
 rule_1_5_1: true      # 1.5.1         Ensure address space layout randomization (ASLR) is enabled
 rule_1_5_2: true      # 1.5.2         Ensure ptrace_scope is restricted
@@ -91,7 +91,7 @@ section_5: true       #
 section_5_1: true     #
 section_5_2: true     #
 section_5_3: true     #
-section_5_4: true     #
+section_5_4: false     #
 ## section 5.1        # 5.1         Configure SSH Server
 rule_5_1_1: true      # 5.1.1         Ensure permissions on /etc/ssh/sshd_config are configured
 rule_5_1_2: true      # 5.1.2         Ensure permissions on SSH private host key files are configured
@@ -169,7 +169,7 @@ rule_5_4_3_2: true    # 5.4.3.2       Ensure default user shell timeout is confi
 rule_5_4_3_3: true    # 5.4.3.3       Ensure default user umask is configured
 
 ### Section 6         #             Logging and Auditing
-section_6: true       #
+section_6: false       #
 section_6_1: true     #
 section_6_2: true     #
 section_6_3: true     #
@@ -240,7 +240,7 @@ rule_6_3_4_9: true    # 6.3.4.9       Ensure audit tools owner is configured
 rule_6_3_4_10: true   # 6.3.4.10      Ensure audit tools group owner is configured
 
 ### Section 7         #             System Maintenance
-section_7: true       #
+section_7: false       #
 section_7_1: true     #
 section_7_2: true     #
 ## section 7.1        # 7.1         System File Permissions
@@ -254,7 +254,7 @@ rule_7_1_7: true      # 7.1.7         Ensure permissions on /etc/gshadow are con
 rule_7_1_8: true      # 7.1.8         Ensure permissions on /etc/gshadow- are configured
 rule_7_1_9: true      # 7.1.9         Ensure permissions on /etc/shells are configured
 rule_7_1_10: true     # 7.1.10        Ensure permissions on /etc/security/opasswd are configured
-rule_7_1_11: true     # 7.1.11        Ensure world writable files and directories are secured
+rule_7_1_11: false     # 7.1.11        Ensure world writable files and directories are secured
 rule_7_1_12: true     # 7.1.12        Ensure no files or directories without an owner and a group exist
 rule_7_1_13: true     # 7.1.13        Ensure SUID and SGID files are reviewed
 ## section 7.2        # 7.2         Local User and Group Settings
@@ -661,7 +661,7 @@ rsyslog_ansiblemanaged: true
 # this variable governs if 'rsyslog' service should be automatically configured to forward messages to a
 # remote log server. If set to 'false', the configuration of the 'omfwd' plugin, used to provide forwarding
 # over UDP or TCP, will not be performed.
-remote_log_server: false
+# remote_log_server: false
 # this variable configures the value of the 'target' parameter to be configured when enabling
 # forwarding syslog messages to a remote log server, thus configuring the actual FQDN/IP address of the
 # destination server. For this value to be reflected in the configuration, the variable which enables the
