@@ -10,6 +10,16 @@
     - never
     - initial
     - setup
+
+- name: Initial Run
+  hosts: all
+  become: yes
+  roles: 
+    - setup # create blue user, adds key to user, creates backup directory, installs common packages
+  tags:
+    - never
+    - initial
+    - setup
   vars_prompt:
   - name: blueteam_password
     prompt: Enter blueteam user password 
