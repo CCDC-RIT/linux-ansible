@@ -1,0 +1,15 @@
+all:
+  hosts:
+    192.168.1.71:
+      shortname: ubuntu
+      host_type: server
+      ssh_port: 22
+    192.168.1.73:
+      shortname: rocky
+      host_type: server
+      ssh_port: 22
+
+  vars:
+    ssh_port: 22
+    wazuh_manager_ip: 
+    ansible_control_ip:
