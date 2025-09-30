@@ -1,4 +1,9 @@
 ---
+
+- name: Gather facts for localhost
+  ansible.builtin.setup:
+  delegate_to: localhost
+
 - name: Add blueteam user
   ansible.builtin.user: 
     name: blueteam
@@ -10,24 +15,52 @@
   ansible.builtin.group:
     name: blueteam
     state: present
+ 
+- name: Add blueteam user to admin groups (RedHat)
+  ansible.builtin.user:
+    name: blueteam
+    groups: '{{ item }}'
+    append: yes
+  with_items:
+    - "wheel"
+    - "adm"
+    - "blueteam"
+  when: ansible_os_family == "RedHat"
 
-- name: Add blueteam user to admin groups
+- name: Add blueteam user to admin groups (Debian)
   ansible.builtin.user:
     name: blueteam
     groups: '{{ item }}'
     append: yes
   with_items:
     - "sudo"
-    - "wheel"
     - "adm"
     - "blueteam"
-  ignore_errors: yes
+  when: ansible_os_family == "Debian"
+
+# - name: Make sure inventory directory exists
+#   ansible.builtin.file:
+#     path: /opt/inventory
+#     state: directory
+#     mode: '0755'
+
+# - name: Make sure key file is there
+#   ansible.builtin.file:
+#     path: /opt/inventory/id_ed25519.pub
+#     state: touch #TODO: make this "file" fr
+#     mode: '0755'
+
+- name: Generate SSH key on Ansible controller
+  command: "ssh-keygen -t ed25519 -f {{ ansible_env.HOME }}/.ssh/id_ed25519 -N \"\" -q"
+  args:
+    creates: '{{ ansible_env.HOME }}/.ssh/id_ed25519'
+  delegate_to: localhost
 
 - name: Add key to blueteam user
   ansible.posix.authorized_key:
     user: blueteam
     state: present
-    key: "{{ lookup('file', '/opt/inventory/id_ed25519.pub') }}"
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_ed25519.pub') }}"
 
 - name: Create backup directory
   ansible.builtin.file:
