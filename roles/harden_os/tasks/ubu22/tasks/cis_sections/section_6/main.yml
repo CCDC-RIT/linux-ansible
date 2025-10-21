@@ -1,5 +1,0 @@
----
-- name: "SECTION | 6.2 | Configure: systemd-journald service, Logfiles"
-  ansible.builtin.import_tasks:
-    file: 6.2.yml
-  when: section_6_2
