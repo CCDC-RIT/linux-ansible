@@ -1,199 +1,329 @@
-#call each sections main here
-#have this get executed by the main playbook
+---
 
-#reinstall core services (pam, ssh, etc.)
+- name: "HARDEN_OS UBUNTU | Enable ASLR"
+  ansible.posix.sysctl:
+    name: kernel.randomize_va_space
+    value: '2'
+    state: present
+    sysctl_file: /etc/sysctl.d/98_kernel.conf
+    reload: true
+    sysctl_set: true
+    ignore_errors: true
 
-- name: Gather ansible facts
-  ansible.builtin.package_facts:
+- name: "HARDEN_OS UBUNTU | Restrict ptrace_scope"
+  ansible.posix.sysctl:
+    name: kernel.yama.ptrace_scope
+    value: '1'
+    state: present
+    sysctl_file: /etc/sysctl.d/98_kernel.conf
+    reload: true
+    sysctl_set: true
+    ignoreerrors: true
 
-- name: Check OS version and family
-  ansible.builtin.fail:
-    msg: "This role can only be run against Ubuntu 22. {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }} is not supported."
-  when: ansible_facts.distribution != 'Ubuntu'
-
-# we need to set something up a register earlier in our playbook that this can read to know if it is a kube node or a container
-- name: Setup rules if container
+- name: "HARDEN_OS UBUNTU | Ensure core dumps are restricted"
   block:
-    - name: Discover and set container variable if required
-      ansible.builtin.set_fact:
-        system_is_container: true
+    - name: "kernel sysctl"
+      ansible.posix.sysctl:
+        name: fs.suid_dumpable
+        value: '0'
+        state: present
+        sysctl_file: /etc/sysctl.d/98_kernel.conf
+        reload: true
+        sysctl_set: true
+        ignoreerrors: true
 
-    - name: Load variable for container
-      ansible.builtin.include_vars:
-        file: "{{ ansible_dir }}/ubu22/vars/{{ container_vars_file }}"
+    - name: "security limits"
+      ansible.builtin.copy:
+        src: 99_zero_core.conf
+        dest: /etc/security/limits.d/99_zero_core.conf
+        owner: root
+        group: root
+        mode: 'go-wx'
+        backup: yes
 
-    - name: Output if discovered is a container
-      when: system_is_container
-      ansible.builtin.debug:
-        msg: system has been discovered as a container
-  when: is_target_container
+    - name: "Replace sysctl.conf with ours"
+      ansible.builtin.copy:
+        src: sysctl.conf
+        dest: /etc/sysctl.conf
+        owner: root
+        group: root
+        mode: 'go-wx'
+        backup: yes
 
-- name: "CIS Benchmark | prelims"
-  ansible.builtin.import_tasks:
-    file: prelim.yml
+    - name: "Replace coredump.conf with ours"
+      ansible.builtin.copy:
+        src: coredump.conf
+        dest: /etc/systemd/coredump.conf
+        owner: root
+        group: root
+        mode: 'go-wx'
+        backup: yes
 
-- name: "CIS Benchmark | section 1"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_1/main.yml
-  when: section_1
+- name: "HARDEN_OS UBUNTU | Ensure prelink is not installed"
+  block:
+    - name: "Restore binaries to normal"
+      ansible.builtin.command: prelink -ua
+      changed_when: false
+      failed_when: false
 
-- name: "CIS Benchmark | section 3"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_3/main.yml
-  when: section_3
+    - name: "Remove prelink package"
+      ansible.builtin.package:
+        name: prelink
+        state: absent
+        purge: false
 
-- name: "CIS Benchmark | section 5"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_5/main.yml
-  when: section_5
 
-- name: "CIS Benchmark | section 6"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_6/main.yml
-  when: section_6
+- name: "HARDEN_OS UBUNTU | Disable Automatic Error Reporting"
+  block:
+    - name: "Disable Apport"
+      ansible.builtin.copy:
+        src: apport
+        dest: /etc/default/apport
+        line: enabled=0
+        owner: root
+        group: root
+        mode: 'go-wx'
 
-- name: "CIS Benchmark | section 7"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_7/main.yml
-  when: section_7
+    - name: "Remove Apport package"
+      ansible.builtin.package:
+        name: apport
+        state: absent
+        purge: false
 
-- name: Flush handlers
-  ansible.builtin.meta: flush_handlers
 
-# - name: ClamAV
-#   ansible.builtin.import_tasks: 
-#     file: clamav.yml
 
-- name: SSH
-  ansible.builtin.import_tasks:
-    file: ssh.yml
+- name: "HARDEN_OS UBUNTU | Configure MOTD"
+  block:
+    - name: "Set MOTD message"
+      ansible.builtin.template:
+        src: motd
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
 
-- name: Update_Initramfs
-  ansible.builtin.command: update-initramfs -u
-  changed_when: true
-  ignore_errors: yes
+    - name: "Disable dynamic_motd/pam_motd.so"
+      ansible.builtin.copy:
+        src: sshd
+        dest: /etc/pam.d/sshd
 
-- name: Grub update
-  ansible.builtin.command: update-grub
-  changed_when: true
-  failed_when: false
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Configure local login warning banner"
+  block:
+    - name: "Set local MOTD in /etc/issue"
+      ansible.builtin.lineinfile:
+        path: /etc/issue
+        insertafter: '.'
+        line: ' \n This system is for AUTHORIZED use only! Violators will be prosecuted under the fullest extent of the law. '
+        backup: yes
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
 
-- name: Reload systemctl
-  ansible.builtin.systemd:
-    daemon_reload: true
-  ignore_errors: yes
+    - name: "Divert /etc/issue with dpkg"
+      community.general.dpkg_divert:
+        path: /etc/issue
 
-- name: Update dconf
-  ansible.builtin.command: dconf update
-  changed_when: true
-  failed_when: false
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Configure remote login warning banner"
+  block:
+    - name: "Set remote MOTD in /etc/issue"
+      ansible.builtin.lineinfile:
+        path: /etc/issue.net
+        insertafter: '.'
+        line: ' \n This system is for AUTHORIZED use only! Violators will be prosecuted under the fullest extent of the law. '
+        backup: yes
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
 
-- name: Restart postfix
-  ansible.builtin.service:
-    name: postfix
-    state: restarted
-  ignore_errors: yes
+    - name: "Divert /etc/issue.net with dpkg"
+      community.general.dpkg_divert:
+        path: /etc/issue.net
 
-- name: Restart journald
-  ansible.builtin.systemd:
-    name: systemd-journald
-    state: restarted
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Make root own /etc/motd"
+  ansible.builtin.file:
+    path: /etc/motd
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
 
-- name: Restart exim4
-  ansible.builtin.systemd:
-    name: exim4
-    state: restarted
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Make root own /etc/issue"
+  ansible.builtin.file:
+    path: /etc/issue
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
 
-- name: Restart firewalld
-  ansible.builtin.systemd:
-    name: firewalld.service
-    state: restarted
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Make root own /etc/issue.net"
+  ansible.builtin.file:
+    path: /etc/issue.net
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
 
-- name: Restart fail2ban
-  ansible.builtin.systemd:
-    name: fail2ban.service
-    state: restarted
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Ensure GDM is removed"
+  ansible.builtin.package:
+    name: gdm3
+    state: absent
 
-- name: Restart sshd
-  ansible.builtin.systemd:
-    name: sshd.service
-    state: restarted
-  ignore_errors: yes
+- name: HARDEN_OS UBUNTU | Discover dconf systemdb
+  ansible.builtin.shell: grep system-db /etc/dconf/profile/user | cut -d ':' -f2
+  changed_when: false
+  failed_when: prelim_dconf_system_db.rc not in [ 0, 1 ]
+  register: prelim_dconf_system_db
 
-- name: Restart clamav-daemon
-  ansible.builtin.systemd:
-    name: clamav-daemon.service
-    state: restarted
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Configure GDM login banner"
+  block:
+    - name: "Make directory"
+      ansible.builtin.file:
+        path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d"
+        owner: root
+        group: root
+        mode: 'go-w'
+        state: directory
 
-- name: Restart auditd
-  ansible.builtin.command: service auditd restart  # noqa command-instead-of-module
-  changed_when: true
-  when: discovered_audit_rules_updated is defined
-  ignore_errors: yes
+    - name: "Banner settings"
+      ansible.builtin.lineinfile:
+        path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-login-screen"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        insertafter: "{{ item.insertafter }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      loop:
+        - { regexp: "\\[org\\/gnome\\/login-screen\\]", line: "[org/gnome/login-screen]", insertafter: EOF }
+        - { regexp: "banner-message-enable", line: "banner-message-enable=true", insertafter: "\\[org\\/gnome\\/login-screen\\]" }
+        - { regexp: "banner-message-text", line: "banner-message-text=This system is for AUTHORIZED use only! Violators will be prosecuted under the fullest extent of the law.", insertafter: "banner-message-enable" }
+  ignore_errors: true
 
-- name: Reload ufw
-  community.general.ufw:
-    state: reloaded
-  ignore_errors: yes
+- name: "HARDEN_OS UBUNTU | Enable GDM disable-user-list option"
+  block:
+    - name: "Make dconf directories"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: root
+        group: root
+        mode: 'go-w'
+        state: directory
+      loop:
+        - /etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d
+        - /etc/dconf/profile
 
-- name: Pam_auth_update_pwunix
-  ansible.builtin.command: pam-auth-update --enable pam_unix
-  changed_when: true
-  ignore_errors: yes
+    - name: "HARDEN_OS UBUNTU | disable-user-list setting login-screen"
+      ansible.builtin.lineinfile:
+        path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-login-screen"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        insertafter: "{{ item.insertafter }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      loop:
+        - { regexp: "\\[org\\/gnome\\/login-screen\\]", line: "[org/gnome/login-screen]", insertafter: EOF }
+        - { regexp: "disable-user-list", line: "disable-user-list=true", insertafter: "\\[org\\/gnome\\/login-screen\\]" }
 
-- name: Pam_auth_update_pwfaillock
-  ansible.builtin.command: pam-auth-update --enable faillock
-  changed_when: true
-  ignore_errors: yes
-
-- name: Pam_auth_update_pwfaillock_notify
-  ansible.builtin.command: pam-auth-update --enable faillock_notify
-  changed_when: true
-  ignore_errors: yes
-
-- name: Pam_auth_update_pwquality
-  ansible.builtin.command: pam-auth-update --enable pwquality
-  changed_when: true
-  ignore_errors: yes
-
-- name: Pam_auth_update_pwhistory
-  ansible.builtin.command: pam-auth-update --enable pwhistory
-  changed_when: true
-  ignore_errors: yes
-
-- name: Flush ipv4 route table
-  ansible.posix.sysctl:
-    name: net.ipv4.route.flush
-    value: '1'
-    sysctl_set: true
-  when: ansible_facts.virtualization_type != "docker"
-  ignore_errors: yes
-
-- name: Flush ipv6 route table
-  ansible.posix.sysctl:
-    name: net.ipv6.route.flush
-    value: '1'
-    sysctl_set: true
+    - name: "HARDEN_OS UBUNTU | disable-user-list setting profile"
+      ansible.builtin.lineinfile:
+        path: "/etc/dconf/profile/{{ prelim_dconf_system_db.stdout }}"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        insertafter: "{{ item.insertafter }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      loop:
+        - { regexp: "^user-db:user", line: "user-db:user", insertafter: EOF }
+        - { regexp: "^system-db:{{ prelim_dconf_system_db.stdout }}", line: "system-db:{{ prelim_dconf_system_db.stdout }}", insertafter: "user-db:user" }
+        - regexp: "^file-db:/usr/share/gdm/greeter-dconf-defaults"
+          line: "file-db:/usr/share/gdm/greeter-dconf-defaults"
+          insertafter: "system-db:{{ prelim_dconf_system_db.stdout }}"
   when:
-    - ansible_facts.virtualization_type != "docker"
-    - ipv6_required
-  ignore_errors: yes
+    - not prelim_dconf_system_db | length == 0
+  ignore_errors: true
 
-- name: Set_reboot_required
-  ansible.builtin.set_fact:
-    change_requires_reboot: true
-  ignore_errors: yes
 
-- name: Warn to Reboot system
-  ansible.builtin.debug:
-    msg: "Warning!! changes have been made that require a reboot to be implemented but skip reboot was set - Can affect compliance check results"
-  changed_when: true
-  when:
-  - change_requires_reboot
+- name: "HARDEN_OS UBUNTU | Disable GDM automatic mounting of removable media"
+  block:
+    - name: "Make directory"
+      ansible.builtin.file:
+        path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d"
+        owner: root
+        group: root
+        mode: 'go-w'
+        state: directory
+
+    - name: "Session script"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/ubu22/templates/etc/dconf/db/00-media-automount.j2"
+        dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-media-automount"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+  ignore_errors: true
+
+- name: "HARDEN_OS UBUNTU | Lock disabling GDM automatic mounting of removable media"
+  block:
+    - name: "Make lock directory"
+      ansible.builtin.file:
+        path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks"
+        owner: root
+        group: root
+        mode: 'go-w'
+        state: directory
+
+    - name: "Make lockfile"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/ubu22/templates/etc/dconf/db/00-automount_lock.j2"
+        dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks/00-automount_lock"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+  ignore_errors: true
+
+- name: "HARDEN_OS UBUNTU | Enable GDM autorun-never"
+  block:
+    - name: "Make directory"
+      ansible.builtin.file:
+        path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d"
+        owner: root
+        group: root
+        mode: 'go-w'
+        state: directory
+
+    - name: "Session script"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/ubu22/templates/etc/dconf/db/00-media-autorun.j2"
+        dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-media-autorun"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+  ignore_errors: true
+
+- name: "HARDEN_OS UBUNTU | Lock GDM autorun-never"
+  block:
+    - name: "Make lock directory"
+      ansible.builtin.file:
+        path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks"
+        owner: root
+        group: root
+        mode: 'go-w'
+        state: directory
+
+    - name: "Make lockfile"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/ubu22/templates/etc/dconf/db/00-autorun_lock.j2"
+        dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks/00-autorun_lock"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+  ignore_errors: true
+
+- name: "HARDEN_OS UBUNTU | Disable XDCMP"
+  ansible.builtin.lineinfile:
+    path: /etc/gdm3/custom.conf
+    regexp: "^Enable.*=.*true"
+    state: absent
+  ignore_errors: true
