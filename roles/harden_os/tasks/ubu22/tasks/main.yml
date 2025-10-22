@@ -20,7 +20,7 @@
     sysctl_set: true
     ignoreerrors: true
 
-- name: "HARDEN_OS UBUNTU | Ensure core dumps are restricted"
+- name: "HARDEN_OS UBUNTU | Ensure core dumps are restricted | Secure IPv4 and IPv6"
   block:
     - name: "kernel sysctl"
       ansible.posix.sysctl:
@@ -95,7 +95,7 @@
 - name: "HARDEN_OS UBUNTU | Configure MOTD"
   block:
     - name: "Set MOTD message"
-      ansible.builtin.template:
+      ansible.builtin.copy:
         src: motd
         dest: /etc/motd
         owner: root
@@ -327,3 +327,95 @@
     regexp: "^Enable.*=.*true"
     state: absent
   ignore_errors: true
+
+- name: "HARDEN_OS UBUNTU | Disable IPv6"
+  block:
+    - name: "Copy GRUB config"
+      ansible.builtin.copy:
+        src: grub
+        dest: /etc/default/grub
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+
+    - name: "Update GRUB"
+      ansible.builtin.command: update-grub
+
+    - name: "Set flags for sysctl disable IPv6"
+      ansible.builtin.copy:
+        src: 60-disable_ipv6.conf
+        dest: etc/sysctl.d/60-disable_ipv6.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+- name: "HARDEN_OS UBUNTU | Disable wireless interfaces"
+  block:
+    - name: "Check for network-manager tool"
+      ansible.builtin.command: nmcli radio wifi
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_wifi_status
+      when: "'network-manager' in ansible_facts.packages"
+
+    - name: "Disable wireless if network-manager installed"
+      ansible.builtin.command: nmcli radio all off
+      changed_when: discovered_nmcli_radio_off.rc == 0
+      register: discovered_nmcli_radio_off
+      when:
+        - "'network-manager' in ansible_facts.packages"
+        - "'enabled' in discovered_wifi_status.stdout"
+
+    - name: "Warn about wireless if network-manager not installed"
+      ansible.builtin.debug:
+        msg: "Warning!! You need to disable wireless interfaces manually since network-manager is not installed"
+      when: "'network-manager' not in ansible_facts.packages"
+
+- name: "HARDEN_OS UBUNTU | Remove Bluetooth"
+  ansible.builtin.package:
+    name: bluez
+    state: absent
+
+- name: HARDEN_OS UBUNTU | Modprobe stuff
+  block:
+  - name: Replace dccp.conf with ours"
+    ansible.builtin.copy:
+      src: modprobe.d/dccp.conf
+      dest: /etc/modprobe.d/dccp.conf
+      owner: root
+      group: root
+      mode: 'go-wx'
+
+  - name: Replace blacklist.conf with ours"
+    ansible.builtin.copy:
+      src: modprobe.d/blacklist.conf
+      dest: /etc/modprobe.d/blacklist.conf
+      owner: root
+      group: root
+      mode: 'go-wx'
+      backup: yes
+
+  - name: Replace tipc.conf with ours"
+    ansible.builtin.copy:
+      src: modprobe.d/tipc.conf
+      dest: /etc/modprobe.d/tipc.conf
+      owner: root
+      group: root
+      mode: 'go-wx'
+
+  - name: Replace rds.conf with ours"
+    ansible.builtin.copy:
+      src: modprobe.d/rds.conf
+      dest: /etc/modprobe.d/rds.conf
+      owner: root
+      group: root
+      mode: 'go-wx'
+
+  - name: Replace sctp.conf with ours"
+    ansible.builtin.copy:
+      src: modprobe.d/sctp.conf
+      dest: /etc/modprobe.d/sctp.conf
+      owner: root
+      group: root
+      mode: 'go-wx'
