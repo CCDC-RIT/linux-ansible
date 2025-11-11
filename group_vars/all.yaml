@@ -5,7 +5,7 @@ backup_dir: "/usr/share/fonts/roboto-mono"
 quarantine: "/usr/share/fonts/quar-mono"
 firewall_logging: false
 logging_ports: [1514, 1515, 1516, 55000, 9200, 443, 9000, 9020]
-
+siem_ip: "x.x.x.x"
 packet_users:
   - harold
   - francis

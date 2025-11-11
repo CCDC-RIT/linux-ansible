@@ -1,14 +1,6 @@
-- name: Copy over Falco helm script
-  ansible.builtin.copy:
-    src: falco_setup.sh
-    dest: /var/tmp/get_helm.sh
-    owner: blueteam
-    group: blueteam
-    mode: '0700'
-
 - name: Copy over Falco configuration file
   ansible.builtin.copy:
-    src: falco.yaml
+    src: falco_config.yaml
     dest: /etc/falco-config.yaml
     owner: root
     group: root
@@ -22,13 +14,21 @@
     group: root
     mode: '0644'
 
-- name: Load Wazuh Manager IP into Falco config file
+- name: Insert SIEM IP into Falco config file
   ansible.builtin.replace:
     path: /etc/falco-config.yaml
-    regexp: '<WAZUH_MANAGER_IP>'  # Match the placeholder
-    replace: "{{ wazuh_manager_ip }}"  # Replace with the variable value
+    regexp: '<SIEM_IP>'  # Match the placeholder
+    replace: "{{ siem_ip }}"  # Replace with the variable value in group_vars/all.yaml
 
-- name: Copy over bash script to install Helm + Falco
+- name: Copy over Falco helm script
+  ansible.builtin.copy:
+    src: falco_setup.sh
+    dest: /var/tmp/get_helm.sh
+    owner: blueteam
+    group: blueteam
+    mode: '0700'
+
+- name: Copy over bash script to install Helm + Falco (TELL BRAEDEN TO RUN MANUALLY IF FALCO ISN'T PRESENT)
   ansible.builtin.copy:
     src: falco_setup.sh
     dest: /var/tmp/install_helm.sh

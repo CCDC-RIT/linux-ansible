@@ -679,7 +679,7 @@ stdout_output:
 syslog_output:
   enabled: true
   priority: "info"
-  host: <WAZUH_MANAGER_IP>
+  host: <SIEM_IP>
   port: 514
   protocol: udp
 
