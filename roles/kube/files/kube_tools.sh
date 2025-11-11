@@ -8,5 +8,7 @@ fi
 
 /bin/bash /var/tmp/get_helm.sh
 helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo add kubeshark https://helm.kubeshark.co
 helm repo update
+helm install kubeshark kubeshark/kubeshark
 helm install --replace falco --namespace falco --create-namespace --set tty=true --set-file config=/etc/falco-config.yaml --set-file rules=/etc/falco-rules.yaml falcosecurity/falco

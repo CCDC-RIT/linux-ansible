@@ -28,10 +28,12 @@
     group: blueteam
     mode: '0700'
 
-- name: Copy over bash script to install Helm + Falco (TELL BRAEDEN TO RUN MANUALLY IF FALCO ISN'T PRESENT)
+- name: Copy over bash script to install Helm + Falco + Kubeshark
   ansible.builtin.copy:
-    src: falco_setup.sh
-    dest: /var/tmp/install_helm.sh
+    src: kube_tools.sh
+    dest: /var/tmp/kube_tools.sh
     owner: blueteam
     group: blueteam
     mode: '0700'
+
+
