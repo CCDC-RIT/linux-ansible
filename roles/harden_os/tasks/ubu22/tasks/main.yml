@@ -1,37 +1,6 @@
 ---
-
-- name: "HARDEN_OS UBUNTU | Enable ASLR"
-  ansible.posix.sysctl:
-    name: kernel.randomize_va_space
-    value: '2'
-    state: present
-    sysctl_file: /etc/sysctl.d/98_kernel.conf
-    reload: true
-    sysctl_set: true
-    ignore_errors: true
-
-- name: "HARDEN_OS UBUNTU | Restrict ptrace_scope"
-  ansible.posix.sysctl:
-    name: kernel.yama.ptrace_scope
-    value: '1'
-    state: present
-    sysctl_file: /etc/sysctl.d/98_kernel.conf
-    reload: true
-    sysctl_set: true
-    ignoreerrors: true
-
 - name: "HARDEN_OS UBUNTU | Ensure core dumps are restricted | Secure IPv4 and IPv6"
   block:
-    - name: "kernel sysctl"
-      ansible.posix.sysctl:
-        name: fs.suid_dumpable
-        value: '0'
-        state: present
-        sysctl_file: /etc/sysctl.d/98_kernel.conf
-        reload: true
-        sysctl_set: true
-        ignoreerrors: true
-
     - name: "security limits"
       ansible.builtin.copy:
         src: 99_zero_core.conf
@@ -41,6 +10,7 @@
         mode: 'go-wx'
         backup: yes
 
+      # TODO: Create exclusion for kube
     - name: "Replace sysctl.conf with ours"
       ansible.builtin.copy:
         src: sysctl.conf
@@ -89,8 +59,6 @@
         name: apport
         state: absent
         purge: false
-
-
 
 - name: "HARDEN_OS UBUNTU | Configure MOTD"
   block:
@@ -386,8 +354,9 @@
       owner: root
       group: root
       mode: 'go-wx'
+      backup: yes
 
-  - name: Replace blacklist.conf with ours"
+  - name: Replace blacklist.conf with ours
     ansible.builtin.copy:
       src: modprobe.d/blacklist.conf
       dest: /etc/modprobe.d/blacklist.conf
@@ -396,7 +365,7 @@
       mode: 'go-wx'
       backup: yes
 
-  - name: Replace tipc.conf with ours"
+  - name: Replace tipc.conf with ours
     ansible.builtin.copy:
       src: modprobe.d/tipc.conf
       dest: /etc/modprobe.d/tipc.conf
@@ -404,18 +373,148 @@
       group: root
       mode: 'go-wx'
 
-  - name: Replace rds.conf with ours"
+  - name: Replace rds.conf with ours
     ansible.builtin.copy:
       src: modprobe.d/rds.conf
       dest: /etc/modprobe.d/rds.conf
       owner: root
       group: root
       mode: 'go-wx'
+      backup: yes
 
-  - name: Replace sctp.conf with ours"
+  - name: Replace sctp.conf with ours
     ansible.builtin.copy:
       src: modprobe.d/sctp.conf
       dest: /etc/modprobe.d/sctp.conf
       owner: root
       group: root
       mode: 'go-wx'
+      backup: yes
+
+- name: HARDEN_OS UBUNTU | Sudoers
+  ansible.builtin.copy:
+    src: sudoers
+    dest: /etc/sudoers
+    owner: root
+    group: root
+    mode: 'go-wx'
+    backup: yes
+  
+# TODO: Move to audit? also write to audit file?
+- name: HARDEN_OS UBUNTU | Get non-root UID 0 accounts
+  ansible.builtin.shell: "cat /etc/passwd | awk -F: '($3 == 0 && $1 != \"root\") {i++;print $1 } END {exit i}'"
+  changed_when: false
+  check_mode: false
+  register: prelim_uid_zero_accounts_except_root
+
+- name: "HARDEN_OS UBUNTU | Remove non-root UID 0 accounts"
+  ansible.builtin.command: passwd -l {{ item }}
+  changed_when: false
+  failed_when: false
+  loop: "{{ prelim_uid_zero_accounts_except_root.stdout_lines }}"
+
+- name: "HARDEN_OS UBUNTU | Get non-root members of GID 0"
+  ansible.builtin.shell: "awk -F: '($1 !~ /^(sync|shutdown|halt|operator)/ && $4==\"0\") {print $1}' /etc/passwd | grep -wv 'root'"
+  changed_when: false
+  failed_when: discovered_gid0_members.rc not in [ 0, 1 ]
+  register: discovered_gid0_members
+
+- name: "HARDEN_OS UBUNTU | Remove non-root members of GID 0"
+  ansible.builtin.user:
+    name: "{{ item }}"
+    group: root
+    state: absent
+  loop: "{{ discovered_gid0_members.stdout_lines }}"
+  when:
+    - discovered_gid0_members is defined
+    - discovered_gid0_members.stdout | length > 0
+
+- name: "HARDEN_OS UBUNTU | Get groups with gid 0"
+  ansible.builtin.shell: "awk -F: '$3==\"0\"{print $1}' /etc/group | grep -vw 'root'"
+  changed_when: false
+  failed_when: discovered_gid0_groups.rc not in [ 0, 1 ]
+  register: discovered_gid0_groups
+
+- name: "HARDEN_OS UBUNTU | Warning if others gid 0 groups"
+  ansible.builtin.debug:
+    msg:
+      - "Warning!! You have other groups assigned to GID 0 - Please resolve"
+      - "{{ discovered_gid0_groups.stdout_lines }}"
+  when:
+    - discovered_gid0_groups is defined
+    - discovered_gid0_groups.stdout | length > 0
+
+# TODO: move to audit?
+- name: "HARDEN_OS UBUNTU | Check to see if root has a password"
+  ansible.builtin.shell: passwd -S root | grep -E "root P"
+  changed_when: false
+  failed_when: false
+  register: root_passwd_set
+
+- name: "HARDEN_OS UBUNTU | Yell that root doesn't have a password"
+  ansible.builtin.assert:
+    that: root_passwd_set.rc == 0
+    fail_msg: "You have rule 5.4.2.4 enabled this requires that you have a root password set - Please manually set a root password"
+    success_msg: "You have a root password set"
+  ignore_errors: yes
+
+# TODO: move to audit?
+- name: "HARDEN_OS UBUNTU | Ensure root PATH Integrity"
+  block:
+    - name: "HARDEN_OS UBUNTU | Get root paths"
+      ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2
+      changed_when: false
+      register: discovered_root_paths
+
+    - name: "HARDEN_OS UBUNTU | Get root paths"
+      ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2 | tr ":" "\n"
+      changed_when: false
+      register: discovered_root_paths_split
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS UBUNTU | Set fact"
+      ansible.builtin.set_fact:
+        root_paths: "{{ discovered_root_paths.stdout }}"
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS UBUNTU | Check for empty dirs"
+      ansible.builtin.shell: 'echo {{ root_paths }} | grep -q "::" && echo "roots path contains a empty directory (::)"'
+      changed_when: false
+      failed_when: discovered_root_path_empty_dir.rc not in [ 0, 1 ]
+      register: discovered_root_path_empty_dir
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS UBUNTU | Check for trailing ':'"
+      ansible.builtin.shell: "echo {{ root_paths }} | grep -q \":$\" && echo \"roots path contains a trailing (:)\""
+      changed_when: false
+      failed_when: discovered_root_path_trailing_colon.rc not in [ 0, 1 ]
+      register: discovered_root_path_trailing_colon
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS UBUNTU | Ensure root PATH Integrity | Check for owner and permissions"
+      block:
+        - name: "5.4.2.5 | Check for owner and permissions"
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          register: discovered_root_path_perms
+          loop: "{{ discovered_root_paths_split.stdout_lines }}"
+
+        - name: "HARDEN_OS UBUNTU | Set permissions"
+          ansible.builtin.file:
+            path: "{{ item.stat.path }}"
+            state: directory
+            owner: root
+            group: root
+            mode: 'go-w'
+            follow: false
+          loop: "{{ discovered_root_path_perms.results }}"
+          loop_control:
+            label: "{{ item }}"
+          when:
+            - item.stat.exists
+            - item.stat.isdir
+            - item.stat.pw_name != 'root' or item.stat.gr_name != 'root' or item.stat.woth or item.stat.wgrp
+            - (item != 'root')
+      when: discovered_root_paths is defined
+  ignore_errors: yes
+
