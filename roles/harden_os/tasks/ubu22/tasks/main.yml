@@ -1,15 +1,6 @@
 ---
-- name: "HARDEN_OS UBUNTU | Ensure core dumps are restricted | Secure IPv4 and IPv6"
+- name: "HARDEN_OS UBUNTU | Secure IPv4 and IPv6 and restrict core dumps"
   block:
-    - name: "security limits"
-      ansible.builtin.copy:
-        src: 99_zero_core.conf
-        dest: /etc/security/limits.d/99_zero_core.conf
-        owner: root
-        group: root
-        mode: 'go-wx'
-        backup: yes
-
       # TODO: Create exclusion for kube
     - name: "Replace sysctl.conf with ours"
       ansible.builtin.copy:
@@ -17,7 +8,7 @@
         dest: /etc/sysctl.conf
         owner: root
         group: root
-        mode: 'go-wx'
+        mode: 0744
         backup: yes
 
     - name: "Replace coredump.conf with ours"
@@ -26,7 +17,7 @@
         dest: /etc/systemd/coredump.conf
         owner: root
         group: root
-        mode: 'go-wx'
+        mode: 0744
         backup: yes
 
 - name: "HARDEN_OS UBUNTU | Ensure prelink is not installed"
@@ -52,7 +43,7 @@
         line: enabled=0
         owner: root
         group: root
-        mode: 'go-wx'
+        mode: 0744
 
     - name: "Remove Apport package"
       ansible.builtin.package:
@@ -68,7 +59,7 @@
         dest: /etc/motd
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
 
     - name: "Disable dynamic_motd/pam_motd.so"
       ansible.builtin.copy:
@@ -85,7 +76,7 @@
         backup: yes
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
 
     - name: "Divert /etc/issue with dpkg"
       community.general.dpkg_divert:
@@ -101,7 +92,7 @@
         backup: yes
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
 
     - name: "Divert /etc/issue.net with dpkg"
       community.general.dpkg_divert:
@@ -112,21 +103,21 @@
     path: /etc/motd
     owner: root
     group: root
-    mode: 'u-x,go-wx'
+    mode: 0644
 
 - name: "HARDEN_OS UBUNTU | Make root own /etc/issue"
   ansible.builtin.file:
     path: /etc/issue
     owner: root
     group: root
-    mode: 'u-x,go-wx'
+    mode: 0644
 
 - name: "HARDEN_OS UBUNTU | Make root own /etc/issue.net"
   ansible.builtin.file:
     path: /etc/issue.net
     owner: root
     group: root
-    mode: 'u-x,go-wx'
+    mode: 0644
 
 - name: "HARDEN_OS UBUNTU | Ensure GDM is removed"
   ansible.builtin.package:
@@ -146,7 +137,7 @@
         path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d"
         owner: root
         group: root
-        mode: 'go-w'
+        mode: 0755
         state: directory
 
     - name: "Banner settings"
@@ -158,7 +149,7 @@
         create: true
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
       loop:
         - { regexp: "\\[org\\/gnome\\/login-screen\\]", line: "[org/gnome/login-screen]", insertafter: EOF }
         - { regexp: "banner-message-enable", line: "banner-message-enable=true", insertafter: "\\[org\\/gnome\\/login-screen\\]" }
@@ -172,7 +163,7 @@
         path: "{{ item }}"
         owner: root
         group: root
-        mode: 'go-w'
+        mode: 0755
         state: directory
       loop:
         - /etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d
@@ -187,7 +178,7 @@
         create: true
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
       loop:
         - { regexp: "\\[org\\/gnome\\/login-screen\\]", line: "[org/gnome/login-screen]", insertafter: EOF }
         - { regexp: "disable-user-list", line: "disable-user-list=true", insertafter: "\\[org\\/gnome\\/login-screen\\]" }
@@ -201,7 +192,7 @@
         create: true
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
       loop:
         - { regexp: "^user-db:user", line: "user-db:user", insertafter: EOF }
         - { regexp: "^system-db:{{ prelim_dconf_system_db.stdout }}", line: "system-db:{{ prelim_dconf_system_db.stdout }}", insertafter: "user-db:user" }
@@ -220,7 +211,7 @@
         path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d"
         owner: root
         group: root
-        mode: 'go-w'
+        mode: 0755
         state: directory
 
     - name: "Session script"
@@ -229,7 +220,7 @@
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-media-automount"
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
   ignore_errors: true
 
 - name: "HARDEN_OS UBUNTU | Lock disabling GDM automatic mounting of removable media"
@@ -239,7 +230,7 @@
         path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks"
         owner: root
         group: root
-        mode: 'go-w'
+        mode: 0755
         state: directory
 
     - name: "Make lockfile"
@@ -248,7 +239,7 @@
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks/00-automount_lock"
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
   ignore_errors: true
 
 - name: "HARDEN_OS UBUNTU | Enable GDM autorun-never"
@@ -258,7 +249,7 @@
         path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d"
         owner: root
         group: root
-        mode: 'go-w'
+        mode: 0755
         state: directory
 
     - name: "Session script"
@@ -267,7 +258,7 @@
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/00-media-autorun"
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
   ignore_errors: true
 
 - name: "HARDEN_OS UBUNTU | Lock GDM autorun-never"
@@ -277,7 +268,7 @@
         path: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks"
         owner: root
         group: root
-        mode: 'go-w'
+        mode: 0755
         state: directory
 
     - name: "Make lockfile"
@@ -286,7 +277,7 @@
         dest: "/etc/dconf/db/{{ prelim_dconf_system_db.stdout }}.d/locks/00-autorun_lock"
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
   ignore_errors: true
 
 - name: "HARDEN_OS UBUNTU | Disable XDCMP"
@@ -304,18 +295,10 @@
         dest: /etc/default/grub
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0644
 
     - name: "Update GRUB"
       ansible.builtin.command: update-grub
-
-    - name: "Set flags for sysctl disable IPv6"
-      ansible.builtin.copy:
-        src: 60-disable_ipv6.conf
-        dest: etc/sysctl.d/60-disable_ipv6.conf
-        owner: root
-        group: root
-        mode: 'g-wx,o-rwx'
 
 - name: "HARDEN_OS UBUNTU | Disable wireless interfaces"
   block:
@@ -353,7 +336,7 @@
       dest: /etc/modprobe.d/dccp.conf
       owner: root
       group: root
-      mode: 'go-wx'
+      mode: 0744
       backup: yes
 
   - name: Replace blacklist.conf with ours
@@ -362,7 +345,7 @@
       dest: /etc/modprobe.d/blacklist.conf
       owner: root
       group: root
-      mode: 'go-wx'
+      mode: 0744
       backup: yes
 
   - name: Replace tipc.conf with ours
@@ -371,7 +354,7 @@
       dest: /etc/modprobe.d/tipc.conf
       owner: root
       group: root
-      mode: 'go-wx'
+      mode: 0744
 
   - name: Replace rds.conf with ours
     ansible.builtin.copy:
@@ -379,7 +362,7 @@
       dest: /etc/modprobe.d/rds.conf
       owner: root
       group: root
-      mode: 'go-wx'
+      mode: 0744
       backup: yes
 
   - name: Replace sctp.conf with ours
@@ -388,7 +371,7 @@
       dest: /etc/modprobe.d/sctp.conf
       owner: root
       group: root
-      mode: 'go-wx'
+      mode: 0744
       backup: yes
 
 - name: HARDEN_OS UBUNTU | Sudoers
@@ -397,7 +380,7 @@
     dest: /etc/sudoers
     owner: root
     group: root
-    mode: 'go-wx'
+    mode: 0744
     backup: yes
   
 # TODO: Move to audit? also write to audit file?
@@ -428,21 +411,6 @@
   when:
     - discovered_gid0_members is defined
     - discovered_gid0_members.stdout | length > 0
-
-- name: "HARDEN_OS UBUNTU | Get groups with gid 0"
-  ansible.builtin.shell: "awk -F: '$3==\"0\"{print $1}' /etc/group | grep -vw 'root'"
-  changed_when: false
-  failed_when: discovered_gid0_groups.rc not in [ 0, 1 ]
-  register: discovered_gid0_groups
-
-- name: "HARDEN_OS UBUNTU | Warning if others gid 0 groups"
-  ansible.builtin.debug:
-    msg:
-      - "Warning!! You have other groups assigned to GID 0 - Please resolve"
-      - "{{ discovered_gid0_groups.stdout_lines }}"
-  when:
-    - discovered_gid0_groups is defined
-    - discovered_gid0_groups.stdout | length > 0
 
 - name: "HARDEN_OS UBUNTU | PAM settings"
   block:
@@ -536,7 +504,7 @@
             state: directory
             owner: root
             group: root
-            mode: 'go-w'
+            mode: 0755
             follow: false
           loop: "{{ discovered_root_path_perms.results }}"
           loop_control:
@@ -548,4 +516,170 @@
             - (item != 'root')
       when: discovered_root_paths is defined
   ignore_errors: yes
+
+- name: "HARDEN_OS UBUNTU | Replace all bash profiles with with ours"
+  block:
+    - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bash_profile"
+      ansible.builtin.copy:
+        src: root_bash_profile
+        dest: /root/.bash_profile
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bashrc"
+      ansible.builtin.copy:
+        src: root_bashrc
+        dest: /root/.bashrc
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: bash_login
+        dest: /root/.bash_login
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bash_logout"
+      ansible.builtin.copy:
+        src: root_bash_logout
+        dest: /root/.bash_logout
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | USER BASH | Get Home directories"
+      ansible.builtin.shell: |
+        awk -F: '($7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd
+      changed_when: false
+      register: discovered_user_homes
+
+    - name: HARDEN_OS UBUNTU | USER BASH | Loop over home directories
+      block:
+        - name: "HARDEN_OS UBUNTU | USER BASH | Replace Bash Profile"
+          ansible.builtin.copy:
+            src: skel/bash_profile
+            dest: "{{ item }}/.bash_profile"
+            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
+            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            mode: 0744
+            backup: yes
+        
+        - name: "HARDEN_OS UBUNTU | USER BASH | Replace bashrc"
+          ansible.builtin.copy:
+            src: skel/user_bashrc
+            dest: "{{ item }}/.bashrc"
+            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
+            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            mode: 0744
+            backup: yes
+
+        - name: "HARDEN_OS UBUNTU | USER BASH | Replace bash_login"
+          ansible.builtin.copy:
+            src: skel/bash_login
+            dest: "{{ item }}/.bash_login"
+            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
+            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            mode: 0744
+            backup: yes
+        
+        - name: "HARDEN_OS UBUNTU | USER BASH | Replace bash_logout"
+          ansible.builtin.copy:
+            src: skel/bash_logout
+            dest: "{{ item }}/.bash_logout"
+            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
+            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            mode: 0744
+            backup: yes
+      loop: "{{ discovered_user_homes.stdout_lines }}"
+      when: discovered_user_homes is defined
+
+    - name: "HARDEN_OS UBUNTU | SKEL BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: skel/bash_login
+        dest: "/etc/skel/.bash_login"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | SKEL BASH | Replace bash_logout"
+      ansible.builtin.copy:
+        src: skel/bash_logout
+        dest: "/etc/skel/.bash_logout"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+    
+    - name: "HARDEN_OS UBUNTU | SKEL BASH | Replace bash_profile"
+      ansible.builtin.copy:
+        src: skel/bash_profile
+        dest: "/etc/skel/.bash_profile"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | SKEL BASH | Replace user_bashrc"
+      ansible.builtin.copy:
+        src: skel/user_bashrc
+        dest: "/etc/skel/.bashrc"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | SKEL BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: skel/profile
+        dest: "/etc/skel/.profile"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+    
+    - name: "HARDEN_OS UBUNTU | SKEL BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: skel/bash_login
+        dest: "/etc/skel/.bash_login"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+    
+    - name: "HARDEN_OS UBUNTU | Replace system_profile"
+      ansible.builtin.copy:
+        src: skel/system_profile
+        dest: "/etc/profile"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS UBUNTU | Replace bashrc.bashrc"
+      ansible.builtin.copy:
+        src: skel/bashrc.bashrc
+        dest: "/etc/bashrc.bashrc"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+- name: "HARDEN_OS UBUNTU | Replace /etc/shells with our version"
+  ansible.builtin.copy:
+    src: shells
+    dest: /etc/shell
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+
 

@@ -269,3 +269,18 @@
 #   register: malware
 # - name: LOG Malware? (Debian)
 #   shell: bash /root/append_to_audit_log.sh "Malware? (Debian)" "{{ malware.stdout }}"
+
+- name: "HARDEN_OS UBUNTU | Get groups with gid 0"
+  ansible.builtin.shell: "awk -F: '$3==\"0\"{print $1}' /etc/group | grep -vw 'root'"
+  changed_when: false
+  failed_when: discovered_gid0_groups.rc not in [ 0, 1 ]
+  register: discovered_gid0_groups
+
+- name: "HARDEN_OS UBUNTU | Warning if others gid 0 groups"
+  ansible.builtin.debug:
+    msg:
+      - "Warning!! You have other groups assigned to GID 0 - Please resolve"
+      - "{{ discovered_gid0_groups.stdout_lines }}"
+  when:
+    - discovered_gid0_groups is defined
+    - discovered_gid0_groups.stdout | length > 0

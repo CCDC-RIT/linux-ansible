@@ -2,18 +2,6 @@
 
 [[[TODO: consolidate into a sudoers file template]]]
 
-
-- name: "5.4.2.6 | PATCH | Ensure root user umask is configured"
-  ansible.builtin.lineinfile:
-    path: /root/.bash_profile
-    regexp: \s*umask
-    line: "umask 0027"
-    create: true
-    owner: root
-    group: root
-    mode: 'g-wx,o-rwx'
-  when: rule_5_4_2_6
-
 - name: "5.4.2.7 | PATCH | Ensure system accounts do not have a valid login shell"
   ansible.builtin.user:
     name: "{{ item.id }}"
@@ -39,40 +27,6 @@
     - disruption_high
     - "item.id not in prelim_interactive_usernames.stdout"
     - "'root' not in item.id"
-
-- name: "5.4.3.1 | PATCH | Ensure nologin is not listed in /etc/shells"
-  ansible.builtin.replace:
-    path: /etc/shells
-    regexp: nologin
-    replace: ""
-  when: rule_5_4_3_1
-
-- name: "5.4.3.2 | PATCH | Ensure default user shell timeout is configured"
-  ansible.builtin.blockinfile:
-    path: "{{ item.path }}"
-    state: "{{ item.state }}"
-    marker: "# {mark} - CIS benchmark - Ansible-lockdown"
-    create: true
-    mode: 'u-x,go-wx'
-    block: |
-      TMOUT=900
-      readonly TMOUT
-      export TMOUT
-  loop:
-    - { path: /etc/profile.d/tmout.sh, state: present }
-    - { path: /etc/profile, state: "{{ ('/etc/profile.d/tmout.sh' == '/etc/profile') | ternary('present', 'absent') }}" }
-  when: rule_5_4_3_2
-
-- name: "5.4.3.3 | PATCH | Ensure default user umask is configured"
-  ansible.builtin.replace:
-    path: "{{ item.path }}"
-    regexp: (?i)(umask\s+\d\d\d)
-    replace: '{{ item.line }} 027'
-  loop:
-    - { path: '/etc/profile', line: 'umask' }
-    - { path: '/etc/login.defs', line: 'UMASK' }
-  when: rule_5_4_3_3
-[[[TODO: consolidate login.defs]]]
 
 [[[TODO: consolidate]]]
 - name: "6.2.1.1.x | Ensure that /etc/systemd/journald.conf.d exists"
