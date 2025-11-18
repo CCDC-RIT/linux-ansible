@@ -3,4 +3,3 @@
 
 - name: Run Kube CIS Benchmarks Ansible
   include_tasks: cis.yml
-
