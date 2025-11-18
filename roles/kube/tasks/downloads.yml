@@ -1,3 +1,4 @@
+#Copy over files
 - name: Copy over Falco configuration file
   ansible.builtin.copy:
     src: falco_config.yaml
@@ -20,7 +21,7 @@
     regexp: '<SIEM_IP>'  # Match the placeholder
     replace: "{{ siem_ip }}"  # Replace with the variable value in group_vars/all.yaml
 
-- name: Copy over Falco helm script
+- name: Copy over Falco helm script (in case we need it)
   ansible.builtin.copy:
     src: falco_setup.sh
     dest: /home/blueteam/get_helm.sh
@@ -28,7 +29,15 @@
     group: blueteam
     mode: '0700'
 
-- name: Copy over bash script to install Helm + Falco + Kubeshark
+- name: Copy over the Helm binary
+  ansible.builtin.copy:
+    src: helm
+    dest: /usr/local/bin/helm
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy over tool installation script (just in case)
   ansible.builtin.copy:
     src: kube_tools.sh
     dest: /home/blueteam/kube_tools.sh
@@ -44,4 +53,38 @@
     group: blueteam
     mode: '0700'
 
+#K9s install if this is Debian
+- name: Copy over k9s deb file
+  ansible.builtin.copy:
+    src: k9s_amd64.deb
+    dest: /home/blueteam/k9s.deb
+    owner: blueteam
+    group: blueteam
+    mode: '0755'
+  when: ansible_os_family == 'Debian'
 
+- name: Install k9s from .deb file package
+  ansible.builtin.apt:
+    deb: /home/blueteam/k9s.deb
+  when: ansible_os_family == 'Debian'
+
+#Add and install necessary Helm repos:
+- name: Add falcosecurity helm repo
+  ansible.builtin.shell:
+    cmd: helm repo add falcosecurity https://falcosecurity.github.io/charts
+
+- name: Add Kubeshark helm repo
+  ansible.builtin.shell:
+    cmd: helm repo add kubeshark https://helm.kubeshark.co
+
+- name: Update helm repos
+  ansible.builtin.shell:
+    cmd: helm repo Update
+
+- name: Install Kubeshark
+  ansible.builtin.shell:
+    cmd: helm install kubeshark kubeshark/kubeshark
+
+- name: Install falco using our config and rulesets
+  ansible.builtin.shell:
+    cmd: helm install --replace falco --namespace falco --create-namespace --set tty=true --set-file config=/etc/falco-config.yaml --set-file rules=/etc/falco-rules.yaml falcosecurity/falco

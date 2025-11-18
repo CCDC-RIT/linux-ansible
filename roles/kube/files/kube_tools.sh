@@ -6,7 +6,6 @@ then
     exit 1
 fi
 
-/bin/bash /var/tmp/get_helm.sh
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo add kubeshark https://helm.kubeshark.co
 helm repo update
