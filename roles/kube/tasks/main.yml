@@ -1,5 +1,5 @@
 - name: Download our Kube tooling onto Control Plane box
-  include_tasks: tools.yml 
+  include_tasks: downloads.yml 
 
 - name: Run Kube CIS Benchmarks Ansible
   include_tasks: cis.yml

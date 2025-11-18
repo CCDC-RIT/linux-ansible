@@ -23,7 +23,7 @@
 - name: Copy over Falco helm script
   ansible.builtin.copy:
     src: falco_setup.sh
-    dest: /var/tmp/get_helm.sh
+    dest: /home/blueteam/get_helm.sh
     owner: blueteam
     group: blueteam
     mode: '0700'
@@ -31,7 +31,15 @@
 - name: Copy over bash script to install Helm + Falco + Kubeshark
   ansible.builtin.copy:
     src: kube_tools.sh
-    dest: /var/tmp/kube_tools.sh
+    dest: /home/blueteam/kube_tools.sh
+    owner: blueteam
+    group: blueteam
+    mode: '0700'
+
+- name: Copy over backup script
+  ansible.builtin.copy:
+    src: kube-backup.sh
+    dest: /home/blueteam/kube-backup.sh
     owner: blueteam
     group: blueteam
     mode: '0700'
