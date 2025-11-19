@@ -14,3 +14,6 @@ MaxAuthTries 3
 MaxSessions 2
 GatewayPorts no
 TCPKeepAlive yes
+Protocol 2
+Banner /etc/issue.net
+#AllowUsers blueteam
