@@ -201,11 +201,52 @@
     mode: 0744
     backup: yes
 
+- name: "HARDEN_OS RHEL | Ensure permissions on /etc/ssh/sshd_config are configured"
+  ansible.builtin.file:
+    path: "/etc/ssh/sshd_config"
+    owner: root
+    group: root
+    mode: 'go-rwx'
 
+- name: "HARDEN_OS RHEL | Ensure permissions on SSH private host key files are configured"
+  block:
+    - name: "5.1.2 | Find the SSH private host keys"
+      ansible.builtin.find:
+        paths: /etc/ssh
+        patterns: 'ssh_host_*_key'
+        recurse: true
+        file_type: any
+      register: discovered_ssh_private_host_key
 
+    - name: "HARDEN_OS RHEL | Set permissions on SSH private host keys"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        owner: root
+        group: root
+        mode: 'u-x,go-rwx'
+      loop: "{{ discovered_ssh_private_host_key.files }}"
+      loop_control:
+        label: "{{ item.path }}"
 
+- name: "HARDEN_OS RHEL | Ensure permissions on SSH public host key files are configured"
+  block:
+    - name: "HARDEN_OS RHEL | Find the SSH public host keys"
+      ansible.builtin.find:
+        paths: /etc/ssh
+        patterns: 'ssh_host_*_key.pub'
+        recurse: true
+        file_type: any
+      register: discovered_ssh_public_host_key
 
-
+    - name: "HARDEN_OS RHEL | Set permissions on SSH public host keys"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      loop: "{{ discovered_ssh_public_host_key.files }}"
+      loop_control:
+        label: "{{ item.path }}"
 
 
 
@@ -225,4 +266,22 @@
 - name: Restart journald
   ansible.builtin.systemd:
     name: systemd-journald
-    state: restarted   
+    state: restarted
+
+- name: HARDEN_OS RHEL | Secure SSHd
+  block:
+    - name: "Replace sshd_config with our version"
+      ansible.builtin.copy:
+        src: rhel/sshd_config
+        dest: /etc/ssh/sshd_config
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+
+    - name: "Restart sshd"
+      ansible.builtin.systemd:
+        name: sshd
+        enabled: yes
+        state: restarted
+        masked: no
