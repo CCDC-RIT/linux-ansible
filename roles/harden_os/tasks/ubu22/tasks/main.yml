@@ -414,6 +414,8 @@
       changed_when: false
       register: discovered_user_homes
 
+    # TODO FIX
+
     - name: HARDEN_OS UBUNTU | USER BASH | Loop over home directories
       block:
         - name: "HARDEN_OS UBUNTU | USER BASH | Replace Bash Profile"
