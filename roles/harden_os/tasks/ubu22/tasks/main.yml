@@ -410,7 +410,7 @@
 
     - name: "HARDEN_OS UBUNTU | USER BASH | Get Home directories"
       ansible.builtin.shell: |
-        awk -F: '($7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd
+        awk -F: '($1 != "root" && $7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd
       changed_when: false
       register: discovered_user_homes
 
