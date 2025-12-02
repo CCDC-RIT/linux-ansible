@@ -2,7 +2,7 @@
   block:
     - name: "Set MOTD message"
       ansible.builtin.copy:
-        src: motd
+        src: rhel/motd
         dest: /etc/motd
         owner: root
         group: root
@@ -194,7 +194,7 @@
 
 - name: HARDEN_OS RHEL | Sudoers
   ansible.builtin.copy:
-    src: sudoers
+    src: rhel/sudoers
     dest: /etc/sudoers
     owner: root
     group: root

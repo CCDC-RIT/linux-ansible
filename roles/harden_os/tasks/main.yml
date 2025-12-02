@@ -20,29 +20,9 @@
     ansible_dir: "{{ role_path }}/tasks"
 
 - name: Harden Ubuntu
-  block:
-    - name: Include ubu22 defaults
-      include_vars:
-        file: ubu22/defaults/main.yml
-
-    - name: Include ubu22 vars main.yml
-      include_vars:
-        file: ubu22/vars/main.yml  
-
-    - name: Include ubu22 tasks
-      include_tasks: ubu22/tasks/main.yml 
+  include_tasks: ubu22/tasks/main.yml 
   when: ansible_facts['os_family'] == "Debian"   
 
 - name: Harden rhel
-  block:
-    - name: Include rhel9 defaults
-      include_vars:
-        file: rhel9/defaults/main.yml
-  
-    - name: Include rhel9 vars main.yml
-      include_vars:
-        file: rhel9/vars/main.yml
-
-    - name: Include rhel9 tasks
-      include_tasks: rhel9/tasks/main.yml
+  include_tasks: rhel9/tasks/main.yml
   when: ansible_facts['os_family'] == "RedHat"
