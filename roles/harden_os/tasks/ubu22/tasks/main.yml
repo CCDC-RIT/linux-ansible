@@ -374,7 +374,7 @@
   block:
     - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bash_profile"
       ansible.builtin.copy:
-        src: ubu/root_bash_profile
+        src: ubu/skel/root_bash_profile
         dest: /root/.bash_profile
         owner: root
         group: root
@@ -383,7 +383,7 @@
 
     - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bashrc"
       ansible.builtin.copy:
-        src: ubu/root_bashrc
+        src: ubu/skel/root_bashrc
         dest: /root/.bashrc
         owner: root
         group: root
@@ -392,7 +392,7 @@
 
     - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bash_login"
       ansible.builtin.copy:
-        src: ubu/bash_login
+        src: ubu/skel/bash_login
         dest: /root/.bash_login
         owner: root
         group: root
@@ -401,7 +401,7 @@
 
     - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bash_logout"
       ansible.builtin.copy:
-        src: ubu/root_bash_logout
+        src: ubu/skel/root_bash_logout
         dest: /root/.bash_logout
         owner: root
         group: root
