@@ -10,7 +10,7 @@
 
     - name: "Disable dynamic_motd/pam_motd.so"
       ansible.builtin.copy:
-        src: sshd
+        src: rhel/sshd
         dest: /etc/pam.d/sshd
 
 - name: "HARDEN_OS RHEL | Configure local login warning banner"
@@ -71,7 +71,7 @@
       # TODO: Create exclusion for kube
     - name: "Replace sysctl.conf with ours"
       ansible.builtin.copy:
-        src: sysctl.conf
+        src: rhel/sysctl.conf
         dest: /etc/sysctl.conf
         owner: root
         group: root
@@ -80,7 +80,7 @@
 
     - name: "Replace coredump.conf with ours"
       ansible.builtin.copy:
-        src: coredump.conf
+        src: rhel/coredump.conf
         dest: /etc/systemd/coredump.conf
         owner: root
         group: root
@@ -150,7 +150,7 @@
   block:
   - name: Replace dccp.conf with ours"
     ansible.builtin.copy:
-      src: modprobe.d/dccp.conf
+      src: rhel/modprobe.d/dccp.conf
       dest: /etc/modprobe.d/dccp.conf
       owner: root
       group: root
@@ -159,7 +159,7 @@
 
   - name: Replace blacklist.conf with ours
     ansible.builtin.copy:
-      src: modprobe.d/blacklist.conf
+      src: rhel/modprobe.d/blacklist.conf
       dest: /etc/modprobe.d/blacklist.conf
       owner: root
       group: root
@@ -168,7 +168,7 @@
 
   - name: Replace tipc.conf with ours
     ansible.builtin.copy:
-      src: modprobe.d/tipc.conf
+      src: rhel/modprobe.d/tipc.conf
       dest: /etc/modprobe.d/tipc.conf
       owner: root
       group: root
@@ -176,7 +176,7 @@
 
   - name: Replace rds.conf with ours
     ansible.builtin.copy:
-      src: modprobe.d/rds.conf
+      src: rhel/modprobe.d/rds.conf
       dest: /etc/modprobe.d/rds.conf
       owner: root
       group: root
@@ -185,7 +185,7 @@
 
   - name: Replace sctp.conf with ours
     ansible.builtin.copy:
-      src: modprobe.d/sctp.conf
+      src: rhel/modprobe.d/sctp.conf
       dest: /etc/modprobe.d/sctp.conf
       owner: root
       group: root
@@ -247,6 +247,45 @@
       loop: "{{ discovered_ssh_public_host_key.files }}"
       loop_control:
         label: "{{ item.path }}"
+
+- name: "HARDEN_OS RHEL | Ensure sudo is installed"
+  ansible.builtin.package:
+    name: sudo
+    state: present
+
+- name: "HARDEN_OS RHEL | Ensure sudo commands use pty"
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    line: "Defaults    use_pty"
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: "HARDEN_OS RHEL | Ensure sudo log file exists"
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults    logfile='
+    line: 'Defaults    logfile="{{ sudolog_location }}"'
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: "HARDEN_OS RHEL | Ensure users must provide password for escalation"
+  block:
+    - name: "HARDEN_OS RHEL | Discover accounts with NOPASSWD"
+      ansible.builtin.shell: grep -Ei '(nopasswd)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
+      become: true
+      changed_when: false
+      failed_when: false
+      register: discovered_nopasswd_sudoers
+
+    - name: "HARDEN_OS RHEL | Remove nopasswd for accounts not excluded"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '^((?!#|{% for name in sudoers_exclude_nopasswd_list %}{{ name }}{% if not loop.last -%}|{%- endif -%}{% endfor %}).*)NOPASSWD(.*)'
+        replace: '\1PASSWD\2'
+        validate: '/usr/sbin/visudo -cf %s'
+      loop: "{{ discovered_nopasswd_sudoers.stdout_lines }}"
+      when: discovered_nopasswd_sudoers.stdout | length > 0
+
+
+
 
 
 

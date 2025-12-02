@@ -51,7 +51,6 @@
       ansible.builtin.copy:
         src: ubu/apport
         dest: /etc/default/apport
-        line: enabled=0
         owner: root
         group: root
         mode: 0744
