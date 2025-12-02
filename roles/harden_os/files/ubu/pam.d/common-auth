@@ -18,6 +18,7 @@ auth    required                        pam_faillock.so preauth # faillock preau
 auth    [success=2 default=ignore]      pam_unix.so try_first_pass
 auth    [success=1 default=ignore]      pam_sss.so use_first_pass # for AD/Domain Joined auth
 auth    [default=die]                   pam_faillock.so authfail # record authentication failures
+auth    sufficient                      pam_faillock.so authsucc # needs this line otherwise it doesn't work
 # here's the fallback if no module succeeds
 auth    requisite                       pam_deny.so
 # prime the stack with a positive return value if there isn't one already;

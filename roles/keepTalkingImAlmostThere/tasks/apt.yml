@@ -73,3 +73,45 @@
   ansible.builtin.copy:
     src: 20auto-upgrades
     dest: /etc/apt/apt.conf.d/20auto-upgrades
+
+# TODO: import from Cis controls stuff that should be moved here
+# - name: "5.3.1.1 | PATCH | Ensure latest version of pam is installed"
+#   ansible.builtin.package:
+#     name: pam
+#     state: latest
+#   when:
+#     - rule_5_3_1_1
+#     - ansible_facts.packages['pam'][0]['version'] is version('1.5.1-19', '<') or
+#       "'pam' not in ansible_facts.packages"
+
+# - name: "5.3.1.2 | PATCH | Ensure latest version of authselect is installed"
+#   block:
+#     - name: "5.3.1.2 | Patch"
+#       ansible.builtin.package:
+#         name: authselect
+#         state: latest
+#       register: discovered_authselect_updated
+
+#     - name: "5.3.1.2 | Patch"
+#       ansible.builtin.set_fact:
+#         authselect_update: OK
+#       when: discovered_authselect_updated.changed  # noqa no-handler
+#   when:
+#     - rule_5_3_1_2
+#     - authselect_pkg_update
+#     - ansible_facts.packages['authselect'][0]['version'] is version('1.2.6-2', '<') or
+#       "'authselect' not in ansible_facts.packages"
+
+# - name: "5.3.1.3 | PATCH | Ensure libpwquality is installed"
+#   ansible.builtin.package:
+#     name: libpwquality
+#     state: latest
+#   when:
+#     - rule_5_3_1_3
+#     - ansible_facts.packages['libpwquality'][0]['version'] is version('1.4.4-8', '<') or
+#       "'libpwquality' not in ansible_facts.packages"
+# - name: "6.2.2.1.1 | PATCH | Ensure systemd-journal-remote is installed"
+#   ansible.builtin.package:
+#     name: systemd-journal-remote
+#     state: present
+#   when: rule_6_2_2_1_1

@@ -15,9 +15,6 @@
 
 # here are the per-package modules (the "Primary" block)
 account [success=1 new_authtok_reqd=done default=ignore]        pam_unix.so
-account required                                                pam_faillock.so #enforce lockout
-account required                                                pam_access.so #enforce login access rules
-account required                                                pam_limits.so #enforce security limits
 # here's the fallback if no module succeeds
 account requisite                       pam_deny.so
 # prime the stack with a positive return value if there isn't one already;
@@ -27,4 +24,7 @@ account required                        pam_permit.so
 # and here are more per-package modules (the "Additional" block)
 account sufficient                      pam_localuser.so # if localuser, allow before trying domain
 account [default=bad success=ok user_unknown=ignore]    pam_sss.so
+account required                                                pam_faillock.so #enforce lockout
+account required                                                pam_access.so #enforce login access rules
+account required                                                pam_limits.so #enforce security limits
 # end of pam-auth-update config

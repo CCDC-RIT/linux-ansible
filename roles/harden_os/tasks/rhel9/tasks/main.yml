@@ -284,7 +284,24 @@
       loop: "{{ discovered_nopasswd_sudoers.stdout_lines }}"
       when: discovered_nopasswd_sudoers.stdout | length > 0
 
+- name: "HARDEN_OS RHEL | Ensure re-authentication for privilege escalation is not disabled globally"
+  block:
+    - name: "5.2.5"
+      ansible.builtin.shell: grep -Ei '(!authenticate)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
+      become: true
+      changed_when: false
+      failed_when: false
+      register: discovered_priv_reauth
 
+    - name: "5.2.5"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '^([^#].*)!authenticate(.*)'
+        replace: '\1authenticate\2'
+        validate: '/usr/sbin/visudo -cf %s'
+      loop: "{{ discovered_priv_reauth.stdout_lines }}"
+      when: discovered_priv_reauth.stdout | length > 0
+  when: rule_5_2_5
 
 
 
@@ -324,3 +341,68 @@
         enabled: yes
         state: restarted
         masked: no
+
+- name: "HARDEN_OS RHEL | Ensure journald service is enabled and active"
+  ansible.builtin.systemd:
+    name: systemd-journald.service
+    masked: false
+    state: started
+  when: rule_6_2_1_1
+
+- name: "HARDEN_OS RHEL | Ensure journald log file access is configured"
+  block:
+    - name: "Default file permissions"
+      ansible.builtin.file:
+        path: /usr/lib/tmpfiles.d/systemd.conf
+        mode: 0740
+
+    - name: "Check for override file"
+      ansible.builtin.stat:
+        path: /etc/tmpfiles.d/systemd.conf
+      register: discovered_tmpfile_override
+
+    - name: "If override file check for journal"
+      ansible.builtin.shell: grep -E 'z /var/log/journal/%m/system.journal \d*' /usr/lib/tmpfiles.d/systemd.conf
+      register: discovered_journald_fileperms_override
+      changed_when: false
+      failed_when: discovered_journald_fileperms_override.rc not in [ 0, 1 ]
+      when: discovered_tmpfile_override.stat.exists
+
+    - name: "Warning if override found"
+      ansible.builtin.debug:
+        msg: "Warning!! - tmpfiles override found /usr/lib/tmpfiles.d/systemd.conf affecting journald files please confirm matches site policy"
+      when:
+        - discovered_tmpfile_override.stat.exists
+        - discovered_journald_fileperms_override.stdout | length > 0
+
+- name: "HARDEN_OS RHEL | ensure /etc/systemd/journal.conf.d exists"
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+- name: "HARDEN_OS RHEL | Ensure journald log file rotation is configured"
+  block:
+    - name: "Add file"
+      ansible.builtin.template:
+        src: "rhel/rotation.conf"
+        dest: /etc/systemd/journald.conf.d/rotation.conf
+        owner: root
+        group: root
+        mode: 0740
+
+# TODO replace with a default journald
+    - name: "6.2.1.3 | comment out current entries"
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: "{{ item }}"
+        replace: '#\1'
+      loop:
+        - '^(\s*SystemMaxUse\s*=.*)'
+        - '^(\s*SystemKeepFree\s*=.*)'
+        - '^(\s*RuntimeMaxUse\s*=)'
+        - '^(\s*RuntimeKeepFree\s*=.*)'
+        - '^(\s*MaxFileSec\s*=.*)'
+  when: rule_6_2_1_3
