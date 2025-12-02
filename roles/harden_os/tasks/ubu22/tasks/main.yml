@@ -345,7 +345,7 @@
 
     - name: "HARDEN_OS UBUNTU | Ensure root PATH Integrity | Check for owner and permissions"
       block:
-        - name: "5.4.2.5 | Check for owner and permissions"
+        - name: "HARDEN_OS UBUNTU | Check for owner and permissions"
           ansible.builtin.stat:
             path: "{{ item }}"
           register: discovered_root_path_perms
@@ -401,7 +401,7 @@
 
     - name: "HARDEN_OS UBUNTU | ROOT BASH | Replace bash_logout"
       ansible.builtin.copy:
-        src: ubu/skel/root_bash_logout
+        src: ubu/skel/bash_logout
         dest: /root/.bash_logout
         owner: root
         group: root
