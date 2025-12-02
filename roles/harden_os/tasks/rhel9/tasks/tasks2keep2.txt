@@ -1,0 +1,2152 @@
+---
+
+- name: "5.1.1 | PATCH | Ensure permissions on /etc/ssh/sshd_config are configured"
+  ansible.builtin.file:
+    path: "/etc/ssh/sshd_config"
+    owner: root
+    group: root
+    mode: 'go-rwx'
+  when: rule_5_1_1
+
+- name: "5.1.2 | PATCH | Ensure permissions on SSH private host key files are configured"
+  block:
+    - name: "5.1.2 | Find the SSH private host keys"
+      ansible.builtin.find:
+        paths: /etc/ssh
+        patterns: 'ssh_host_*_key'
+        recurse: true
+        file_type: any
+      register: discovered_ssh_private_host_key
+
+    - name: "5.1.2 | Set permissions on SSH private host keys"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        owner: root
+        group: root
+        mode: 'u-x,go-rwx'
+      loop: "{{ discovered_ssh_private_host_key.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+  when: rule_5_1_2
+
+- name: "5.1.3 | PATCH | Ensure permissions on SSH public host key files are configured"
+  block:
+    - name: "5.1.3 | Find the SSH public host keys"
+      ansible.builtin.find:
+        paths: /etc/ssh
+        patterns: 'ssh_host_*_key.pub'
+        recurse: true
+        file_type: any
+      register: discovered_ssh_public_host_key
+
+    - name: "5.1.3 | Set permissions on SSH public host keys"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      loop: "{{ discovered_ssh_public_host_key.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+  when: rule_5_1_3
+
+- name: "5.1.4 | PATCH | Ensure sshd Ciphers are configured"
+  block:
+    - name: "5.1.4 | Add submodule exclusion"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod.j2"
+        dest: /etc/crypto-policies/policies/modules/NO-SSHWEAKCIPHERS.pmod
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: "5.1.4 | submodule to crypto policy modules"
+      ansible.builtin.set_fact:
+        crypto_policy_module: "{{ crypto_policy_module + ':NO-SSHWEAKCIPHERS' }}"
+  when:
+    - rule_5_1_4
+    - "'NO-SSHWEAKCIPHERS' not in crypto_policy_module"
+
+- name: "5.1.5 | PATCH | Ensure sshd KexAlgorithms is configured"
+  block:
+    - name: "5.1.5 | Add submodule exclusion"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/crypto-policies/policies/modules/NO-SHA1.pmod.j2"
+        dest: /etc/crypto-policies/policies/modules/NO-SHA1.pmod
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: "5.1.5 | submodule to crypto policy modules"
+      ansible.builtin.set_fact:
+        crypto_policy_module: "{{ crypto_policy_module + ':NO-SHA1' }}"
+  when:
+    - rule_5_1_5
+    - "'NO-SHA1' not in crypto_policy_module"
+
+- name: "5.1.6 | PATCH | Ensure sshd KexAlgorithms is configured"
+  block:
+    - name: "5.1.6 | Add submodule exclusion"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/crypto-policies/policies/modules/NO-SSHWEAKMACS.pmod.j2"
+        dest: /etc/crypto-policies/policies/modules/NO-SSHWEAKMACS.pmod
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: "5.1.6 | submodule to crypto policy modules"
+      ansible.builtin.set_fact:
+        crypto_policy_module: "{{ crypto_policy_module + ':' + 'NO-SSHWEAKMACS' }}"
+  when:
+    - rule_5_1_6
+    - "'NO-SSHWEAKMACS' not in crypto_policy_module"
+
+- name: "5.1.7 | PATCH | Ensure sshd access is configured"
+  block:
+    - name: "5.1.7 | Add line to sshd_config for allowusers"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: "^AllowUsers"
+        line: "AllowUsers {{ sshd_allowusers }}"
+        validate: sshd -t -f %s
+      when: "sshd_allowusers | length > 0"
+
+    - name: "5.1.7 | Add line to sshd_config for allowgroups"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: "^AllowGroups"
+        line: "AllowGroups {{ sshd_allowgroups }}"
+        validate: sshd -t -f %s
+      when: "sshd_allowgroups | length > 0"
+
+    - name: "5.1.7 | Add line to sshd_config for denyusers"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: "^DenyUsers"
+        line: "DenyUsers {{ sshd_denyusers }}"
+        validate: sshd -t -f %s
+      when: "sshd_denyusers | length > 0"
+
+    - name: "5.1.7 | Add line to sshd_config for denygroups"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: "^DenyGroups"
+        line: "DenyGroups {{ sshd_denygroups }}"
+        validate: sshd -t -f %s
+      when: "sshd_denygroups | length > 0" 
+  when: rule_5_1_7
+
+- name: "5.1.8 | PATCH | Ensure sshd Banner is configured"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: '^Banner'
+    line: 'Banner /etc/issue.net'
+  when: rule_5_1_8
+
+- name: "5.1.9 | PATCH | Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured"
+  block:
+    - name: "5.1.9 | Add line in sshd_config for ClientAliveInterval"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: '^ClientAliveInterval'
+        line: "ClientAliveInterval {{ sshd_clientaliveinterval }}"
+        validate: sshd -t -f %s
+
+    - name: "5.1.9 | PATCH | Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured | Ensure SSH ClientAliveCountMax set to <= 3"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: '^ClientAliveCountMax'
+        line: "ClientAliveCountMax {{ sshd_clientalivecountmax }}"
+        validate: sshd -t -f %s
+  when: rule_5_1_9
+
+- name: "5.1.10 | PATCH | Ensure sshd DisableForwarding is enabled"
+  block:
+    - name: "5.1.10 | config file"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: ^(#|)\s*DisableForwarding
+        line: 'DisableForwarding yes'
+        validate: sshd -t -f %s
+
+    - name: "5.1.10 | override"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config.d/50-redhat.conf
+        regexp: ^(?i)(#|)\s*X11Forwarding
+        line: 'X11Forwarding {{ sshd_x11forwarding }}'
+        validate: sshd -t -f %s
+  when: rule_5_1_10
+
+- name: "5.1.11 | PATCH | Ensure sshd GSSAPIAuthentication is disabled"
+  block:
+    - name: "5.1.11 | redhat file"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config.d/50-redhat.conf
+        regexp: ^(?i)(#|)\s*GSSAPIAuthentication
+        line: GSSAPIAuthentication no
+        validate: sshd -t -f %s
+
+    - name: "5.1.11 | ssh config"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: ^(?i)(#|)\s*GSSAPIAuthentication
+        line: GSSAPIAuthentication no
+        validate: sshd -t -f %s
+  when: rule_5_1_11
+
+- name: "5.1.12 | PATCH | Ensure sshd HostbasedAuthentication is disabled"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*HostbasedAuthentication
+    line: 'HostbasedAuthentication no'
+    validate: sshd -t -f %s
+  when: rule_5_1_12  
+
+- name: "5.1.13 | PATCH | Ensure sshd IgnoreRhosts is enabled"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*IgnoreRhosts
+    line: 'IgnoreRhosts yes'
+    validate: sshd -t -f %s
+  when: rule_5_1_13 
+
+- name: "5.1.14 | PATCH | Ensure sshd LoginGraceTime is set to one minute or less"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*LoginGraceTime
+    line: "LoginGraceTime {{ sshd_logingracetime }}"
+    validate: sshd -t -f %s
+  when: rule_5_1_14    
+
+- name: "5.1.15 | PATCH | Ensure sshd LogLevel is appropriate"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*LogLevel
+    line: 'LogLevel {{ ssh_loglevel }}'
+    validate: sshd -t -f %s
+  when: rule_5_1_15    
+
+- name: "5.1.16 | PATCH | Ensure sshd MaxAuthTries is set to 4 or less"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: '^(#)?MaxAuthTries \d'
+    line: 'MaxAuthTries {{ ssh_maxauthtries }}'
+    validate: sshd -t -f %s
+  when: rule_5_1_16    
+
+- name: "5.1.17 | PATCH | Ensure sshd MaxStartups is configured"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*MaxStartups
+    line: 'MaxStartups {{ ssh_maxstartups }}'
+    validate: sshd -t -f %s
+  when: rule_5_1_17    
+
+- name: "5.1.18 | PATCH | Ensure SSH MaxSessions is set to 10 or less"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*MaxSessions
+    line: 'MaxSessions {{ ssh_maxsessions }}'
+    validate: sshd -t -f %s
+  when: rule_5_1_18    
+
+- name: "5.1.19 | PATCH | Ensure sshd PermitEmptyPasswords is disabled"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*PermitEmptyPasswords
+    line: 'PermitEmptyPasswords no'
+    validate: sshd -t -f %s
+  when: rule_5_1_19    
+
+- name: "5.1.20 | PATCH | Ensure sshd PermitRootLogin is disabled"
+  block:
+    - name: "5.1.20 | config file"
+      ansible.builtin.lineinfile:
+        path: "{{ sshd_config_file }}"
+        regexp: ^(?i)(#|)\s*PermitRootLogin
+        line: 'PermitRootLogin no'
+        validate: sshd -t -f %s
+
+    - name: "5.1.20 | override file"
+      ansible.builtin.file:
+        path: /etc/ssh/sshd_config.d/01-permitrootlogin.conf
+        state: absent
+  when: rule_5_1_20      
+
+- name: "5.1.21 | PATCH | Ensure sshd PermitUserEnvironment is disabled"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*PermitUserEnvironment
+    line: 'PermitUserEnvironment no'
+    validate: sshd -t -f %s
+  when: rule_5_1_21    
+
+- name: "5.1.22 | PATCH | Ensure SSH PAM is enabled"
+  ansible.builtin.lineinfile:
+    path: "{{ sshd_config_file }}"
+    regexp: ^(?i)(#|)\s*UsePAM
+    line: 'UsePAM yes'
+    validate: sshd -t -f %s
+  when: rule_5_1_22 
+
+---
+
+- name: "5.2.1 | PATCH | Ensure sudo is installed"
+  ansible.builtin.package:
+    name: sudo
+    state: present
+  when: rule_5_2_1
+
+- name: "5.2.2 | PATCH | Ensure sudo commands use pty"
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    line: "Defaults    use_pty"
+    validate: '/usr/sbin/visudo -cf %s'
+  when: rule_5_2_2
+
+- name: "5.2.3 | PATCH | Ensure sudo log file exists"
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults    logfile='
+    line: 'Defaults    logfile="{{ sudolog_location }}"'
+    validate: '/usr/sbin/visudo -cf %s'
+  when: rule_5_2_3
+
+- name: "5.2.4 | PATCH | Ensure users must provide password for escalation"
+  block:
+    - name: "5.2.4 | Discover accts with NOPASSWD"
+      ansible.builtin.shell: grep -Ei '(nopasswd)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
+      become: true
+      changed_when: false
+      failed_when: false
+      register: discovered_nopasswd_sudoers
+
+    - name: "5.2.4 | Remove nopasswd for accounts not excluded"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '^((?!#|{% for name in sudoers_exclude_nopasswd_list %}{{ name }}{% if not loop.last -%}|{%- endif -%}{% endfor %}).*)NOPASSWD(.*)'
+        replace: '\1PASSWD\2'
+        validate: '/usr/sbin/visudo -cf %s'
+      loop: "{{ discovered_nopasswd_sudoers.stdout_lines }}"
+      when: discovered_nopasswd_sudoers.stdout | length > 0
+  when: rule_5_2_4
+
+- name: "5.2.5 | PATCH | Ensure re-authentication for privilege escalation is not disabled globally"
+  block:
+    - name: "5.2.5"
+      ansible.builtin.shell: grep -Ei '(!authenticate)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
+      become: true
+      changed_when: false
+      failed_when: false
+      register: discovered_priv_reauth
+
+    - name: "5.2.5"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '^([^#].*)!authenticate(.*)'
+        replace: '\1authenticate\2'
+        validate: '/usr/sbin/visudo -cf %s'
+      loop: "{{ discovered_priv_reauth.stdout_lines }}"
+      when: discovered_priv_reauth.stdout | length > 0
+  when: rule_5_2_5
+
+- name: "5.2.6 | PATCH | Ensure sudo authentication timeout is configured correctly"
+  block:
+    - name: "5.2.6 | Get files with timeout set"
+      ansible.builtin.shell: grep -is 'timestamp_timeout' /etc/sudoers /etc/sudoers.d/* | cut -d":" -f1 | uniq | sort
+      changed_when: false
+      failed_when: false
+      register: discovered_sudo_timeout_files
+
+    - name: "5.2.6 | Set value if no results"
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        regexp: 'Defaults timestamp_timeout='
+        line: "Defaults timestamp_timeout={{ sudo_timestamp_timeout }}"
+        validate: '/usr/sbin/visudo -cf %s'
+      when: discovered_sudo_timeout_files.stdout | length == 0
+
+    - name: "5.2.6 | Set value if has results"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'timestamp_timeout=(\d+)'
+        replace: "timestamp_timeout={{ sudo_timestamp_timeout }}"
+        validate: '/usr/sbin/visudo -cf %s'
+      loop: "{{ discovered_sudo_timeout_files.stdout_lines }}"
+      when: discovered_sudo_timeout_files.stdout | length > 0
+  when: rule_5_2_6
+
+- name: "5.2.7 | PATCH | Ensure access to the su command is restricted"
+  block:
+    - name: "5.2.7 | Ensure sugroup exists"
+      ansible.builtin.group:
+        name: "{{ sugroup }}"
+        state: present
+      register: discovered_sugroup
+
+    - name: "5.2.7 | remove users from group"
+      ansible.builtin.lineinfile:
+        path: /etc/group
+        regexp: '^{{ discovered_sugroup }}(:.:.*:).*$'
+        line: '{{ sugroup }}\g<1>'
+        backrefs: true
+
+    - name: "5.2.7 | Setting pam_wheel to use_uid"
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/su
+        regexp: '^(#)?auth\s+required\s+pam_wheel\.so'
+        line: 'auth           required        pam_wheel.so use_uid group={{ sugroup }}'
+  when: rule_5_2_7 
+
+---
+
+- name: "5.3.1.1 | PATCH | Ensure latest version of pam is installed"
+  ansible.builtin.package:
+    name: pam
+    state: latest
+  when:
+    - rule_5_3_1_1
+    - ansible_facts.packages['pam'][0]['version'] is version('1.5.1-19', '<') or
+      "'pam' not in ansible_facts.packages"
+
+- name: "5.3.1.2 | PATCH | Ensure latest version of authselect is installed"
+  block:
+    - name: "5.3.1.2 | Patch"
+      ansible.builtin.package:
+        name: authselect
+        state: latest
+      register: discovered_authselect_updated
+
+    - name: "5.3.1.2 | Patch"
+      ansible.builtin.set_fact:
+        authselect_update: OK
+      when: discovered_authselect_updated.changed  # noqa no-handler
+  when:
+    - rule_5_3_1_2
+    - authselect_pkg_update
+    - ansible_facts.packages['authselect'][0]['version'] is version('1.2.6-2', '<') or
+      "'authselect' not in ansible_facts.packages"
+
+- name: "5.3.1.3 | PATCH | Ensure libpwquality is installed"
+  ansible.builtin.package:
+    name: libpwquality
+    state: latest
+  when:
+    - rule_5_3_1_3
+    - ansible_facts.packages['libpwquality'][0]['version'] is version('1.4.4-8', '<') or
+      "'libpwquality' not in ansible_facts.packages"
+
+- name: "5.3.2.1 | PATCH | Ensure active authselect profile includes pam modules"
+  block:
+    - name: "5.3.2.1 | Create custom profiles"
+      ansible.builtin.command: "/usr/bin/authselect create-profile {{ authselect_custom_profile_name }} -b {{ authselect_default_profile_to_copy }}"
+      changed_when: false
+      args:
+        creates: "/etc/authselect/custom/{{ authselect_custom_profile_name }}"
+      when:
+        - authselect_custom_profile_name not in prelim_authselect_current_profile.stdout or
+          prelim_authselect_current_profile.stdout is not defined
+
+    - name: "5.3.2.1 | get profile features"
+      ansible.builtin.command: "/usr/bin/authselect list-features custom/{{ authselect_custom_profile_name }}"
+      changed_when: false
+      register: discovered_authselect_profile_features
+
+    - name: "5.3.2.1 | Add missing pam modules to config | pwquality"
+      ansible.builtin.lineinfile:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^password\s*requisite\s*pam_pwquality.so.*
+        line: password    requisite                                    pam_pwquality.so local_users_only        {include if "with-pwquality"}
+      loop:
+        - system
+        - password
+      when: "'with-pwquality' not in discovered_authselect_profile_features.stdout_lines"
+
+    - name: "5.3.2.1 | Backup and Add pam modules"
+      ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-pwquality with-pwhistory without-nullok --force --backup=rhel9cis-preremediate-2025-01-14-1345"
+      changed_when: true
+  when:
+    - rule_5_3_2_1
+    - disruption_high
+    - allow_authselect_updates
+
+- name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled"
+  block:
+    - name: "5.3.2.2 | Get current config"
+      ansible.builtin.shell: |
+        authselect current | grep faillock
+      changed_when: false
+      failed_when: discovered_authselect_current_faillock.rc not in [ 0, 1 ]
+      register: discovered_authselect_current_faillock
+
+    - name: "5.3.2.2 | Add feature if missing"  # noqa syntax-check[specific]"
+      ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-faillock with-pwquality with-pwhistory without-nullok"
+      changed_when: true
+      when: discovered_authselect_current_faillock.rc != 0
+  when:
+    - rule_5_3_2_2
+    - disruption_high
+    - allow_authselect_updates
+
+- name: "5.3.2.3 | PATCH | Ensure pam_pwquality module is enabled"
+  block:
+    - name: "5.3.2.3 | Get current config"
+      ansible.builtin.shell: |
+        authselect current | grep quality
+      changed_when: false
+      failed_when: discovered_authselect_current_quality.rc not in [ 0, 1 ]
+      register: discovered_authselect_current_quality
+
+    - name: "5.3.2.3 | Add feature if missing"
+      ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-faillock with-pwquality with-pwhistory without-nullok"
+      changed_when: true
+      when: discovered_authselect_current_quality.rc != 0
+  when:
+    - rule_5_3_2_3
+    - disruption_high
+    - allow_authselect_updates
+
+- name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled"
+  block:
+    - name: "5.3.2.4 | Get current config"
+      ansible.builtin.shell: |
+        authselect current | grep pwhistory
+      changed_when: false
+      failed_when: discovered_authselect_current_history.rc not in [ 0, 1 ]
+      register: discovered_authselect_current_history
+
+    - name: "5.3.2.4 | enable feature"
+      ansible.builtin.command: "/usr/bin/authselect select custom/{{ authselect_custom_profile_name }} with-faillock with-pwquality with-pwhistory without-nullok"
+      changed_when: true
+      when: discovered_authselect_current_history.rc != 0
+  when:
+    - rule_5_3_2_4
+    - disruption_high
+    - allow_authselect_updates
+
+- name: "5.3.2.5 | PATCH | Ensure pam_unix module is enabled"
+  block:
+    - name: "5.3.2.5"
+      ansible.builtin.shell: grep -P -- '\b(pam_unix\.so)\b' /etc/authselect/"$(head -1 /etc/authselect/authselect.conf)"/{system,password}-auth
+      changed_when: false
+      failed_when: discovered_authselect_pam_unix.rc not in [ 0, 1 ]
+      register: discovered_authselect_pam_unix
+
+    - name: "5.3.2.5 | system-auth"
+      ansible.builtin.lineinfile:
+        path: /etc/authselect/custom/{{ authselect_custom_profile_name }}/system-auth
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backrefs: true
+        insertafter: "{{ item.after | default(omit) }}"
+        insertbefore: "{{ item.before | default(omit) }}"
+        loop:
+          - { regexp: '^(auth\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', after: '^auth.*pam_faillock.*preauth' }
+          - { regexp: '^(password\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', before: '^password.*pam_deny.so' }
+      when: "'system-auth:password' not in discovered_authselect_pam_unix.stdout"
+
+    - name: "5.3.2.5 | password-auth"
+      ansible.builtin.lineinfile:
+        path: /etc/authselect/custom/{{ authselect_custom_profile_name }}/password-auth
+        line: "{{ item.line }}"
+        regexp: "{{ item.regexp }}"
+        backrefs: true
+        insertafter: "{{ item.after | default(omit) }}"
+        insertbefore: "{{ item.before | default(omit) }}"
+        loop:
+          - { regexp: '^(auth\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\2', after: '^auth.*pam_faillock.*preauth' }
+          - { regexp: '^(password\s+)sufficient(\s+pam_unix.so.*)(.*)', line: '\1sufficient\2\3', before: '^password.*pam_deny.so' }
+      when: "'password-auth:password' not in discovered_authselect_pam_unix.stdout"
+  when:
+    - rule_5_3_2_5
+    - disruption_high
+    - allow_authselect_updates
+
+- name: "5.3.3.1.1 | PATCH | Ensure password failed attempts lockout is configured"
+  block:
+    - name: "5.3.3.1.1 | faillock.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        state: present
+        regexp: '^(#|)\s*deny\s*=\s*\d'
+        line: "deny = {{ pam_faillock_deny }}"
+
+    - name: "5.3.3.1.1 | remove deny from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+deny\s*=\s*\S+(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.1.1 | remove deny from AuthSelect config"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+deny\s*=\s*\S+(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_1_1
+
+- name: "5.3.3.1.2 | PATCH | Ensure password unlock time is configured"
+  block:
+    - name: "5.3.3.1.2 | faillock.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        state: present
+        regexp: '^(#|)\s*unlock_time\s*=\s*\d'
+        line: "unlock_time = {{ pam_faillock_unlock_time }}"
+
+    - name: "5.3.3.1.2 | remove unlock from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+unlock_time\s*=\s*\S+(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - disruption_high
+        - not allow_authselect_updates
+
+    - name: "5.3.3.1.2 | remove unlock from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s+unlock_time\s*=\s*\S+(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_1_2
+
+- name: "5.3.3.1.3 | PATCH | Ensure password failed attempts lockout includes root account"
+  block:
+    - name: "5.3.3.1.3 | configure faillock.conf"
+      ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        regexp: '^{{ pamroot_lock_option }}'
+        line: "{{ pamroot_lock_option }}"
+        insertafter: '^# end of pam-auth-update config'
+        create: true
+        mode: 'u-x,go-wx'
+
+    - name: "5.3.3.1.3 | remove lockout from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s(even_deny_root|root_unlock_time=\d*)"(\s*=\s*\d|.*)\S+(.*$)
+        replace: \1\2\4
+      loop:
+        - password
+        - system
+      when:
+        - disruption_high
+        - not allow_authselect_updates
+
+    - name: "5.3.3.1.3 | remove lockout from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so)(.*)\s(even_deny_root|root_unlock_time=\d*)"(\s*=\s*\d|.*)\S+(.*$)
+        replace: \1\2\4
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_1_3
+
+- name: "5.3.3.2.1 | PATCH | Ensure password number of changed characters is configured"
+  block:
+    - name: "5.3.3.2.1 | Remove difok from conf files except expected file"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'difok\s*=\s*\d+\b'
+        replace: ''
+      with_fileglob:
+        - '/etc/security/pwquality.conf'
+        - '/etc/security/pwquality.conf.d/*.conf'
+        - /etc/pam.d/*-auth
+      when:
+        - item != passwd_difok_file
+        - disruption_high
+
+    - name: "5.3.3.2.1 | Ensure difok file exists"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_difok_file }}.j2"
+        dest: "/{{ passwd_difok_file }}"
+        owner: root
+        group: root
+        mode: 'go-rwx'
+
+    - name: "5.3.3.2.1 | Remove difok from pam files Not AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdifok=\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.2.1 | Remove difok from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdifok=\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_2_1
+
+- name: "5.3.3.2.2 | PATCH | Ensure password length is configured"
+  block:
+    - name: "5.3.3.2.2 | Remove minlen from conf files except expected file"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'minlen\s*=\s*\d+\b'
+        replace: ''
+      with_fileglob:
+        - '/etc/security/pwquality.conf'
+        - '/etc/security/pwquality.conf.d/*.conf'
+        - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_minlen_file
+        - disruption_high
+
+    - name: "5.3.3.2.2 | Ensure minlen file exists"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_minlen_file }}.j2"
+        dest: "/{{ passwd_minlen_file }}"
+        owner: root
+        group: root
+        mode: 'go-rwx'
+
+    - name: "5.3.3.2.2 | Remove minlen from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sminlen=\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.2.2 | Remove minlen from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sminlen=\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_2_2
+
+- name: "5.3.3.2.3 | PATCH | Ensure password complexity is configured"
+  block:
+    - name: "5.3.3.2.3 | Remove pwd complex settings from conf files except expected file"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '(minclass|[dulo]credit)\s*=\s*(-\d|\d+)\b'
+        replace: ''
+      with_fileglob:
+        - '/etc/security/pwquality.conf'
+        - '/etc/security/pwquality.conf.d/*.conf'
+        - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_complex_file
+        - disruption_high
+
+    - name: "5.3.3.2.3 | Ensure complexity file exists"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_complex_file }}.j2"
+        dest: "/{{ passwd_complex_file }}"
+        owner: root
+        group: root
+        mode: 'go-rwx'
+
+    - name: "5.3.3.2.3 | Remove complexity from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\s(minclass=[0-3]|[dulo]credit=[^-]\d*)(.*$)
+        replace: \1\2\4
+      loop:
+        - password
+        - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.2.3 | Remove complexity from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\s(minclass=[0-3]|[dulo]credit=[^-]\d*)(.*$)
+        replace: \1\2\4
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_2_3
+
+- name: "5.3.3.2.4 | PATCH | Ensure password same consecutive characters is configured"
+  block:
+    - name: "5.3.3.2.4 | Remove maxrepeat settings from conf files except expected file"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'maxrepeat\s*=\s*\d+\b'
+        replace: ''
+      with_fileglob:
+        - '/etc/security/pwquality.conf'
+        - '/etc/security/pwquality.conf.d/*.conf'
+        - '/etc/pam.d/*-auth'
+      when: item != passwd_maxrepeat_file
+
+    - name: "5.3.3.2.4 | Ensure maxrepeat file exists"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_maxrepeat_file }}.j2"
+        dest: "/{{ passwd_maxrepeat_file }}"
+        owner: root
+        group: root
+        mode: 'go-rwx'
+
+    - name: "5.3.3.2.4 | Remove maxrepeat from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxrepeat\s*=\s*\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.2.4 | Remove maxrepeat from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxrepeat\s*=\s*\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_2_4
+  ignore_errors: yes
+
+- name: "5.3.3.2.5 | PATCH | Ensure password maximum sequential characters is is configured"
+  block: 
+    - name: "5.3.3.2.5 | Remove maxsequence settings from conf files except expected file"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'maxsequence\s*=\s*\d+\b'
+        replace: ''
+      with_fileglob:
+        - '/etc/security/pwquality.conf'
+        - '/etc/security/pwquality.conf.d/*.conf'
+        - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_maxsequence_file
+        - disruption_high
+
+    - name: "5.3.3.2.5 | Ensure maxsequence file exists"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_maxsequence_file }}.j2"
+        dest: "/{{ passwd_maxsequence_file }}"
+        owner: root
+        group: root
+        mode: 'go-rwx'
+
+    - name: "5.3.3.2.5 | Remove maxsequence from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxsequence\s*=\s*\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.2.5 | Remove maxsequence from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\smaxsequence\s*=\s*\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_2_5
+
+- name: "5.3.3.2.6 | PATCH | Ensure password dictionary check is enabled"
+  block:
+    - name: "5.3.3.2.6 | Remove dictcheck settings from conf files except expected file"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'dictcheck\s*=\s*\d+\b'
+        replace: ''
+      with_fileglob:
+        - '/etc/security/pwquality.conf'
+        - '/etc/security/pwquality.conf.d/*.conf'
+        - '/etc/pam.d/*-auth'
+      when:
+        - item != passwd_dictcheck_file
+
+    - name: "5.3.3.2.6 | Ensure dictcheck file exists"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_dictcheck_file }}.j2"
+        dest: "/{{ passwd_dictcheck_file }}"
+        owner: root
+        group: root
+        mode: 'go-rwx'
+
+    - name: "5.3.3.2.6 | Remove dictcheck from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdictcheck\s*=\s*\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.2.6 | Remove dictcheck from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so)(.*)\sdictcheck\s*=\s*\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_2_6
+  ignore_errors: yes
+
+- name: "5.3.3.2.7 | PATCH | Ensure password quality is enforced for the root user"
+  ansible.builtin.template:
+    src: "{{ ansible_dir }}/rhel9/templates/{{ passwd_quality_enforce_root_file }}.j2"
+    dest: "/{{ passwd_quality_enforce_root_file }}"
+    owner: root
+    group: root
+    mode: 'o-rwx'
+  when: rule_5_3_3_2_7
+
+- name: "5.3.3.3.1 | PATCH | Ensure password history remember is configured"
+  block:
+    - name: "5.3.3.3.1 | Check existing files"
+      ansible.builtin.shell: grep -Psi -- '^\h*password\s+[^#\n\r]+\h+pam_pwhistory\.so\s+([^#\n\r]+\s+)?remember=\d+\b' /etc/pam.d/password-auth /etc/pam.d/system-auth
+      changed_when: false
+      failed_when: discovered_pwhistory_remember.rc not in [0, 1]
+      register: discovered_pwhistory_remember
+
+    - name: "5.3.3.3.1 | Ensure remember is set pwhistory file"
+      ansible.builtin.lineinfile:
+        path: "/etc/security/pwhistory.conf"
+        regexp: remember\s*=\s*\d*
+        line: remember = {{ pamd_pwhistory_remember }}
+
+    - name: "5.3.3.3.1 | Remove remember from pam files NOT AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/pam.d/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\sremember=\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - not allow_authselect_updates
+        - disruption_high
+
+    - name: "5.3.3.3.1 | Remove remember from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\sremember=\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - disruption_high
+  when: rule_5_3_3_3_1
+
+- name: "5.3.3.3.2 | PATCH | Ensure password history is enforced for the root user"
+  block:
+    - name: "5.3.3.3.2 | Check existing files"
+      ansible.builtin.shell: grep -Psi -- '^\h*password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+([^#\n\r]+\h+)?enforce_for_root\b' /etc/pam.d/{system,password}-auth
+      register: discovered_pwhistory_enforce_for_root
+      changed_when: false
+      failed_when: discovered_pwhistory_enforce_for_root.rc not in [0, 1]
+
+    - name: "5.3.3.3.2 | Ensure enforce_for_root is set pwhistory file"
+      ansible.builtin.lineinfile:
+        path: "/etc/security/pwhistory.conf"
+        regexp: ^\s*(?#)enforce_for_root
+        line: enforce_for_root
+
+    - name: "5.3.3.3.2 | Ensure enforce_for_root is set"
+      ansible.builtin.lineinfile:
+        path: "/{{ pam_confd_dir }}{{ pam_pwhistory_file }}"
+        regexp: ^(password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+)(.*)(enforce_for_root)
+        line: '\1\2\3 enforce_for_root'
+        backrefs: true
+      when:
+        - not allow_authselect_updates
+        - discovered_pwhistory_enforce_for_root.stdout | length == 0
+        - disruption_high
+
+    - name: "5.3.3.3.2 | Ensure enforce_for_root is set"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\senforce_for_root(.*$)
+        replace: \1\2enforce_for_root\3
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - discovered_pwhistory_enforce_for_root.stdout | length == 0
+        - disruption_high
+  when: rule_5_3_3_3_2
+
+- name: "5.3.3.3.3 | PATCH | Ensure pam_pwhistory includes use_authtok"
+  block:
+    - name: "5.3.3.3.3 | Check existing files"
+      ansible.builtin.shell: grep -Psi -- '^\h*password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+([^#\n\r]+\h+)?use_authtok\b' /etc/pam.d/{system,password}-auth
+      register: discovered_pwhistory_use_authtok
+      changed_when: false
+      failed_when: discovered_pwhistory_use_authtok.rc not in [0, 1]
+
+    - name: "5.3.3.3.3 | Update pwhistory for use_authtok"
+      ansible.builtin.lineinfile:
+        path: "/etc/security/pwhistory.conf"
+        regexp: ^\s*(?#)use_authtok
+        line: use_authtok
+
+    - name: "5.3.3.3.3 | Ensure use_authtok is set"
+      ansible.builtin.lineinfile:
+        path: "/{{ pam_confd_dir }}{{ pam_pwhistory_file }}"
+        regexp: ^(password\h+[^#\n\r]+\h+pam_pwhistory\.so\h+)(.*)(use_authtok)
+        line: '\1\2 use_authtok'
+        backrefs: true
+      when:
+        - not allow_authselect_updates
+        - discovered_pwhistory_use_authtok.stdout | length == 0
+        - disruption_high
+
+    - name: "PATCH | add authtok to pam files AuthSelect"
+      ansible.builtin.lineinfile:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_pwhistory\.so)(.*)\suse_authtok(.*$)
+        line: \1\2 use_authtok\3
+        backrefs: true
+      loop:
+        - password
+        - system
+      when:
+        - allow_authselect_updates
+        - discovered_pwhistory_use_authtok.stdout | length == 0
+        - disruption_high
+  when: rule_5_3_3_3_3
+
+- name: "5.3.3.4.1 | PATCH | Ensure pam_unix does not include nullok"
+  block:
+    - name: "5.3.3.4.1 | capture state"
+      ansible.builtin.shell: grep -E "pam_unix.so.*nullok" /etc/pam.d/*-auth | cut -d ':' -f1 | uniq
+      changed_when: false
+      failed_when: discovered_pam_nullok.rc not in [ 0, 1 ]
+      register: discovered_pam_nullok
+
+    - name: "5.3.3.4.1 | Ensure nullok removed"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: nullok
+        replace: ''
+      loop: "{{ discovered_pam_nullok.stdout_lines }}"
+      when:
+        - discovered_pam_nullok.stdout | length > 0
+        - not allow_authselect_updates
+
+    - name: "5.3.3.4.1 | Remove nullok from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_unix\.so)(.*)\snullok(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when: allow_authselect_updates
+  when:
+    - rule_5_3_3_4_1
+    - disruption_high
+
+- name: "5.3.3.4.2 | PATCH | Ensure pam_unix does not include remember"
+  block:
+    - name: "5.3.3.4.2 | capture state"
+      ansible.builtin.shell: grep -E "password.*pam_unix.so.*remember" /etc/pam.d/*-auth | cut -d ':' -f1 | uniq
+      changed_when: false
+      failed_when: discovered_pam_remember.rc not in [ 0, 1 ]
+      register: discovered_pam_remember
+
+    - name: "5.3.3.4.2 | Ensure remember removed"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: remember
+        replace: ''
+      loop: "{{ discovered_pam_remember.stdout_lines }}"
+      when:
+        - not allow_authselect_updates
+        - discovered_pam_remember.stdout | length > 0
+
+    - name: "5.3.3.4.2 | Remove remember from pam files AuthSelect"
+      ansible.builtin.replace:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+(requisite|required|sufficient)\s+pam_unix\.so)(.*)\sremember\s*=\s*=\d*(.*$)
+        replace: \1\2\3
+      loop:
+        - password
+        - system
+      when: allow_authselect_updates
+  when:
+    - rule_5_3_3_4_2
+    - disruption_high
+
+- name: "5.3.3.4.3 | PATCH | Ensure pam_unix includes a strong password hashing algorithm"
+  block:
+    - name: "5.3.3.4.3 | capture state"
+      ansible.builtin.shell: grep -E "password.*pam_unix.so.*(sha512|yescrypt)" /etc/pam.d/*-auth | cut -d ':' -f1 | uniq
+      changed_when: false
+      failed_when: discovered_pam_pwhash.rc not in [ 0, 1 ]
+      register: discovered_pam_pwhash
+
+    - name: "5.3.3.4.3 | Ensure hash algorithm set"
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: "(md5|bigcrypt|sha256|blowfish|gost_yescrypt|sha512|yescrypt)"
+        replace: '{{ passwd_hash_algo }}'
+      loop: "{{ discovered_pam_remember.stdout_lines }}"
+      when:
+        - not allow_authselect_updates
+        - discovered_pam_remember.stdout | length > 0
+
+    - name: "5.3.3.4.3 | Add hash algorithm to pam files AuthSelect"
+      ansible.builtin.lineinfile:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+)(requisite|required|sufficient)(\s+pam_unix.so\s)(.*)(sha512|yescrypt)(.*$)
+        line: \1\2\3\4{{ passwd_hash_algo }}\6
+        backrefs: true
+      loop:
+        - password
+        - system
+      when: allow_authselect_updates
+  when:
+    - rule_5_3_3_4_3
+    - disruption_high
+
+- name: "5.3.3.4.4 | PATCH | Ensure pam_unix includes use_authtok"
+  block:
+    - name: "5.3.3.4.4 | capture state"
+      ansible.builtin.shell: grep -PH -- '^\h*^password\h*[^#\n\r]+\h+pam_unix.so\b' /etc/pam.d/{password,system}-auth | grep -Pv -- '\buse_authtok\b'
+      changed_when: false
+      failed_when: discovered_pam_authtok.rc not in [ 0, 1 ]
+      register: discovered_pam_authtok
+
+    - name: "5.3.3.4.4 | pam_files"
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        regexp: ^(\s*password\s+)(requisite|required|sufficient)(\s+pam_unix.so\s)(.*)use_authtok(.*$)
+        line: \1\2\3\4use_authtok \5
+        backrefs: true
+      loop: "{{ discovered_pam_authtok.stdout_lines }}"
+      when:
+        - not allow_authselect_updates
+        - discovered_pam_authtok is defined
+        - discovered_pam_authtok.stdout | length > 0
+
+    - name: "5.3.3.4.4 | Add use_authtok pam files AuthSelect"
+      ansible.builtin.lineinfile:
+        path: "/etc/authselect/custom/{{ authselect_custom_profile_name }}/{{ item }}-auth"
+        regexp: ^(\s*password\s+)(requisite|required|sufficient)(\s+pam_unix.so\s)(.*)use_authtok(.*$)
+        line: \1\2\3\4use_authtok\5
+        backrefs: true
+      loop:
+        - password
+        - system
+      when: allow_authselect_updates
+  when:
+    - rule_5_3_3_4_4
+    - disruption_high
+
+---
+
+- name: "5.4.1.1 | PATCH | Ensure password expiration is 365 days or less"
+  block:
+    - name: "5.4.1.1"
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MAX_DAYS'
+        line: "PASS_MAX_DAYS {{ pass_max_days }}"
+
+    - name: "5.4.1.1 | Get existing users PASS_MAX_DAYS"
+      ansible.builtin.shell: "awk -F: '(/^[^:]+:[^!*]/ && ($5> {{ pass_max_days }} || $5< {{ pass_max_days }} || $5 == -1)){print $1}' /etc/shadow"
+      changed_when: false
+      failed_when: false
+      register: discovered_max_days
+
+    - name: "5.4.1.1 | Set existing users PASS_MAX_DAYS"
+      ansible.builtin.user:
+        name: "{{ item }}"
+        password_expire_max: "{{ pass_max_days }}"
+      loop: "{{ discovered_max_days.stdout_lines }}"
+      when:
+        - discovered_max_days.stdout_lines | length > 0
+        - item in prelim_interactive_usernames.stdout
+        - force_user_maxdays
+  when: rule_5_4_1_1
+
+- name: "5.4.1.2 | PATCH | Ensure minimum password days is configured"
+  block:
+    - name: "5.4.1.2 | set login.defs"
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MIN_DAYS'
+        line: "PASS_MIN_DAYS {{ pass_min_days }}"
+
+    - name: "5.4.1.2 | Get existing users PASS_MIN_DAYS"
+      ansible.builtin.shell: "awk -F: '/^[^:]+:[^!*]/ && $4< {{ pass_min_days }} {print $1}' /etc/shadow"
+      changed_when: false
+      failed_when: false
+      register: discovered_min_days
+
+    - name: "5.4.1.2 | Set existing users PASS_MIN_DAYS"
+      ansible.builtin.user:
+        name: "{{ item }}"
+        password_expire_max: "{{ pass_min_days }}"
+      loop: "{{ discovered_min_days.stdout_lines }}"
+      when:
+        - discovered_min_days.stdout_lines | length > 0
+        - item in prelim_interactive_usernames.stdout
+        - force_user_mindays
+  when: rule_5_4_1_2
+
+- name: "5.4.1.3 | PATCH | Ensure password expiration warning days is configured"
+  block:
+    - name: "5.4.1.3 | set login.defs"
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_WARN_AGE'
+        line: "PASS_WARN_AGE {{ pass_warn_age }}"
+
+    - name: "5.4.1.3 | Get existing users WARN_DAYS"
+      ansible.builtin.shell: "awk -F: '/^[^:]+:[^!*]/ && $6< {{ pass_warn_age }} {print $1}' /etc/shadow"
+      changed_when: false
+      failed_when: false
+      register: discovered_warn_days
+
+    - name: "5.4.1.3 | Set existing users WARN_DAYS"
+      ansible.builtin.command: "chage --warndays {{ pass['warn_age'] }} {{ item }}"
+      changed_when: true
+      loop: "{{ discovered_warn_days.stdout_lines }}"
+      when:
+        - discovered_warn_days.stdout_lines | length > 0
+        - item in prelim_interactive_usernames.stdout
+        - force_user_warnage
+  when: rule_5_4_1_3
+
+- name: "5.4.1.4 | PATCH | Ensure strong password hashing algorithm is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^ENCRYPT_METHOD'
+    line: 'ENCRYPT_METHOD {{ passwd_hash_algo | upper }}'
+  when: rule_5_4_1_4
+
+- name: "5.4.1.5 | PATCH | Ensure inactive password lock is configured"
+  block:
+    - name: "5.4.1.5 | Check current settings"
+      ansible.builtin.shell: |
+        useradd -D | grep INACTIVE={{ inactivelock.lock_days }} | cut -f2 -d=
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_passwdlck_inactive_settings
+
+    - name: "5.4.1.5 | Set default inactive setting"
+      ansible.builtin.command: useradd -D -f {{ inactivelock.lock_days }}
+      changed_when: true
+      when: discovered_passwdlck_inactive_settings.stdout | length == 0
+
+    - name: "5.4.1.5 | Getting user list"
+      ansible.builtin.command: "awk -F: '/^[^#:]+:[^\\!\\*:]*:[^:]*:[^:]*:[^:]*:[^:]*:(\\s*|-1|3[1-9]|[4-9][0-9]|[1-9][0-9][0-9]+):[^:]*:[^:]*\\s*$/ {print $1}' /etc/shadow"
+      changed_when: false
+      check_mode: false
+      register: discovered_passwdlck_user_list
+
+    - name: "5.4.1.5 | Apply Inactive setting to existing accounts"
+      ansible.builtin.command: chage --inactive {{ inactivelock.lock_days }} "{{ item }}"
+      changed_when: true
+      loop: "{{ discovered_passwdlck_user_list.stdout_lines }}"
+      when: item in prelim_interactive_usernames.stdout
+  when: rule_5_4_1_5
+
+- name: "5.4.1.6 | PATCH | Ensure all users last password change date is in the past"
+  block:
+    - name: "5.4.1.6 | Get current date in Unix Time"
+      ansible.builtin.shell: echo $(($(date --utc --date "$1" +%s)/86400))
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_passwdlck_currentunixtime
+
+    - name: "5.4.1.6 | Get list of users with last changed pw date in the future"
+      ansible.builtin.shell: "cat /etc/shadow | awk -F: '{if($3>{{ discovered_passwdlck_currentunixtime.stdout }})print$1}'"
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_passwdlck_user_future
+
+    - name: "5.4.1.6 | Alert on accounts with pw change in the future"
+      ansible.builtin.debug:
+        msg: "Warning!! The following accounts have the last PW change date in the future: {{ discovered_passwdlck_user_future.stdout_lines }}"
+      when:
+        - discovered_passwdlck_user_future.stdout | length > 0
+        - not futurepwchgdate_autofix
+
+    - name: "5.4.1.6 | Fix accounts with pw change in the future"
+      ansible.builtin.command: passwd --expire {{ item }}
+      changed_when: true
+      loop: "{{ discovered_passwdlck_user_future.stdout_lines }}"
+      when:
+        - discovered_passwdlck_user_future.stdout | length > 0
+        - futurepwchgdate_autofix
+  when: rule_5_4_1_6
+
+- name: "5.4.2.1 | PATCH | Ensure root is the only UID 0 account"
+  ansible.builtin.command: passwd -l {{ item }}
+  changed_when: false
+  failed_when: false
+  loop: "{{ prelim_uid_zero_accounts_except_root.stdout_lines }}"
+  when:
+    - rule_5_4_2_1
+    - prelim_uid_zero_accounts_except_root.rc
+    - disruption_high
+
+- name: "5.4.2.2 | PATCH | Ensure root is the only GID 0 account"
+  block:
+    - name: "5.4.2.2 | Get members of gid 0"
+      ansible.builtin.shell: "awk -F: '($1 !~ /^(sync|shutdown|halt|operator)/ && $4==\"0\") {print $1}' /etc/passwd | grep -wv 'root'"
+      register: discovered_gid0_members
+      changed_when: false
+      failed_when: discovered_gid0_members.rc not in [ 0, 1 ]
+
+    - name: "5.4.2.2 | Remove users not root from gid 0"
+      ansible.builtin.user:
+        name: "{{ item }}"
+        group: root
+        state: absent
+      loop: "{{ discovered_gid0_members.stdout_lines }}"
+      when:
+        - discovered_gid0_members is defined
+        - discovered_gid0_members.stdout | length > 0
+  when:
+    - rule_5_4_2_2
+    - disruption_high
+
+- name: "5.4.2.5 | PATCH | Ensure root PATH Integrity"
+  block:
+    - name: "5.4.2.5 | Get root paths"
+      ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2
+      changed_when: false
+      register: discovered_root_paths
+
+    - name: "5.4.2.5 | Get root paths"
+      ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2 | tr ":" "\n"
+      changed_when: false
+      register: discovered_root_paths_split
+      when: discovered_root_paths is defined
+
+    - name: "5.4.2.5 | Set fact"
+      ansible.builtin.set_fact:
+        root_paths: "{{ discovered_root_paths.stdout }}"
+      when: discovered_root_paths is defined
+
+    - name: "5.4.2.5 | Check for empty dirs"
+      ansible.builtin.shell: 'echo {{ root_paths }} | grep -q "::" && echo "roots path contains a empty directory (::)"'
+      changed_when: false
+      failed_when: discovered_root_path_empty_dir.rc not in [ 0, 1 ]
+      register: discovered_root_path_empty_dir
+      when: discovered_root_paths is defined
+
+    - name: "5.4.2.5 | Check for trailing ':'"
+      ansible.builtin.shell: '{{ root_paths }} | cut -d= -f2 | grep -q ":$" && echo "roots path contains a trailing (:)"'
+      changed_when: false
+      failed_when: discovered_root_path_trailing_colon.rc not in [ 0, 1 ]
+      register: discovered_root_path_trailing_colon
+      when: discovered_root_paths is defined
+
+    - name: "5.4.2.5 | Check for owner and permissions"
+      block:
+        - name: "5.4.2.5 | Check for owner and permissions"
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          register: discovered_root_path_perms
+          loop: "{{ discovered_root_paths_split.stdout_lines }}"
+
+        - name: "5.4.2.5 | Set permissions"
+          ansible.builtin.file:
+            path: "{{ item.stat.path }}"
+            state: directory
+            owner: root
+            group: root
+            mode: 'go-w'
+            follow: false
+          loop: "{{ discovered_root_path_perms.results }}"
+          loop_control:
+            label: "{{ item }}"
+          when:
+            - item.stat.exists
+            - item.stat.isdir
+            - item.stat.pw_name != 'root' or item.stat.gr_name != 'root' or item.stat.woth or item.stat.wgrp
+            - (item != 'root')
+      when: discovered_root_paths is defined
+  when: rule_5_4_2_5
+
+- name: "5.4.2.6 | PATCH | Ensure root user umask is configured"
+  ansible.builtin.lineinfile:
+    path: /root/.bash_profile
+    regexp: \s*umask
+    line: "umask {{ root_umask }}"
+    create: true
+    mode: 'u+x,go-rwx'
+  when: rule_5_4_2_6
+
+- name: "5.4.2.7 | PATCH | Ensure system accounts do not have a valid login shell"
+  ansible.builtin.user:
+    name: "{{ item.id }}"
+    shell: /usr/sbin/nologin
+  loop: "{{ passwd }}"
+  loop_control:
+    label: "{{ item.id }}"
+  when:
+    - rule_5_4_2_7
+    - "item.id not in prelim_interactive_usernames.stdout"
+    - item.id not in system_users_shell
+    - "'root' not in item.id"
+    - disruption_high
+
+- name: "5.4.2.8 | PATCH | Ensure accounts without a valid login shell are locked | Lock accounts"
+  ansible.builtin.user:
+    name: "{{ item.id }}"
+    password_lock: true
+  loop: "{{ passwd }}"
+  loop_control:
+    label: "{{ item.id }}"
+  when:
+    - rule_5_4_2_8
+    - disruption_high
+    - "item.id not in prelim_interactive_usernames.stdout"
+    - "'root' not in item.id"
+
+- name: "5.4.3.1 | PATCH | Ensure nologin is not listed in /etc/shells"
+  ansible.builtin.replace:
+    path: /etc/shells
+    regexp: nologin
+    replace: ""
+  when: rule_5_4_3_1
+
+- name: "5.4.3.2 | PATCH | Ensure default user shell timeout is configured"
+  ansible.builtin.blockinfile:
+    path: "{{ item.path }}"
+    state: "{{ item.state }}"
+    marker: "# {mark} - CIS benchmark - Ansible-lockdown"
+    create: true
+    mode: 'go-wx'
+    block: |
+      TMOUT={{ shell_session_timeout }}
+      readonly TMOUT
+      export TMOUT
+  loop:
+    - { path: "{{ shell_session_file }}", state: present }
+    - { path: /etc/profile, state: "{{ (shell_session_file == '/etc/profile') | ternary('present', 'absent') }}" }
+  when: rule_5_4_3_2
+
+- name: "5.4.3.3 | PATCH | Ensure default user umask is configured"
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: (?i)(umask\s+\d*)
+    replace: '{{ item.line }} {{ bash_umask }}'
+  loop:
+    - { path: '/etc/profile', line: 'umask' }
+    - { path: '/etc/login.defs', line: 'UMASK' }
+  when: rule_5_4_3_3
+
+- name: "6.2.1.1 | PATCH | Ensure journald service is enabled and active"
+  ansible.builtin.systemd:
+    name: systemd-journald.service
+    masked: false
+    state: started
+  when: rule_6_2_1_1
+
+- name: "6.2.1.2 | PATCH | Ensure journald log file access is configured"
+  block:
+    - name: "6.2.1.2 | Default file permissions"
+      ansible.builtin.file:
+        path: /usr/lib/tmpfiles.d/systemd.conf
+        mode: 'g-wx,o-rwx'
+
+    - name: "6.2.1.2 | Check for override file"
+      ansible.builtin.stat:
+        path: /etc/tmpfiles.d/systemd.conf
+      register: discovered_tmpfile_override
+
+    - name: "6.2.1.2 | If override file check for journal"
+      ansible.builtin.shell: grep -E 'z /var/log/journal/%m/system.journal \d*' /usr/lib/tmpfiles.d/systemd.conf
+      register: discovered_journald_fileperms_override
+      changed_when: false
+      failed_when: discovered_journald_fileperms_override.rc not in [ 0, 1 ]
+      when: discovered_tmpfile_override.stat.exists
+
+    - name: "6.2.1.2 | Warning if override found"
+      ansible.builtin.debug:
+        msg: "Warning!! - tmpfiles override found /usr/lib/tmpfiles.d/systemd.conf affecting journald files please confirm matches site policy"
+      when:
+        - discovered_tmpfile_override.stat.exists
+        - discovered_journald_fileperms_override.stdout | length > 0
+  when: rule_6_2_1_2
+
+- name: "6.2.1.x | ensure /etc/systemd/journal.conf.d exists"
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: "6.2.1.3 | PATCH | Ensure journald log file rotation is configured"
+  block:
+    - name: "6.2.1.3 | Add file"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/rotation.conf.j2"
+        dest: /etc/systemd/journald.conf.d/rotation.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: "6.2.1.3 | comment out current entries"
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: "{{ item }}"
+        replace: '#\1'
+      loop:
+        - '^(\s*SystemMaxUse\s*=.*)'
+        - '^(\s*SystemKeepFree\s*=.*)'
+        - '^(\s*RuntimeMaxUse\s*=)'
+        - '^(\s*RuntimeKeepFree\s*=.*)'
+        - '^(\s*MaxFileSec\s*=.*)'
+  when: rule_6_2_1_3
+
+- name: "6.2.1.4 | PATCH | Ensure only one logging system is in use"
+  block:
+    - name: "6.2.1.4 | when rsyslog"
+      ansible.builtin.systemd:
+        name: systemd-journald
+        state: stopped
+        enabled: false
+      when: syslog == "rsyslog"
+
+    - name: "6.2.1.4 | when journald"
+      ansible.builtin.systemd:
+        name: rsyslog
+        state: stopped
+        enabled: false
+      when: syslog == "journald"
+  when: rule_6_2_1_4
+
+- name: "6.2.2.1.1 | PATCH | Ensure systemd-journal-remote is installed"
+  ansible.builtin.package:
+    name: systemd-journal-remote
+    state: present
+  when: rule_6_2_2_1_1
+
+- name: "6.2.2.1.2 | PATCH | Ensure systemd-journal-remote authentication is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journal-upload.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: 'URL=', line: 'URL={{ remote_log_server }}'}
+    - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
+    - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
+    - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
+  when: rule_6_2_2_1_2
+
+- name: "6.2.2.1.3 | PATCH | Ensure systemd-journal-remote is enabled and active"
+  ansible.builtin.systemd:
+    name: systemd-journal-upload
+    masked: false
+    enabled: true
+  when: rule_6_2_2_1_3
+
+- name: "6.2.2.1.4 | PATCH | Ensure systemd-journal-remote service is not in use"
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop:
+    - systemd-journal-remote.socket
+    - systemd-journal-remote.service
+  when: rule_6_2_2_1_4
+
+- name: "6.2.2.2 | PATCH | Ensure journald ForwardToSyslog is disabled"
+  block:
+    - name: "6.2.2.2 | Add file"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/forwardtosyslog.conf.j2"
+        dest: /etc/systemd/journald.conf.d/forwardtosyslog.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: "6.2.2.2 | comment out current entries"
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: ^(\s*ForwardToSyslog)
+        replace: '#\1'
+  when: rule_6_2_2_2
+
+- name: "6.2.2.3 | PATCH | Ensure journald Compress is configured"
+  block:
+    - name: "6.2.2.3 | Add file"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"  # Added to the same file as 6.2.1.1.4
+        dest: /etc/systemd/journald.conf.d/storage.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: "6.2.2.3 | comment out current entries"
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: ^(?i)(\s*compress=)
+        replace: '#\1'
+  when: rule_6_2_2_3
+
+- name: "6.2.2.4 | PATCH | Ensure journald Storage is configured"
+  block:
+    - name: "6.2.2.4 | Add file"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"
+        dest: /etc/systemd/journald.conf.d/storage.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: "6.2.2.4 | comment out current entries"
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: ^(?i)(\s*storage=)
+        replace: '#\1'
+  when: rule_6_2_2_4
+
+- name: "6.2.3.1 | PATCH | Ensure rsyslog installed"
+  ansible.builtin.package:
+    name: rsyslog
+    state: present
+  when:
+    - "'rsyslog' not in ansible_facts.packages"
+    - rule_6_2_3_1
+
+- name: "6.2.3.2 | PATCH | Ensure rsyslog Service is enabled and active"
+  ansible.builtin.systemd:
+    name: rsyslog
+    enabled: true
+    state: started
+  when: rule_6_2_3_2
+
+- name: "6.2.3.3 | PATCH | Ensure journald is configured to send logs to rsyslog"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: "^#ForwardToSyslog=|^ForwardToSyslog="
+    line: ForwardToSyslog=yes
+  when: rule_6_2_3_3
+
+- name: "6.2.3.4 | PATCH | Ensure rsyslog log file creation mode is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^\$FileCreateMode'
+    line: '$FileCreateMode 0640'
+  when: rule_6_2_3_4
+
+- name: "6.2.3.5 | PATCH | Ensure logging is configured"
+  block:
+    - name: "6.2.3.5 | rsyslog current config message out"
+      ansible.builtin.shell: cat /etc/rsyslog.conf | grep -Ev "^#|^$"
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_configured_rsyslog
+
+    - name: "6.2.3.5 | rsyslog current config message out"
+      ansible.builtin.debug:
+        msg:
+          - "These are the current logging configurations for rsyslog, please review:"
+          - "{{ discovered_configured_rsyslog.stdout_lines }}"
+
+    - name: "6.2.3.5 | mail.* log setting"
+      ansible.builtin.blockinfile:
+        path: /etc/rsyslog.conf
+        marker: "# {mark} MAIL LOG SETTINGS - CIS benchmark - Ansible-lockdown"
+        block: |
+          # mail logging additions to meet CIS standards
+          mail.*                                                  -/var/log/mail
+          mail.info                                               -/var/log/mail.info
+          mail.warning                                            -/var/log/mail.warning
+          mail.err                                                /var/log/mail.err
+        insertafter: '# Log all the mail messages in one place.'      
+      when: rsyslog_ansiblemanaged
+
+    - name: "6.2.3.5 | news.crit log setting"
+      ansible.builtin.blockinfile:
+        path: /etc/rsyslog.conf
+        state: present
+        marker: "# {mark} NEWS LOG SETTINGS - CIS benchmark - Ansible-lockdown"
+        block: |
+          # news logging additions to meet CIS standards
+          news.crit                                               -/var/log/news/news.crit
+          news.notice                                             -/var/log/news/news.crit
+        insertafter: '# Save news errors of level crit and higher in a special file.'
+      when: rsyslog_ansiblemanaged
+
+    - name: "6.2.3.5 | Misc. log setting"
+      ansible.builtin.blockinfile:
+        path: /etc/rsyslog.conf
+        state: present
+        marker: "# {mark} MISC. LOG SETTINGS - CIS benchmark - Ansible-lockdown"
+        block: |
+          # misc. logging additions to meet CIS standards
+          *.=warning;*.=err                                        -/var/log/warn
+          *.crit                                                   /var/log/warn
+          *.*;mail.none;news.none                                  /var/log/messages
+        insertafter: '#### RULES ####'
+      when: rsyslog_ansiblemanaged
+
+    - name: "6.2.3.5 | Local log settings"
+      ansible.builtin.blockinfile:
+        path: /etc/rsyslog.conf
+        state: present
+        marker: "#{mark} LOCAL LOG SETTINGS - CIS benchmark - Ansible-lockdown"
+        block: |
+          # local log settings to meet CIS standards
+          local0,local1.*                                          -/var/log/localmessages
+          local2,local3.*                                          -/var/log/localmessages
+          local4,local5.*                                          -/var/log/localmessages
+          local6,local7.*                                          -/var/log/localmessages
+          *.emerg                                                    :omusrmsg:*
+        insertafter: '#### RULES ####'
+
+    - name: "6.2.3.5 | Auth Settings"
+      ansible.builtin.blockinfile:
+        path: /etc/rsyslog.conf
+        state: present
+        marker: "#{mark} Auth SETTINGS - CIS benchmark - Ansible-lockdown"
+        block: |
+          # Private settings to meet CIS standards
+          auth,authpriv.*                                           /var/log/secure
+        insertafter: '#### RULES ####'
+
+    - name: "6.2.3.5 | Cron Settings"
+      ansible.builtin.blockinfile:
+        path: /etc/rsyslog.conf
+        state: present
+        marker: "#{mark} Cron SETTINGS - CIS benchmark - Ansible-lockdown"
+        block: |
+          # Cron settings to meet CIS standards
+          cron.*                                                   /var/log/cron
+        insertafter: '#### RULES ####'
+  when: rule_6_2_3_5
+
+- name: "6.2.3.6 | PATCH | Ensure rsyslog is configured to send logs to a remote log host"
+  ansible.builtin.blockinfile:
+    path: /etc/rsyslog.conf
+    state: present
+    block: |
+      # target can be IP or FQDN
+      *.* action(type="omfwd" target="{{ remote_log_host }}" port="{{ remote_log_port }}" protocol="{{ remote_log_protocol }}" action.resumeRetryCount="{{ remote_log_retrycount }}" queue.type="LinkedList" queue.size="{{ remote_log_queuesize }}")
+    insertafter: EOF
+  failed_when:
+    - discovered_rsyslog_remote_host is failed
+    - discovered_rsyslog_remote_host.rc != 257
+  register: discovered_rsyslog_remote_host
+  when:
+    - rule_6_2_3_6
+    - remote_log_server
+
+- name: "6.2.3.7 | PATCH | Ensure rsyslog is not configured to recieve logs from a remote client"
+  block:
+    - name: "6.2.3.7 | When not log host"
+      ansible.builtin.replace:
+        path: /etc/rsyslog.conf
+        regexp: '{{ item }}'
+        replace: '#\1'
+      loop:
+        - '^(\$ModLoad imtcp)'
+        - '^(\$InputTCPServerRun)'
+        - '^(module\(load="imtcp"\))'
+        - '^(input\(type="imtcp")'
+      when: not system_is_log_server
+
+    - name: "6.2.3.7 | When log host"
+      ansible.builtin.replace:
+        path: /etc/rsyslog.conf
+        regexp: '^#(.*{{ item }}.*)'
+        replace: '\1'
+      loop:
+        - 'ModLoad imtcp'
+        - 'InputTCPServerRun'
+      when: system_is_log_server
+  when: rule_6_2_3_7
+
+- name: "6.2.3.8 | PATCH | Ensure rsyslog logrotate is configured"
+  block:
+    - name: "6.2.3.8 | installed"
+      ansible.builtin.package:
+        name: rsyslog-logrotate
+        state: present
+
+    - name: "6.2.3.8 | scheduled"
+      ansible.builtin.systemd:
+        name: logrotate.timer
+        state: started
+        enabled: true
+
+    - name: "6.2.3.8 | set rsyslog conf"
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/logrotate.d/rsyslog.conf.j2"
+        dest: /etc/logrotate.d/rsyslog.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+  when: rule_6_2_3_8
+
+- name: "6.2.4.1 | PATCH | Ensure access to all logfiles has been configured"
+  block:
+    - name: "6.2.4.1 | find log files"
+      ansible.builtin.shell: find /var/log/ -type f -exec ls {} \;
+      changed_when: false
+      failed_when: false
+      register: discovered_logfiles
+
+    - name: "6.2.4.1 | change permissions"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'u-x,g-wx,o-rwx'
+      failed_when: discovered_logfile_list.state not in '[ file, absent ]'
+      register: discovered_logfile_list
+      loop: "{{ discovered_logfiles.stdout_lines }}"
+      when:
+        - discovered_logfiles.stdout_lines | length > 0
+        - ('audit.log' in item or 'journal' in item) or
+          item == '/var/log/secure' or
+          item == '/var/log/syslog' or
+          item == '/var/log/messages' or
+          item == '/var/log/auth.log'
+
+    - name: "6.2.4.1 | change permissions"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'u-x,g-x,o-rwx'
+      failed_when: discovered_logfile_list.state not in '[ file, absent ]'
+      register: discovered_logfile_list
+      loop: "{{ discovered_logfiles.stdout_lines }}"
+      when:
+        - discovered_logfiles.stdout_lines | length > 0
+        - ('anaconda' in item or 'dnf' in item or 'secure' in item  or 'messages' in item or 'hawkey' in item)
+
+    - name: "6.2.4.1 | change permissions"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'ug-x,o-wx'
+      failed_when: discovered_logfile_list.state not in '[ file, absent ]'
+      register: discovered_logfile_list
+      loop: "{{ discovered_logfiles.stdout_lines }}"
+      when:
+        - discovered_logfiles.stdout_lines | length > 0
+        - ('sssd' in item or 'lastlog' in item) or
+          item == "/var/log/btmp" or
+          item == "/var/log/utmp" or
+          item == "/var/log/wtmp" or
+          item == "/var/log/lastlog"
+  when: rule_6_2_4_1
+
+- name: "7.2.2 | PATCH | Ensure /etc/shadow password fields are not empty"
+  block:
+    - name: "7.2.2 | Find users with no password"
+      ansible.builtin.shell: awk -F":" '($2 == "" ) { print $1 }' /etc/shadow
+      changed_when: false
+      check_mode: false
+      register: discovered_empty_password_acct
+
+    - name: "7.2.2 | Lock users with empty password"
+      ansible.builtin.user:
+        name: "{{ item }}"
+        password_lock: true
+      loop:
+        - "{{ discovered_empty_password_acct.stdout_lines }}"
+      when: discovered_empty_password_acct.stdout | length > 0
+  when: rule_7_2_2
+
+- name: "7.2.3 | AUDIT | Ensure all groups in /etc/passwd exist in /etc/group"
+  block:
+    - name: "7.2.3 | Check /etc/passwd entries"
+      ansible.builtin.shell: pwck -r | grep 'no group' | awk '{ gsub("[:\47]",""); print $2}'
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_passwd_gid_check
+    - name: "7.2.3 | Print warning about users with invalid GIDs missing GID entries in /etc/group"
+      ansible.builtin.debug:
+        msg: "Warning!! The following users have non-existent GIDs (Groups): {{ discovered_passwd_gid_check.stdout_lines | join(', ') }}"
+      when: discovered_passwd_gid_check.stdout | length > 0
+  when: rule_7_2_3
+
+- name: "7.2.8 | PATCH | Ensure local interactive user home directories are configured"
+  block:
+    - name: "7.2.8 | Create dir if absent"  # noqa risky-file-permissions
+      ansible.builtin.file:
+        path: "{{ item.dir }}"
+        state: directory
+        owner: "{{ item.id }}"
+        group: "{{ item.gid }}"
+      loop: "{{ passwd | selectattr('uid', '>=', prelim_min_int_uid | int) | selectattr('uid', '<=', prelim_max_int_uid | int) | list }}"
+      loop_control:
+        label: "{{ item.id }}"
+
+    # set default ACLs so the homedir has an effective umask of 0027
+    - name: "7.2.8 | Set group ACL"
+      ansible.posix.acl:
+        path: "{{ item }}"
+        default: true
+        etype: group
+        permissions: rx
+        state: present
+      loop: "{{ prelim_interactive_users_home.stdout_lines }}"
+      when: not system_is_container
+
+    - name: "7.2.8 | Set other ACL"
+      ansible.posix.acl:
+        path: "{{ item }}"
+        default: true
+        etype: other
+        permissions: 0
+        state: present
+      loop: "{{ prelim_interactive_users_home.stdout_lines }}"
+      when: not system_is_container
+  when: rule_7_2_8
+
+- name: "7.2.9 | PATCH | Ensure local interactive user dot files access is configured"
+  block:
+    - name: "7.2.9 | Check for files"
+      ansible.builtin.shell: find /home/ -name "\.*" -perm /g+w,o+w
+      changed_when: false
+      failed_when: discovered_homedir_dot_files.rc not in [ 0, 1 ]
+      check_mode: false
+      register: discovered_homedir_dot_files
+
+    - name: "7.2.9 | Warning on files found"
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! We have discovered group or world-writable dot files on your system and this host is configured for manual intervention. Please investigate these files further."
+      when:
+        - discovered_homedir_dot_files.stdout | length > 0
+        - dotperm_ansiblemanaged
+
+    - name: "7.2.9 | Changes files if configured"
+      ansible.builtin.file:
+        path: '{{ item }}'
+        mode: 'go-w'
+      with_items: "{{ discovered_homedir_dot_files.stdout_lines }}"
+      when:
+        - discovered_homedir_dot_files.stdout | length > 0
+        - dotperm_ansiblemanaged
+  when:
+    - rule_7_2_9
+    - disruption_high
+
+---
+
+- name: "7.1.1 | PATCH | Ensure permissions on /etc/passwd are configured"
+  ansible.builtin.file:
+    path: /etc/passwd
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  when: rule_7_1_1
+
+- name: "7.1.2 | PATCH | Ensure permissions on /etc/passwd- are configured"
+  ansible.builtin.file:
+    path: /etc/passwd-
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  when: rule_7_1_2
+
+- name: "7.1.3 | PATCH | Ensure permissions on /etc/group are configured"
+  ansible.builtin.file:
+    path: /etc/group
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  when: rule_7_1_3
+
+- name: "7.1.4 | PATCH | Ensure permissions on /etc/group- are configured"
+  ansible.builtin.file:
+    path: /etc/group-
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  when: rule_7_1_4
+
+- name: "7.1.5 | PATCH | Ensure permissions on /etc/shadow are configured"
+  ansible.builtin.file:
+    path: /etc/shadow
+    owner: root
+    group: root
+    mode: 'ugo-rwx'
+  when: rule_7_1_5
+
+- name: "7.1.6 | PATCH | Ensure permissions on /etc/shadow- are configured"
+  ansible.builtin.file:
+    path: /etc/shadow-
+    owner: root
+    group: root
+    mode: 'ugo-rwx'
+  when: rule_7_1_6
+
+- name: "7.1.7 | PATCH | Ensure permissions on /etc/gshadow are configured"
+  ansible.builtin.file:
+    path: /etc/gshadow
+    owner: root
+    group: root
+    mode: 'ugo-rwx'
+  when: rule_7_1_7
+
+- name: "7.1.8 | PATCH | Ensure permissions on /etc/gshadow- are configured"
+  ansible.builtin.file:
+    path: /etc/gshadow-
+    owner: root
+    group: root
+    mode: 'ugo-rwx'
+  when: rule_7_1_8
+
+- name: "7.1.9 | PATCH | Ensure permissions on /etc/shells are configured"
+  ansible.builtin.file:
+    path: /etc/shells
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  when: rule_7_1_9
+
+- name: "7.1.10 | PATCH | Ensure permissions on /etc/security/opasswd are configured"
+  ansible.builtin.file:
+    path: /etc/security/opasswd
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+  when: rule_7_1_10
+
+- name: "7.1.11 | PATCH | Ensure world writable files and directories are secured"
+  block:
+    - name: "7.1.11 | Get list of world-writable files"
+      ansible.builtin.shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type f -perm -0002
+      failed_when: false
+      changed_when: false
+      register: discovered_world_writable
+
+    - name: "7.1.11 | Adjust world-writable files if they exist (Configurable)"
+      ansible.builtin.file:
+        path: '{{ item }}'
+        mode: 'o-w'
+        state: touch
+      loop: "{{ discovered_world_writable.stdout_lines }}"
+      when:
+        - discovered_world_writable.stdout_lines is defined
+        - discovered_world_writable.stdout_lines | length > 0
+        - no_world_write_adjust
+
+    - name: "7.1.11 | Adjust world-writable directories add sticky bit"
+      ansible.builtin.shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type d -perm -o+w ! -perm -1002 2>/dev/null | xargs chmod a+t
+      failed_when: discovered_set_stickybit.rc not in [ 0, 123 ]
+      changed_when: discovered_set_stickybit.rc == 0
+      register: discovered_set_stickybit
+  when: rule_7_1_11
+
+- name: "7.1.12 | PATCH | Ensure no files or directories without an owner and a group exist"
+  block:
+    - name: "7.1.12 | Get list files or directories"
+      ansible.builtin.command: find {{ exclude_unowned_search_path }} {{ item.mount }} -xdev \( -nouser -o -nogroup \) -not -fstype nfs
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_unowned_files
+      with_items:
+        - "{{ ansible_facts.mounts }}"
+      loop_control:
+        label: "{{ item.mount }}"
+
+    - name: "7.1.12 | Flatten no_user_items results for easier use"
+      ansible.builtin.set_fact:
+        discovered_unowned_files_flatten: "{{ discovered_unowned_files.results | selectattr('stdout_lines', 'defined') | map(attribute='stdout_lines') | flatten }}"
+
+    - name: "7.1.12 | Alert on unowned files and directories"
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! You have unowned files and are configured to not auto-remediate for this task"
+          - "Please review the files/directories below and assign an owner"
+          - "{{ discovered_unowned_files_flatten }}"
+      when:
+        - not ownership_adjust
+        - discovered_unowned_files_flatten | length > 0
+
+    - name: "7.1.12 | PATCH | Ensure no files or directories without an owner and a group exist | Set files/directories to configured owner and group"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: "{{ unowned_owner }}"
+        group: "{{ unowned_group }}"
+      with_items:
+        - "{{ discovered_unowned_files_flatten }}"
+      when:
+        - ownership_adjust
+        - discovered_unowned_files_flatten | length > 0
+  when: rule_7_1_12
+

@@ -118,30 +118,6 @@
           shell: >-4
               \g<shell>
 
-# for 6.3
-- name: "PRELIM | AUDIT | Discover audit logfile"
-  ansible.builtin.shell: grep ^log_file /etc/audit/auditd.conf | awk '{ print $NF }'
-  changed_when: false
-  register: prelim_auditd_logfile
-  when:
-    - rule_6_3_4_1 or
-      rule_6_3_4_2 or
-      rule_6_3_4_3 or
-      rule_6_3_4_4
-
-# for 6.3
-- name: "PRELIM | AUDIT | Audit conf and rules files | list files"
-  ansible.builtin.find:
-    path: /etc/audit
-    file_type: file
-    recurse: true
-    patterns: '*.conf,*.rules'
-  register: prelim_auditd_conf_files
-  when:
-    - rule_6_3_4_5 or
-      rule_6_3_4_6 or
-      rule_6_3_4_7
-
 # for 7.2
 - name: "PRELIM | AUDIT | Interactive User accounts home directories"
   tags: always

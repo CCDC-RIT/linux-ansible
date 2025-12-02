@@ -1,78 +1,213 @@
----
-
-- name: "Check OS version and family"
-  ansible.builtin.assert:
-    that: (ansible_facts.distribution != 'CentOS' and ansible_facts.os_family == 'RedHat' or ansible_facts.os_family == "Rocky") and ansible_facts.distribution_major_version is version_compare('9', '==')
-    fail_msg: "This role can only be run against Supported OSs. {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }} is not supported."
-    success_msg: "This role is running against a supported OS {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }}"
-
-# we need to set something up a register earlier in our playbook that this can read to know if it is a kube node or a container
-- name: "Setup rules if container"
+- name: "HARDEN_OS RHEL | Configure MOTD"
   block:
-    - name: "Discover and set container variable if required"
-      ansible.builtin.set_fact:
-        system_is_container: true
+    - name: "Set MOTD message"
+      ansible.builtin.copy:
+        src: motd
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: 0644
 
-    - name: "Load variable for container"
-      ansible.builtin.include_vars:
-        file: "{{ ansible_dir}}/rhel9/vars/{{ container_vars_file }}"
+    - name: "Disable dynamic_motd/pam_motd.so"
+      ansible.builtin.copy:
+        src: sshd
+        dest: /etc/pam.d/sshd
 
-    - name: "Output if discovered is a container"
-      ansible.builtin.debug:
-        msg: system has been discovered as a container
-      when: system_is_container
-  when:
-    - is_target_container
-        
-- name: "Gather the package facts"
-  ansible.builtin.package_facts:
+- name: "HARDEN_OS RHEL | Configure local login warning banner"
+  block:
+    - name: "Set local MOTD in /etc/issue"
+      ansible.builtin.lineinfile:
+        path: /etc/issue
+        insertafter: '.'
+        line: ' \n This system is for AUTHORIZED use only! Violators will be prosecuted under the fullest extent of the law. '
+        backup: yes
+        owner: root
+        group: root
+        mode: 0644
 
-- name: "Include OS specific variables"
-  ansible.builtin.include_vars:
-    file: "{{ ansible_dir }}/rhel9/vars/{{ ansible_facts.distribution }}.yml"
+    - name: "Divert /etc/issue with dpkg"
+      community.general.dpkg_divert:
+        path: /etc/issue
 
-- name: "CIS Benchmark | prelims"
-  ansible.builtin.import_tasks:
-    file: prelim.yml
+- name: "HARDEN_OS RHEL | Configure remote login warning banner"
+  block:
+    - name: "Set remote MOTD in /etc/issue"
+      ansible.builtin.lineinfile:
+        path: /etc/issue.net
+        insertafter: '.'
+        line: ' \n This system is for AUTHORIZED use only! Violators will be prosecuted under the fullest extent of the law. '
+        backup: yes
+        owner: root
+        group: root
+        mode: 0644
 
-- name: "CIS Benchmark | section 1"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_1/main.yml
-  when: section_1
+    - name: "Divert /etc/issue.net with dpkg"
+      community.general.dpkg_divert:
+        path: /etc/issue.net
 
-- name: "CIS Benchmark | section 3"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_3/main.yml
-  when: section_3
+- name: "HARDEN_OS RHEL | Make root own /etc/motd"
+  ansible.builtin.file:
+    path: /etc/motd
+    owner: root
+    group: root
+    mode: 0644
 
-- name: "CIS Benchmark | section 5"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_5/main.yml
-  when: section_5
+- name: "HARDEN_OS RHEL | Make root own /etc/issue"
+  ansible.builtin.file:
+    path: /etc/issue
+    owner: root
+    group: root
+    mode: 0644
 
-- name: "CIS Benchmark | section 6"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_6/main.yml
-  when: section_6
+- name: "HARDEN_OS RHEL | Make root own /etc/issue.net"
+  ansible.builtin.file:
+    path: /etc/issue.net
+    owner: root
+    group: root
+    mode: 0644
 
-- name: "CIS Benchmark | section 7"
-  ansible.builtin.import_tasks:
-    file: cis_sections/section_7/main.yml
-  when: section_7
+- name: "HARDEN_OS RHEL | Secure IPv4 and IPv6 and restrict core dumps"
+  block:
+      # TODO: Create exclusion for kube
+    - name: "Replace sysctl.conf with ours"
+      ansible.builtin.copy:
+        src: sysctl.conf
+        dest: /etc/sysctl.conf
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
 
-- name: "Run post remediation tasks"
-  ansible.builtin.import_tasks:
-    file: post.yml
+    - name: "Replace coredump.conf with ours"
+      ansible.builtin.copy:
+        src: coredump.conf
+        dest: /etc/systemd/coredump.conf
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
 
-- name: Update Crypto Policy
-  ansible.builtin.set_fact:
-    full_crypto_policy: "{{ crypto_policy }}{% if crypto_policy_module | length > 0 %}{{ crypto_policy_module }}{% endif %}"
+- name: "HARDEN_OS RHEL | Ensure cron daemon is enabled"
+  ansible.builtin.service:
+    name: crond
+    enabled: true
 
-- name: Set Crypto Policy
-  when: prelim_system_wide_crypto_policy.stdout != full_crypto_policy
-  ansible.builtin.command: update-crypto-policies --set "{{ full_crypto_policy }}"
-  changed_when: true
-  ignore_errors: yes
+- name: "HARDEN_OS RHEL | Configure cron permissions"
+  block:
+    - name: "HARDEN_OS RHEL | Set permissions on /etc/crontab"
+      ansible.builtin.file:
+        path: /etc/crontab
+        owner: root
+        group: root
+        mode: 0700
+
+    - name: "HARDEN_OS RHEL | Set permissions on /etc/cron.hourly"
+      ansible.builtin.file:
+        path: /etc/cron.hourly
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+
+    - name: "HARDEN_OS RHEL | Set permissions on /etc/cron.daily"
+      ansible.builtin.file:
+        path: /etc/cron.daily
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+
+    - name: "HARDEN_OS RHEL | Set permissions on /etc/cron.weekly"
+      ansible.builtin.file:
+        path: /etc/cron.weekly
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+
+    - name: "HARDEN_OS RHEL | Set permissions on /etc/cron.monthly"
+      ansible.builtin.file:
+        path: /etc/cron.monthly
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+
+    - name: "HARDEN_OS RHEL | Set permissions on /etc/cron.d"
+      ansible.builtin.file:
+        path: /etc/cron.d
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+
+- name: "HARDEN_OS RHEL | Ensure bluetooth services are not in use"
+  ansible.builtin.package:
+    name: bluez
+    state: absent
+
+- name: HARDEN_OS RHEL | Modprobe stuff
+  block:
+  - name: Replace dccp.conf with ours"
+    ansible.builtin.copy:
+      src: modprobe.d/dccp.conf
+      dest: /etc/modprobe.d/dccp.conf
+      owner: root
+      group: root
+      mode: 0744
+      backup: yes
+
+  - name: Replace blacklist.conf with ours
+    ansible.builtin.copy:
+      src: modprobe.d/blacklist.conf
+      dest: /etc/modprobe.d/blacklist.conf
+      owner: root
+      group: root
+      mode: 0744
+      backup: yes
+
+  - name: Replace tipc.conf with ours
+    ansible.builtin.copy:
+      src: modprobe.d/tipc.conf
+      dest: /etc/modprobe.d/tipc.conf
+      owner: root
+      group: root
+      mode: 0744
+
+  - name: Replace rds.conf with ours
+    ansible.builtin.copy:
+      src: modprobe.d/rds.conf
+      dest: /etc/modprobe.d/rds.conf
+      owner: root
+      group: root
+      mode: 0744
+      backup: yes
+
+  - name: Replace sctp.conf with ours
+    ansible.builtin.copy:
+      src: modprobe.d/sctp.conf
+      dest: /etc/modprobe.d/sctp.conf
+      owner: root
+      group: root
+      mode: 0744
+      backup: yes
+
+- name: HARDEN_OS RHEL | Sudoers
+  ansible.builtin.copy:
+    src: sudoers
+    dest: /etc/sudoers
+    owner: root
+    group: root
+    mode: 0744
+    backup: yes
+
+
+
+
+
+
+
+
 
 - name: Restart sshd
   ansible.builtin.systemd:
