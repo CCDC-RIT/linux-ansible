@@ -1,8 +1,8 @@
-- name: Allow port 10250
+- name: Allow port 6443 inbound to Kube Manager
   iptables:
     chain: INPUT
     protocol: tcp
-    destination_port: 10250
+    destination_port: 6443
     jump: ACCEPT
   with_items: "{{ groups['kube'] }}"
   loop_control:
@@ -10,22 +10,16 @@
   vars:
     source: "{{ kube_ip }}"
 
-- name: Allow port 10256
-  iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: 10256
-    jump: ACCEPT
-  with_items: "{{ groups['kubemgr'] + groups['kube'] }}"
-  loop_control:
-    loop_var: kube_ip
-  vars:
-    source: "{{ kube_ip }}"
 
-# - name: Allow NodePort default range
-#   iptables:
-#     chain: INPUT
-#     protocol: tcp
-#     destination_ports: 
-#      - "30000:32767"
-#     jump: ACCEPT
+#https://docs.oracle.com/en/operating-systems/olcne/1.1/start/ports.html
+#
+#Our boxes <===> 6443/tcp: Kubernetes Api Server on Control Plane
+#All Kube Nodes <===> 10250/tcp: Kubernetes kubelet API server on master and worker nodes
+#All Kube Nodes <===> 8472/udp: Flannel overlay network if using VxLAN backend on master and worker nodes (REPLACE IF USING DIFFERENT CNI)
+#Allow traffic from the defined pod network CIDR to reach your Kubernetes master node. This ensures pods can communicate with the API server
+#
+#SPECIAL CASES:
+#Master Nodes <===> 2379/tcp: Kubernetes etcd server client API on master nodes in multi-master deployments
+#Master Nodes <===> 2380/tcp: Kubernetes etcd server client API on master nodes in multi-master deployments
+#Master Nodes <===> 10251/tcp: Kubernetes kube-scheduler on master nodes in multi-master deployments
+#Master Nodes <===> 10252/tcp: Kubernetes kube-controller-manager on master nodes in multi-master deployments
