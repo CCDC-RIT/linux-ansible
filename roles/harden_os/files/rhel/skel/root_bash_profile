@@ -1,0 +1,2 @@
+# All new files are created with permissions 640
+umask 0027

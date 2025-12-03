@@ -405,4 +405,360 @@
         - '^(\s*RuntimeMaxUse\s*=)'
         - '^(\s*RuntimeKeepFree\s*=.*)'
         - '^(\s*MaxFileSec\s*=.*)'
-  when: rule_6_2_1_3
+
+- name: "HARDEN_OS RHEL | Gather UID 0 accounts other than root"
+  ansible.builtin.shell: "cat /etc/passwd | awk -F: '($3 == 0 && $1 != \"root\") {i++;print $1 } END {exit i}'"
+  changed_when: false
+  check_mode: false
+  register: uid_zero_accounts_except_root
+
+- name: "HARDEN_OS RHEL | Ensure root is the only UID 0 account"
+  ansible.builtin.command: passwd -l {{ item }}
+  changed_when: false
+  failed_when: false
+  loop: "{{ uid_zero_accounts_except_root.stdout_lines }}"
+
+- name: "HARDEN_OS RHEL | Ensure root is the only GID 0 account"
+  block:
+    - name: "HARDEN_OS RHEL | Get members of gid 0"
+      ansible.builtin.shell: "awk -F: '($1 !~ /^(sync|shutdown|halt|operator)/ && $4==\"0\") {print $1}' /etc/passwd | grep -wv 'root'"
+      register: discovered_gid0_members
+      changed_when: false
+      failed_when: discovered_gid0_members.rc not in [ 0, 1 ]
+
+    - name: "HARDEN_OS RHEL | Remove users not root from gid 0"
+      ansible.builtin.user:
+        name: "{{ item }}"
+        group: root
+        state: absent
+      loop: "{{ discovered_gid0_members.stdout_lines }}"
+      when:
+        - discovered_gid0_members is defined
+        - discovered_gid0_members.stdout | length > 0
+
+- name: "HARDEN_OS RHEL | Replace all bash profiles with with ours"
+  block:
+    - name: "HARDEN_OS RHEL | ROOT BASH | Replace bash_profile"
+      ansible.builtin.copy:
+        src: rhel/skel/root_bash_profile
+        dest: /root/.bash_profile
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | ROOT BASH | Replace bashrc"
+      ansible.builtin.copy:
+        src: rhel/skel/root_bashrc
+        dest: /root/.bashrc
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | ROOT BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: rhel/skel/bash_login
+        dest: /root/.bash_login
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | ROOT BASH | Replace bash_logout"
+      ansible.builtin.copy:
+        src: rhel/skel/bash_logout
+        dest: /root/.bash_logout
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | USER BASH | Get Home directories"
+      ansible.builtin.shell: |
+        awk -F: '($1 != "sync" && $1 != "root" && $7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd
+      changed_when: false
+      register: discovered_user_homes
+
+    # TODO FIX
+
+    - name: HARDEN_OS RHEL | USER BASH | Get user/group info for home directories
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: home_stat
+      loop: "{{ discovered_user_homes.stdout_lines }}"
+
+    - name: HARDEN_OS RHEL | USER BASH | Loop over home directories
+      block:
+        - name: "HARDEN_OS RHEL | USER BASH | Replace Bash Profile"
+          ansible.builtin.copy:
+            src: rhel/skel/bash_profile
+            dest: "{{ item.0 }}/.bash_profile"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
+            mode: 0744
+            backup: yes
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
+        
+        - name: "HARDEN_OS RHEL | USER BASH | Replace bashrc"
+          ansible.builtin.copy:
+            src: rhel/skel/user_bashrc
+            dest: "{{ item.0 }}/.bashrc"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
+            mode: 0744
+            backup: yes
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
+
+        - name: "HARDEN_OS RHEL | USER BASH | Replace bash_login"
+          ansible.builtin.copy:
+            src: rhel/skel/bash_login
+            dest: "{{ item.0 }}/.bash_login"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
+            mode: 0744
+            backup: yes
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
+        
+        - name: "HARDEN_OS RHEL | USER BASH | Replace bash_logout"
+          ansible.builtin.copy:
+            src: rhel/skel/bash_logout
+            dest: "{{ item.0 }}/.bash_logout"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
+            mode: 0744
+            backup: yes
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
+      when: discovered_user_homes is defined
+
+    - name: "HARDEN_OS RHEL | SKEL BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: rhel/skel/bash_login
+        dest: "/etc/skel/.bash_login"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | SKEL BASH | Replace bash_logout"
+      ansible.builtin.copy:
+        src: rhel/skel/bash_logout
+        dest: "/etc/skel/.bash_logout"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+    
+    - name: "HARDEN_OS RHEL | SKEL BASH | Replace bash_profile"
+      ansible.builtin.copy:
+        src: rhel/skel/bash_profile
+        dest: "/etc/skel/.bash_profile"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | SKEL BASH | Replace user_bashrc"
+      ansible.builtin.copy:
+        src: rhel/skel/user_bashrc
+        dest: "/etc/skel/.bashrc"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | SKEL BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: rhel/skel/profile
+        dest: "/etc/skel/.profile"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+    
+    - name: "HARDEN_OS RHEL | SKEL BASH | Replace bash_login"
+      ansible.builtin.copy:
+        src: rhel/skel/bash_login
+        dest: "/etc/skel/.bash_login"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+    
+    - name: "HARDEN_OS RHEL | Replace system_profile"
+      ansible.builtin.copy:
+        src: rhel/skel/system_profile
+        dest: "/etc/profile"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+    - name: "HARDEN_OS RHEL | Replace bashrc.bashrc"
+      ansible.builtin.copy:
+        src: rhel/skel/bashrc.bashrc
+        dest: "/etc/bashrc.bashrc"
+        owner: root
+        group: root
+        mode: 0744
+        backup: yes
+
+- name: "HARDEN_OS RHEL | Replace /etc/shells with our version"
+  ansible.builtin.copy:
+    src: rhel/shells
+    dest: /etc/shell
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+
+- name: "HARDEN_OS RHEL | Ensure root PATH Integrity"
+  block:
+    - name: "HARDEN_OS RHEL | Get root paths"
+      ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2
+      changed_when: false
+      register: discovered_root_paths
+
+    - name: "HARDEN_OS RHEL | Get root paths"
+      ansible.builtin.shell: sudo -Hiu root env | grep '^PATH' | cut -d= -f2 | tr ":" "\n"
+      changed_when: false
+      register: discovered_root_paths_split
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS RHEL | Set fact"
+      ansible.builtin.set_fact:
+        root_paths: "{{ discovered_root_paths.stdout }}"
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS RHEL | Check for empty dirs"
+      ansible.builtin.shell: 'echo {{ root_paths }} | grep -q "::" && echo "roots path contains a empty directory (::)"'
+      changed_when: false
+      failed_when: discovered_root_path_empty_dir.rc not in [ 0, 1 ]
+      register: discovered_root_path_empty_dir
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS RHEL | Check for trailing ':'"
+      ansible.builtin.shell: '{{ root_paths }} | cut -d= -f2 | grep -q ":$" && echo "roots path contains a trailing (:)"'
+      changed_when: false
+      failed_when: discovered_root_path_trailing_colon.rc not in [ 0, 1 ]
+      register: discovered_root_path_trailing_colon
+      when: discovered_root_paths is defined
+
+    - name: "HARDEN_OS RHEL | Check for owner and permissions"
+      block:
+        - name: HARDEN_OS RHEL | Check for owner and permissions"
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          register: discovered_root_path_perms
+          loop: "{{ discovered_root_paths_split.stdout_lines }}"
+
+        - name: "HARDEN_OS RHEL | Set permissions"
+          ansible.builtin.file:
+            path: "{{ item.stat.path }}"
+            state: directory
+            owner: root
+            group: root
+            mode: 'go-w'
+            follow: false
+          loop: "{{ discovered_root_path_perms.results }}"
+          loop_control:
+            label: "{{ item }}"
+          when:
+            - item.stat.exists
+            - item.stat.isdir
+            - item.stat.pw_name != 'root' or item.stat.gr_name != 'root' or item.stat.woth or item.stat.wgrp
+            - (item != 'root')
+      when: discovered_root_paths is defined
+
+- name: "HARDEN_OS RHEL | Interactive Users"
+  ansible.builtin.shell: >
+    grep -E -v '^(root|halt|sync|shutdown)' /etc/passwd | awk -F: '(!index($7, "sbin/nologin") && $7 != "/bin/nologin" && $7 != "/bin/false" && $7 != "/dev/null") { print $1 }'
+  changed_when: false
+  register: interactive_usernames
+
+- name: "HARDEN_OS RHEL | Ensure system accounts do not have a valid login shell"
+  ansible.builtin.user:
+    name: "{{ item.id }}"
+    shell: /usr/sbin/nologin
+  loop: "{{ passwd }}"
+  loop_control:
+    label: "{{ item.id }}"
+  when:
+    - "item.id not in interactive_usernames.stdout"
+    - item.id not in system_users_shell
+    - "'root' not in item.id"
+
+- name: "HARDEN_OS RHEL | Ensure accounts without a valid login shell are locked | Lock accounts"
+  ansible.builtin.user:
+    name: "{{ item.id }}"
+    password_lock: true
+  loop: "{{ passwd }}"
+  loop_control:
+    label: "{{ item.id }}"
+  when:
+    - "item.id not in interactive_usernames.stdout"
+    - "'root' not in item.id"
+
+- name: "HARDEN_OS RHEL | Ensure systemd-journal-remote authentication is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journal-upload.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: 'URL=', line: 'URL={{ remote_log_server }}'}
+    - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
+    - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
+    - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
+
+- name: "HARDEN_OS RHEL | Ensure systemd-journal-remote is enabled and active"
+  ansible.builtin.systemd:
+    name: systemd-journal-upload
+    masked: false
+    enabled: true
+
+- name: "HARDEN_OS RHEL | Ensure systemd-journal-remote service is not in use"
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop:
+    - systemd-journal-remote.socket
+    - systemd-journal-remote.service
+
+- name: "HARDEN_OS UBUNTU | Set file permissions of 644 files"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - /etc/passwd
+    - /etc/passwd-
+    - /etc/group
+    - /etc/group-
+  ignore_errors: yes # If file doesn't exist, don't fatal error (mainly for hyphenated files)
+
+- name: "HARDEN_OS RHEL | Set file permissions of 640 files"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0640
+  with_items:
+    - /etc/shadow
+    - /etc/shadow-
+    - /etc/gshadow
+    - /etc/gshadow-
+  ignore_errors: yes # If file doesn't exist, don't fatal error (mainly for hyphenated files)
+
+- name: "HARDEN_OS RHEL | Set file permissions of 600 files"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  with_items:
+    - /etc/security/opasswd
+    - /etc/security/opasswd.old
+  ignore_errors: yes # If file doesn't exist, don't fatal error
