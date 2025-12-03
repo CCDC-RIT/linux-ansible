@@ -416,47 +416,53 @@
 
     # TODO FIX
 
+    - name: HARDEN_OS UBUNTU | USER BASH | Get user/group info for home directories
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: home_stat
+      loop: "{{ discovered_user_homes.stdout_lines }}"
+
     - name: HARDEN_OS UBUNTU | USER BASH | Loop over home directories
       block:
         - name: "HARDEN_OS UBUNTU | USER BASH | Replace Bash Profile"
           ansible.builtin.copy:
             src: ubu/skel/bash_profile
-            dest: "{{ item }}/.bash_profile"
-            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
-            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            dest: "{{ item.0 }}/.bash_profile"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
             mode: 0744
             backup: yes
-          loop: "{{ discovered_user_homes.stdout_lines }}"
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
         
         - name: "HARDEN_OS UBUNTU | USER BASH | Replace bashrc"
           ansible.builtin.copy:
             src: ubu/skel/user_bashrc
-            dest: "{{ item }}/.bashrc"
-            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
-            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            dest: "{{ item.0 }}/.bashrc"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
             mode: 0744
             backup: yes
-          loop: "{{ discovered_user_homes.stdout_lines }}"
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
 
         - name: "HARDEN_OS UBUNTU | USER BASH | Replace bash_login"
           ansible.builtin.copy:
             src: ubu/skel/bash_login
-            dest: "{{ item }}/.bash_login"
-            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
-            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            dest: "{{ item.0 }}/.bash_login"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
             mode: 0744
             backup: yes
-          loop: "{{ discovered_user_homes.stdout_lines }}"
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
         
         - name: "HARDEN_OS UBUNTU | USER BASH | Replace bash_logout"
           ansible.builtin.copy:
             src: ubu/skel/bash_logout
-            dest: "{{ item }}/.bash_logout"
-            owner: "{{ lookup('ansible.builtin.file', item).stat.pw_name }}"
-            group: "{{ lookup('ansible.builtin.file', item).stat.gr_name }}"
+            dest: "{{ item.0 }}/.bash_logout"
+            owner: "{{ item.1.stat.pw_name }}"
+            group: "{{ item.1.stat.gr_name }}"
             mode: 0744
             backup: yes
-          loop: "{{ discovered_user_homes.stdout_lines }}"
+          loop: "{{ discovered_user_homes.stdout_lines | zip(home_stat.results) | list }}"
       when: discovered_user_homes is defined
 
     - name: "HARDEN_OS UBUNTU | SKEL BASH | Replace bash_login"
@@ -539,6 +545,29 @@
     group: root
     mode: 0644
     backup: yes
+
+- name: HARDEN_OS UBUNTU | Discover Interactive UID MIN and MIN from logins.def
+  block:
+    - name: Capture UID_MIN information from logins.def
+      ansible.builtin.shell: grep -w "^UID_MIN" /etc/login.defs | awk '{print $NF}'
+      changed_when: false
+      register: prelim_uid_min_id
+
+    - name: Capture UID_MAX information from logins.def
+      ansible.builtin.shell: grep -w "^UID_MAX" /etc/login.defs | awk '{print $NF}'
+      changed_when: false
+      register: prelim_uid_max_id
+
+    - name: Capture GID_MIN information from logins.def
+      ansible.builtin.shell: grep -w "^GID_MIN" /etc/login.defs | awk '{print $NF}'
+      changed_when: false
+      register: prelim_gid_min_id
+
+    - name: Set_facts for interactive uid/gid
+      ansible.builtin.set_fact:
+        min_int_uid: "{{ prelim_uid_min_id.stdout }}"
+        max_int_uid: "{{ prelim_uid_max_id.stdout }}"
+        min_int_gid: "{{ prelim_gid_min_id.stdout }}"
 
 - name: HARDEN_OS UBUNTU | Secure /etc/passwd
   block:
@@ -633,6 +662,14 @@
         paths: /var/log
         file_type: file
       register: log_files
+    
+    - name: DEBUGGGGGG
+      ansible.builtin.debug:
+        msg: "{{ log_files }}"
+
+    - name: DEBUGGGGGG
+      ansible.builtin.debug:
+        msg: "{{ log_files.files }}"
 
     - name: "Set permissions on log files (660 for tmp, lastlog, sssd, 640 otherwise)"
       ansible.builtin.file:
@@ -692,7 +729,7 @@
     - name: "Find users with no password"
       ansible.builtin.shell: awk -F":" '($2 == "" ) { print $1 }' /etc/shadow
       changed_when: false
-      check_mode: false`
+      check_mode: false
       register: discovered_empty_password_acct
 
     - name: "Lock users with empty password"
