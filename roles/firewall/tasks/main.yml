@@ -12,7 +12,7 @@
   when: firewall_logging is true
 
 - name: kube worker
-  include_tasks: iptables_kube.yml
+  include_tasks: old_iptables_kube.yml
   when: inventory_hostname in groups["kube"]
 
 - name: kube Manager
