@@ -69,22 +69,22 @@
   when: ansible_os_family == 'Debian'
 
 #Add and install necessary Helm repos:
-- name: Add falcosecurity helm repo
-  ansible.builtin.shell:
-    cmd: helm repo add falcosecurity https://falcosecurity.github.io/charts
+# - name: Add falcosecurity helm repo
+#   ansible.builtin.shell:
+#     cmd: helm repo add falcosecurity https://falcosecurity.github.io/charts
 
-- name: Add Kubeshark helm repo
-  ansible.builtin.shell:
-    cmd: helm repo add kubeshark https://helm.kubeshark.co
+# - name: Add Kubeshark helm repo
+#   ansible.builtin.shell:
+#     cmd: helm repo add kubeshark https://helm.kubeshark.co
 
-- name: Update helm repos
-  ansible.builtin.shell:
-    cmd: helm repo Update
+# - name: Update helm repos
+#   ansible.builtin.shell:
+#     cmd: helm repo Update
 
-- name: Install Kubeshark
-  ansible.builtin.shell:
-    cmd: helm install kubeshark kubeshark/kubeshark
+# - name: Install Kubeshark
+#   ansible.builtin.shell:
+#     cmd: helm install kubeshark kubeshark/kubeshark
 
-- name: Install falco using our config and rulesets
-  ansible.builtin.shell:
-    cmd: helm install --replace falco --namespace falco --create-namespace --set tty=true --set-file config=/etc/falco-config.yaml --set-file rules=/etc/falco-rules.yaml falcosecurity/falco
+# - name: Install falco using our config and rulesets
+#   ansible.builtin.shell:
+#     cmd: helm install --replace falco --namespace falco --create-namespace --set tty=true --set-file config=/etc/falco-config.yaml --set-file rules=/etc/falco-rules.yaml falcosecurity/falco
