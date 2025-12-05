@@ -883,57 +883,9 @@
       when: item in prelim_interactive_usernames.stdout
   when: rule_5_4_1_5
 
+^^^^^ PAM ^^^^^^^
 
-- name: "6.2.2.2 | PATCH | Ensure journald ForwardToSyslog is disabled"
-  block:
-    - name: "6.2.2.2 | Add file"
-      ansible.builtin.template:
-        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/forwardtosyslog.conf.j2"
-        dest: /etc/systemd/journald.conf.d/forwardtosyslog.conf
-        owner: root
-        group: root
-        mode: 'g-wx,o-rwx'
 
-    - name: "6.2.2.2 | comment out current entries"
-      ansible.builtin.replace:
-        path: /etc/systemd/journald.conf
-        regexp: ^(\s*ForwardToSyslog)
-        replace: '#\1'
-  when: rule_6_2_2_2
-
-- name: "6.2.2.3 | PATCH | Ensure journald Compress is configured"
-  block:
-    - name: "6.2.2.3 | Add file"
-      ansible.builtin.template:
-        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"  # Added to the same file as 6.2.1.1.4
-        dest: /etc/systemd/journald.conf.d/storage.conf
-        owner: root
-        group: root
-        mode: 'g-wx,o-rwx'
-
-    - name: "6.2.2.3 | comment out current entries"
-      ansible.builtin.replace:
-        path: /etc/systemd/journald.conf
-        regexp: ^(?i)(\s*compress=)
-        replace: '#\1'
-  when: rule_6_2_2_3
-
-- name: "6.2.2.4 | PATCH | Ensure journald Storage is configured"
-  block:
-    - name: "6.2.2.4 | Add file"
-      ansible.builtin.template:
-        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"
-        dest: /etc/systemd/journald.conf.d/storage.conf
-        owner: root
-        group: root
-        mode: 'g-wx,o-rwx'
-
-    - name: "6.2.2.4 | comment out current entries"
-      ansible.builtin.replace:
-        path: /etc/systemd/journald.conf
-        regexp: ^(?i)(\s*storage=)
-        replace: '#\1'
-  when: rule_6_2_2_4
 
 - name: "6.2.3.1 | PATCH | Ensure rsyslog installed"
   ansible.builtin.package:
@@ -949,13 +901,6 @@
     enabled: true
     state: started
   when: rule_6_2_3_2
-
-- name: "6.2.3.3 | PATCH | Ensure journald is configured to send logs to rsyslog"
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/journald.conf
-    regexp: "^#ForwardToSyslog=|^ForwardToSyslog="
-    line: ForwardToSyslog=yes
-  when: rule_6_2_3_3
 
 - name: "6.2.3.4 | PATCH | Ensure rsyslog log file creation mode is configured"
   ansible.builtin.lineinfile:
