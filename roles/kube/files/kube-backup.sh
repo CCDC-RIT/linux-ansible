@@ -15,17 +15,27 @@ fi
 #  exit 2
 # fi
 
-RESOURCES=(pods services deployments secrets statefulset)
+RESOURCE_TYPES=(pods services deployments secrets statefulset)
 
 NAMESPACES=$(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}')
 
 for NAMESPACE in $NAMESPACES; do
     mkdir -p "$BACKUPDIR"/"$NAMESPACE"
     echo "Processing namespace: $NAMESPACE"
-    RESOURCES=$(kubectl get $RESOURCE_TYPE -n $NAMESPACE -o jsonpath='{.items[*].metadata.name}')
-    for RESOURCE in $RESOURCES; do
-        echo "Fetching YAML for $RESOURCE_TYPE $RESOURCE in namespace $NAMESPACE"
-        kubectl get "$RESOURCE_TYPE" "$RESOURCE" -n "$NAMESPACE" -o yaml > "$BACKUPDIR"/"$NAMESPACE"/"$RESOURCE_TYPE"-"$RESOURCE"-$(date +%d_%H%M%S ).yaml
-        echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+    for RESOURCE_TYPE in "${RESOURCE_TYPES[@]}"; do
+        echo "  Fetching $RESOURCE_TYPE..."
+        RESOURCE_NAMES=$(kubectl get "$RESOURCE_TYPE" -n "$NAMESPACE" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+        # Skip if the resource type doesn't exist in this namespace
+        if [[ -z "$RESOURCE_NAMES" ]]; then
+            echo "    No $RESOURCE_TYPE found in $NAMESPACE"
+            continue
+        fi
+        for NAME in $RESOURCE_NAMES; do
+            OUTFILE="$BACKUPDIR/$NAMESPACE/${RESOURCE_TYPE}-${NAME}.yaml"
+            echo "    Saving $RESOURCE_TYPE/$NAME → $OUTFILE"
+            kubectl get "$RESOURCE_TYPE" "$NAME" -n "$NAMESPACE" -o yaml > "$OUTFILE"
+        done
     done
+
+    echo "--------------------------------------------------------------------------"
 done
