@@ -1,6 +1,126 @@
-- name: "HARDEN_OS RHEL | Configure MOTD"
+- name: HARDEN_OS RHEL | Ensure /etc/shadow password fields are not empty
   block:
-    - name: "Set MOTD message"
+    - name: HARDEN_OS RHEL | Find users with no password
+      ansible.builtin.shell: awk -F":" '($2 == "" ) { print $1 }' /etc/shadow
+      changed_when: false
+      check_mode: false
+      register: discovered_empty_password_acct
+
+    - name: HARDEN_OS RHEL | Lock users with empty password
+      ansible.builtin.user:
+        name: "{{ item }}"
+        password_lock: true
+      loop:
+        - "{{ discovered_empty_password_acct.stdout_lines }}"
+      when: discovered_empty_password_acct.stdout | length > 0
+
+- name: HARDEN_OS RHEL | Ensure all groups in /etc/passwd exist in /etc/group
+  block:
+    - name: HARDEN_OS RHEL | Check /etc/passwd entries
+      ansible.builtin.shell: pwck -r | grep 'no group' | awk '{ gsub("[:\47]",""); print $2}'
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_passwd_gid_check
+    - name: HARDEN_OS RHEL | Print warning about users with invalid GIDs missing GID entries in /etc/group
+      ansible.builtin.debug:
+        msg: "Warning!! The following users have non-existent GIDs (Groups): {{ discovered_passwd_gid_check.stdout_lines | join(', ') }}"
+      when: discovered_passwd_gid_check.stdout | length > 0
+
+- name: "HARDEN_OS RHEL | Ensure local interactive user dot files access is configured"
+  block:
+    - name: "HARDEN_OS RHEL | Check for files"
+      ansible.builtin.shell: find /home/ -name "\.*" -perm /g+w,o+w
+      changed_when: false
+      failed_when: discovered_homedir_dot_files.rc not in [ 0, 1 ]
+      check_mode: false
+      register: discovered_homedir_dot_files
+
+    - name: "HARDEN_OS RHEL | Warning on files found"
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! We have discovered group or world-writable dot files on your system and this host is configured for manual intervention. Please investigate these files further."
+      when:
+        - discovered_homedir_dot_files.stdout | length > 0
+        - dotperm_ansiblemanaged
+
+    - name: "HARDEN_OS RHEL | Changes files if configured"
+      ansible.builtin.file:
+        path: '{{ item }}'
+        mode: 'go-w'
+      with_items: "{{ discovered_homedir_dot_files.stdout_lines }}"
+      when:
+        - discovered_homedir_dot_files.stdout | length > 0
+        - dotperm_ansiblemanaged
+  when:
+    - disruption_high
+
+- name: "HARDEN_OS RHEL | Ensure world writable files and directories are secured"
+  block:
+    - name: "HARDEN_OS RHEL | Get list of world-writable files"
+      ansible.builtin.shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type f -perm -0002
+      failed_when: false
+      changed_when: false
+      register: discovered_world_writable
+
+    - name: "HARDEN_OS RHEL | Adjust world-writable files if they exist (Configurable)"
+      ansible.builtin.file:
+        path: '{{ item }}'
+        mode: 'o-w'
+        state: touch
+      loop: "{{ discovered_world_writable.stdout_lines }}"
+      when:
+        - discovered_world_writable.stdout_lines is defined
+        - discovered_world_writable.stdout_lines | length > 0
+        - no_world_write_adjust
+
+    - name: "HARDEN_OS RHEL | Adjust world-writable directories add sticky bit"
+      ansible.builtin.shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type d -perm -o+w ! -perm -1002 2>/dev/null | xargs chmod a+t
+      failed_when: discovered_set_stickybit.rc not in [ 0, 123 ]
+      changed_when: discovered_set_stickybit.rc == 0
+      register: discovered_set_stickybit
+
+- name: "HARDEN_OS RHEL | Ensure no files or directories without an owner and a group exist"
+  block:
+    - name: "HARDEN_OS RHEL | Get list files or directories"
+      ansible.builtin.command: find {{ exclude_unowned_search_path }} {{ item.mount }} -xdev \( -nouser -o -nogroup \) -not -fstype nfs
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_unowned_files
+      with_items:
+        - "{{ ansible_facts.mounts }}"
+      loop_control:
+        label: "{{ item.mount }}"
+
+    - name: "HARDEN_OS RHEL | Flatten no_user_items results for easier use"
+      ansible.builtin.set_fact:
+        discovered_unowned_files_flatten: "{{ discovered_unowned_files.results | selectattr('stdout_lines', 'defined') | map(attribute='stdout_lines') | flatten }}"
+
+    - name: "HARDEN_OS RHEL | Alert on unowned files and directories"
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! You have unowned files and are configured to not auto-remediate for this task"
+          - "Please review the files/directories below and assign an owner"
+          - "{{ discovered_unowned_files_flatten }}"
+      when:
+        - not ownership_adjust
+        - discovered_unowned_files_flatten | length > 0
+
+    - name: "HARDEN_OS RHEL | Ensure no files or directories w/o owner & group exist - set files/directories to configured owner and group"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: "{{ unowned_owner }}"
+        group: "{{ unowned_group }}"
+      with_items:
+        - "{{ discovered_unowned_files_flatten }}"
+      when:
+        - ownership_adjust
+        - discovered_unowned_files_flatten | length > 0
+
+- name: HARDEN_OS RHEL | Configure MOTD
+  block:
+    - name: HARDEN_OS RHEL | Set MOTD message
       ansible.builtin.copy:
         src: rhel/motd
         dest: /etc/motd
@@ -8,14 +128,14 @@
         group: root
         mode: 0644
 
-    - name: "Disable dynamic_motd/pam_motd.so"
+    - name: HARDEN_OS RHEL | Disable dynamic_motd/pam_motd.so
       ansible.builtin.copy:
         src: rhel/sshd
         dest: /etc/pam.d/sshd
 
-- name: "HARDEN_OS RHEL | Configure local login warning banner"
+- name: HARDEN_OS RHEL | Configure local login warning banner
   block:
-    - name: "Set local MOTD in /etc/issue"
+    - name: HARDEN_OS RHEL | Set local MOTD in /etc/issue
       ansible.builtin.lineinfile:
         path: /etc/issue
         insertafter: '.'
@@ -25,13 +145,13 @@
         group: root
         mode: 0644
 
-    - name: "Divert /etc/issue with dpkg"
+    - name: HARDEN_OS RHEL | Divert /etc/issue with dpkg
       community.general.dpkg_divert:
         path: /etc/issue
 
-- name: "HARDEN_OS RHEL | Configure remote login warning banner"
+- name: HARDEN_OS RHEL | Configure remote login warning banner
   block:
-    - name: "Set remote MOTD in /etc/issue"
+    - name: HARDEN_OS RHEL | Set remote MOTD in /etc/issue
       ansible.builtin.lineinfile:
         path: /etc/issue.net
         insertafter: '.'
@@ -41,35 +161,35 @@
         group: root
         mode: 0644
 
-    - name: "Divert /etc/issue.net with dpkg"
+    - name: HARDEN_OS RHEL | Divert /etc/issue.net with dpkg
       community.general.dpkg_divert:
         path: /etc/issue.net
 
-- name: "HARDEN_OS RHEL | Make root own /etc/motd"
+- name: HARDEN_OS RHEL | Make root own /etc/motd
   ansible.builtin.file:
     path: /etc/motd
     owner: root
     group: root
     mode: 0644
 
-- name: "HARDEN_OS RHEL | Make root own /etc/issue"
+- name: HARDEN_OS RHEL | Make root own /etc/issue
   ansible.builtin.file:
     path: /etc/issue
     owner: root
     group: root
     mode: 0644
 
-- name: "HARDEN_OS RHEL | Make root own /etc/issue.net"
+- name: HARDEN_OS RHEL | Make root own /etc/issue.net
   ansible.builtin.file:
     path: /etc/issue.net
     owner: root
     group: root
     mode: 0644
 
-- name: "HARDEN_OS RHEL | Secure IPv4 and IPv6 and restrict core dumps"
+- name: HARDEN_OS RHEL | Secure IPv4 and IPv6 and restrict core dumps
   block:
       # TODO: Create exclusion for kube
-    - name: "Replace sysctl.conf with ours"
+    - name: HARDEN_OS RHEL | Replace sysctl.conf with ours
       ansible.builtin.copy:
         src: rhel/sysctl.conf
         dest: /etc/sysctl.conf
@@ -78,7 +198,7 @@
         mode: 0744
         backup: yes
 
-    - name: "Replace coredump.conf with ours"
+    - name: HARDEN_OS RHEL | Replace coredump.conf with ours
       ansible.builtin.copy:
         src: rhel/coredump.conf
         dest: /etc/systemd/coredump.conf
@@ -148,7 +268,7 @@
 
 - name: HARDEN_OS RHEL | Modprobe stuff
   block:
-  - name: Replace dccp.conf with ours"
+  - name: HARDEN_OS RHEL | Replace dccp.conf with ours"
     ansible.builtin.copy:
       src: rhel/modprobe.d/dccp.conf
       dest: /etc/modprobe.d/dccp.conf
@@ -157,7 +277,7 @@
       mode: 0744
       backup: yes
 
-  - name: Replace blacklist.conf with ours
+  - name: HARDEN_OS RHEL | Replace blacklist.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/blacklist.conf
       dest: /etc/modprobe.d/blacklist.conf
@@ -166,7 +286,7 @@
       mode: 0744
       backup: yes
 
-  - name: Replace tipc.conf with ours
+  - name: HARDEN_OS RHEL | Replace tipc.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/tipc.conf
       dest: /etc/modprobe.d/tipc.conf
@@ -174,7 +294,7 @@
       group: root
       mode: 0744
 
-  - name: Replace rds.conf with ours
+  - name: HARDEN_OS RHEL | Replace rds.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/rds.conf
       dest: /etc/modprobe.d/rds.conf
@@ -183,7 +303,7 @@
       mode: 0744
       backup: yes
 
-  - name: Replace sctp.conf with ours
+  - name: HARDEN_OS RHEL | Replace sctp.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/sctp.conf
       dest: /etc/modprobe.d/sctp.conf
@@ -889,7 +1009,51 @@
     group: root
     mode: '0640'
 
-- name: HARDEN_OS RHEL | 
-  ansible.builtin.file:
-    path: /var/log/journal
-    state: directory
+- name: HARDEN_OS RHEL | Ensure access to all logfiles has been configured
+  block:
+    - name: HARDEN_OS RHEL | find log files
+      ansible.builtin.shell: find /var/log/ -type f -exec ls {} \;
+      changed_when: false
+      failed_when: false
+      register: discovered_logfiles
+
+    - name: HARDEN_OS RHEL | change permissions
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'u-x,g-wx,o-rwx'
+      failed_when: discovered_logfile_list.state not in '[ file, absent ]'
+      register: discovered_logfile_list
+      loop: "{{ discovered_logfiles.stdout_lines }}"
+      when:
+        - discovered_logfiles.stdout_lines | length > 0
+        - ('audit.log' in item or 'journal' in item) or
+          item == '/var/log/secure' or
+          item == '/var/log/syslog' or
+          item == '/var/log/messages' or
+          item == '/var/log/auth.log'
+
+    - name: HARDEN_OS RHEL | change permissions
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'u-x,g-x,o-rwx'
+      failed_when: discovered_logfile_list.state not in '[ file, absent ]'
+      register: discovered_logfile_list
+      loop: "{{ discovered_logfiles.stdout_lines }}"
+      when:
+        - discovered_logfiles.stdout_lines | length > 0
+        - ('anaconda' in item or 'dnf' in item or 'secure' in item  or 'messages' in item or 'hawkey' in item)
+
+    - name: HARDEN_OS RHEL | change permissions
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 'ug-x,o-wx'
+      failed_when: discovered_logfile_list.state not in '[ file, absent ]'
+      register: discovered_logfile_list
+      loop: "{{ discovered_logfiles.stdout_lines }}"
+      when:
+        - discovered_logfiles.stdout_lines | length > 0
+        - ('sssd' in item or 'lastlog' in item) or
+          item == "/var/log/btmp" or
+          item == "/var/log/utmp" or
+          item == "/var/log/wtmp" or
+          item == "/var/log/lastlog"
