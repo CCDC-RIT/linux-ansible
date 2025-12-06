@@ -29,14 +29,6 @@
 #     group: blueteam
 #     mode: '0700'
 
-- name: Copy over the Helm binary
-  ansible.builtin.copy:
-    src: helm
-    dest: /usr/local/bin/helm
-    owner: root
-    group: root
-    mode: '0755'
-
 - name: Copy over tool installation script (just in case)
   ansible.builtin.copy:
     src: kube_tools.sh
