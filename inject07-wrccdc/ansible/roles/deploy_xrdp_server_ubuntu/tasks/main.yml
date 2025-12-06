@@ -1,0 +1,42 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install xrdp and XFCE
+  ansible.builtin.apt:
+    name:
+      - xrdp
+      - "{{ desktop_env }}"
+      - xfce4-goodies
+    state: present
+
+- name: Configure xrdp.ini with MaxSessions
+  ansible.builtin.lineinfile:
+    path: /etc/xrdp/xrdp.ini
+    regexp: '^MaxSessions='
+    line: "MaxSessions={{ max_sessions }}"
+
+- name: Add startxfce4 to user's .xsession
+  ansible.builtin.lineinfile:
+    path: /home/{{ ansible_user }}/.xsession
+    create: yes
+    line: 'startxfce4'
+
+- name: Open firewall port for RDP
+  ufw:
+    rule: allow
+    proto: tcp
+    from_ip: any
+    port: "{{ xrdp_port }}"
+
+- name: Restart xrdp
+  systemd:
+    name: xrdp
+    state: restarted
+    
+- name: Ensure xrdp service is started and enabled
+  systemd:
+    name: xrdp
+    state: started
+    enabled: yes
