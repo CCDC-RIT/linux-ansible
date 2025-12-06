@@ -11,15 +11,6 @@
     - initial
     - setup
 
-- name: Take Backups
-  hosts: all
-  become: yes
-  roles:
-    - backups
-  tags:
-    - initial
-    - backups
-
 - name: Setup Firewall
   hosts: all
   become: yes
@@ -28,30 +19,3 @@
   tags:
     - initial
     - firewall
-
-- name: Harden Kube Controller
-  hosts: kubemgr
-  become: yes
-  roles:
-    - kube
-  tags:
-    - kube
-    - initial
-
-- name: Harden Kube Boxes
-  hosts: kube
-  become: yes
-  roles:
-    - kube
-  tags:
-    - kube
-    - initial
-    
-- name: Harden OS
-  hosts: all
-  become: yes
-  roles:
-    - harden_os
-  tags:
-    - initial
-    - harden

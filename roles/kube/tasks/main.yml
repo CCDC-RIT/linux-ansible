@@ -1,5 +1,7 @@
 - name: Download our Kube tooling onto Control Plane box
   include_tasks: downloads.yml 
+  when: inventory_hostname in groups["kubemgr"]
 
 - name: Run Kube CIS Benchmarks Ansible
   include_tasks: cis.yml
+  when: inventory_hostname in groups["kubemgr"]

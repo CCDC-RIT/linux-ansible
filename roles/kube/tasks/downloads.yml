@@ -46,19 +46,19 @@
     mode: '0700'
 
 #K9s install if this is Debian
-- name: Copy over k9s deb file
-  ansible.builtin.copy:
-    src: k9s_amd64.deb
-    dest: /home/blueteam/k9s.deb
-    owner: blueteam
-    group: blueteam
-    mode: '0755'
-  when: ansible_os_family == 'Debian'
+# - name: Copy over k9s deb file
+#   ansible.builtin.copy:
+#     src: k9s_amd64.deb
+#     dest: /home/blueteam/k9s.deb
+#     owner: blueteam
+#     group: blueteam
+#     mode: '0755'
+#   when: ansible_os_family == 'Debian'
 
-- name: Install k9s from .deb file package
-  ansible.builtin.apt:
-    deb: /home/blueteam/k9s.deb
-  when: ansible_os_family == 'Debian'
+# - name: Install k9s from .deb file package
+#   ansible.builtin.apt:
+#     deb: /home/blueteam/k9s.deb
+#   when: ansible_os_family == 'Debian'
 
 #Add and install necessary Helm repos:
 # - name: Add falcosecurity helm repo

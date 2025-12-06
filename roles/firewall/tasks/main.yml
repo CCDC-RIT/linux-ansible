@@ -20,5 +20,7 @@
 #   when: inventory_hostname in groups["kubemgr"]
 
 - name: kube
-  include_tasks: iptables_kubeMANAGER.yml
+  include_tasks: iptables_kube.yml
+  vars:
+    pod_network_cidr: "10.19.0.0/16"
   when: inventory_hostname in groups["kube"] + groups["kubemgr"]
