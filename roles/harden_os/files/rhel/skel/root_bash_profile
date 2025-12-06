@@ -1,2 +1,10 @@
 # All new files are created with permissions 640
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
 umask 0027
