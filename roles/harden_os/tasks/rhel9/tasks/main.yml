@@ -888,3 +888,8 @@
     owner: root
     group: root
     mode: '0640'
+
+- name: HARDEN_OS RHEL | 
+  ansible.builtin.file:
+    path: /var/log/journal
+    state: directory
