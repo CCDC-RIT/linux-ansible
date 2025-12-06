@@ -4,6 +4,8 @@ BACKUPDIR="."
 
 mkdir -p "$BACKUPDIR"
 
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
 if [[ $EUID -ne 0 ]]; then
     echo "Must be run as root"
     exit 1
