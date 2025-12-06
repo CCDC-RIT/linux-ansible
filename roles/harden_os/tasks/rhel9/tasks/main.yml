@@ -1053,53 +1053,49 @@
 #         - item in prelim_interactive_usernames.stdout
 #         - force_user_warnage
 
-- name: HARDEN_OS RHEL | Ensure journald ForwardToSyslog is disabled
-  block:
-    - name: HARDEN_OS RHEL | Add file
-      ansible.builtin.template:
-        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/forwardtosyslog.conf.j2"
-        dest: /etc/systemd/journald.conf.d/forwardtosyslog.conf
-        owner: root
-        group: root
-        mode: 'g-wx,o-rwx'
+- name: Make journald backup dir /var/fonts
+  file:
+    path: /var/fonts/journald-backup
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
 
-    - name: HARDEN_OS RHEL | comment out current entries
-      ansible.builtin.replace:
-        path: /etc/systemd/journald.conf
-        regexp: ^(\s*ForwardToSyslog)
-        replace: '#\1'
+- name: HARDEN_OS RHEL | Backup journald.conf if present
+  copy:
+    src: /etc/systemd/journald.conf
+    dest: /var/fonts/journald-backup/journald.conf.bak
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0600'
+  ignore_errors: yes
 
-- name: HARDEN_OS RHEL | Ensure journald Compress is configured
-  block:
-    - name: HARDEN_OS RHEL | Add file
-      ansible.builtin.template:
-        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"
-        dest: /etc/systemd/journald.conf.d/storage.conf
-        owner: root
-        group: root
-        mode: 'g-wx,o-rwx'
+- name: HARDEN_OS RHEL | Backup journald.conf.d directory if present
+  copy:
+    src: /etc/systemd/journald.conf.d
+    dest: /var/fonts/journald-backup/journald.conf.d
+    remote_src: yes
+    mode: '0700'
+  ignore_errors: yes
 
-    - name: HARDEN_OS RHEL | comment out current entries
-      ansible.builtin.replace:
-        path: /etc/systemd/journald.conf
-        regexp: ^(?i)(\s*compress=)
-        replace: '#\1'
+- name: HARDEN_OS RHEL | Remove journald.conf.d overrides
+  file:
+    path: /etc/systemd/journald.conf.d
+    state: absent
 
-- name: HARDEN_OS RHEL | Ensure journald Storage is configured
-  block:
-    - name: HARDEN_OS RHEL | Add file
-      ansible.builtin.template:
-        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"
-        dest: /etc/systemd/journald.conf.d/storage.conf
-        owner: root
-        group: root
-        mode: 'g-wx,o-rwx'
-
-    - name: HARDEN_OS RHEL | comment out current entries
-      ansible.builtin.replace:
-        path: /etc/systemd/journald.conf
-        regexp: ^(?i)(\s*storage=)
-        replace: '#\1'
+- name: HARDEN_OS RHEL | Copy over hardened journald.conf
+  copy:
+    src: journald.conf
+    dest: /etc/systemd/journald.conf
+    owner: root
+    group: root
+    mode: '0644'
+  
+- name: HARDEN_OS RHEL | restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
 
 - name: HARDEN_OS RHEL | Ensure rsyslog installed
   ansible.builtin.package:
@@ -1113,14 +1109,6 @@
     name: rsyslog
     enabled: true
     state: started
-
-- name: HARDEN_OS RHEL | Ensure journald is configured to send logs to rsyslog
-  ansible.builtin.copy:
-    src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/journald.conf"
-    dest: /etc/systemd/journald.conf
-    owner: root
-    group: root
-    mode: '0640'
 
 - name: HARDEN_OS RHEL | Ensure rsyslog log file creation mode is configured
   ansible.builtin.copy:
