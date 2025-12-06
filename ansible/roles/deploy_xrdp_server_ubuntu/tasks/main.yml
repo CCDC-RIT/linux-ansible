@@ -23,18 +23,12 @@
     create: yes
     line: 'startxfce4'
 
-- name: Ensure iptables is installed
-  ansible.builtin.apt:
-    name: iptables
-    state: present
-
 - name: Open firewall port for RDP
-  iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: "{{ rdp_port }}"
-    jump: ACCEPT
-    state: present
+  ufw:
+    rule: allow
+    proto: tcp
+    from_ip: any
+    port: "{{ xrdp_port }}"
 
 - name: Restart xrdp
   systemd:
