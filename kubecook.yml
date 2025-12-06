@@ -8,7 +8,6 @@
         msg: "You must define ansible_control_ip in group_vars/main.yaml"
       when: ansible_control_ip is not defined
   tags:
-    - never
     - initial
     - setup
 
@@ -18,7 +17,6 @@
   roles:
     - backups
   tags:
-    - never
     - initial
     - backups
 
@@ -28,7 +26,6 @@
   roles:
     - firewall # copy current firewall rules, run lite if no scoring ip, otherwise harden that shit
   tags:
-    - never
     - initial
     - firewall
 
@@ -38,7 +35,6 @@
   roles:
     - kube
   tags:
-    - never
     - kube
     - initial
 
@@ -48,7 +44,6 @@
   roles:
     - kube
   tags:
-    - never
     - kube
     - initial
     
@@ -58,6 +53,5 @@
   roles:
     - harden_os
   tags:
-    - never
     - initial
     - harden
