@@ -23,6 +23,7 @@
   with_items:
     - { chain: INPUT }
     - { chain: OUTPUT }
+  when: inventory_hostname not in groups["kubemgr"] + groups["kube"]
 
 - name: Allow all traffic from Ansible
   iptables: 

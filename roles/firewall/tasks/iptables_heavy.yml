@@ -19,6 +19,7 @@
   with_items:
     - "INPUT"
     - "OUTPUT"
+  when: inventory_hostname not in groups["kubemgr"] + groups["kube"]
 
 - name: Allow scoring (INPUT, Source IP)
   iptables:
