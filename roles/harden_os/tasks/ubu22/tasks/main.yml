@@ -265,6 +265,15 @@
     - discovered_gid0_members is defined
     - discovered_gid0_members.stdout | length > 0
 
+- name: "HARDEN_OS UBUNTU | Drop in login.defs"
+  ansible.builtin.copy:
+    src: "ubu/login.defs"
+    dest: "/etc/login.defs"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+
 - name: "HARDEN_OS UBUNTU | PAM settings"
   block:
     - name: "Drop in common-* files"
