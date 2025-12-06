@@ -250,12 +250,10 @@
         mode: 0644
 
     - name: HARDEN_OS RHEL | Disable dynamic_motd/pam_motd.so
-    - name: HARDEN_OS RHEL | Disable dynamic_motd/pam_motd.so
       ansible.builtin.copy:
         src: rhel/sshd
         dest: /etc/pam.d/sshd
 
-- name: HARDEN_OS RHEL | Configure local login warning banner
 - name: HARDEN_OS RHEL | Configure local login warning banner
   block:
     - name: HARDEN_OS RHEL | Set local MOTD in /etc/issue
@@ -269,14 +267,11 @@
         mode: 0644
 
     - name: HARDEN_OS RHEL | Divert /etc/issue with dpkg
-    - name: HARDEN_OS RHEL | Divert /etc/issue with dpkg
       community.general.dpkg_divert:
         path: /etc/issue
 
 - name: HARDEN_OS RHEL | Configure remote login warning banner
-- name: HARDEN_OS RHEL | Configure remote login warning banner
   block:
-    - name: HARDEN_OS RHEL | Set remote MOTD in /etc/issue
     - name: HARDEN_OS RHEL | Set remote MOTD in /etc/issue
       ansible.builtin.lineinfile:
         path: /etc/issue.net
@@ -288,11 +283,9 @@
         mode: 0644
 
     - name: HARDEN_OS RHEL | Divert /etc/issue.net with dpkg
-    - name: HARDEN_OS RHEL | Divert /etc/issue.net with dpkg
       community.general.dpkg_divert:
         path: /etc/issue.net
 
-- name: HARDEN_OS RHEL | Make root own /etc/motd
 - name: HARDEN_OS RHEL | Make root own /etc/motd
   ansible.builtin.file:
     path: /etc/motd
@@ -301,14 +294,12 @@
     mode: 0644
 
 - name: HARDEN_OS RHEL | Make root own /etc/issue
-- name: HARDEN_OS RHEL | Make root own /etc/issue
   ansible.builtin.file:
     path: /etc/issue
     owner: root
     group: root
     mode: 0644
 
-- name: HARDEN_OS RHEL | Make root own /etc/issue.net
 - name: HARDEN_OS RHEL | Make root own /etc/issue.net
   ansible.builtin.file:
     path: /etc/issue.net
@@ -317,10 +308,8 @@
     mode: 0644
 
 - name: HARDEN_OS RHEL | Secure IPv4 and IPv6 and restrict core dumps
-- name: HARDEN_OS RHEL | Secure IPv4 and IPv6 and restrict core dumps
   block:
       # TODO: Create exclusion for kube
-    - name: HARDEN_OS RHEL | Replace sysctl.conf with ours
     - name: HARDEN_OS RHEL | Replace sysctl.conf with ours
       ansible.builtin.copy:
         src: rhel/sysctl.conf
@@ -330,7 +319,6 @@
         mode: 0744
         backup: yes
 
-    - name: HARDEN_OS RHEL | Replace coredump.conf with ours
     - name: HARDEN_OS RHEL | Replace coredump.conf with ours
       ansible.builtin.copy:
         src: rhel/coredump.conf
@@ -402,7 +390,6 @@
 - name: HARDEN_OS RHEL | Modprobe stuff
   block:
   - name: HARDEN_OS RHEL | Replace dccp.conf with ours"
-  - name: HARDEN_OS RHEL | Replace dccp.conf with ours"
     ansible.builtin.copy:
       src: rhel/modprobe.d/dccp.conf
       dest: /etc/modprobe.d/dccp.conf
@@ -411,7 +398,6 @@
       mode: 0744
       backup: yes
 
-  - name: HARDEN_OS RHEL | Replace blacklist.conf with ours
   - name: HARDEN_OS RHEL | Replace blacklist.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/blacklist.conf
@@ -422,7 +408,6 @@
       backup: yes
 
   - name: HARDEN_OS RHEL | Replace tipc.conf with ours
-  - name: HARDEN_OS RHEL | Replace tipc.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/tipc.conf
       dest: /etc/modprobe.d/tipc.conf
@@ -430,7 +415,6 @@
       group: root
       mode: 0744
 
-  - name: HARDEN_OS RHEL | Replace rds.conf with ours
   - name: HARDEN_OS RHEL | Replace rds.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/rds.conf
@@ -440,7 +424,6 @@
       mode: 0744
       backup: yes
 
-  - name: HARDEN_OS RHEL | Replace sctp.conf with ours
   - name: HARDEN_OS RHEL | Replace sctp.conf with ours
     ansible.builtin.copy:
       src: rhel/modprobe.d/sctp.conf
