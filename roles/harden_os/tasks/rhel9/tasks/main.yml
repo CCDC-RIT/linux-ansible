@@ -1053,7 +1053,7 @@
 #         - item in prelim_interactive_usernames.stdout
 #         - force_user_warnage
 
-- name: HARDEN_OS RHEL | Make journald backup dir /var/fonts
+- name: HARDEN_OS RHEL | Make journald backup dir in /var/fonts
   file:
     path: /var/fonts/journald-backup
     state: directory
