@@ -1,0 +1,63 @@
+---
+
+- name: Assert Variables
+  hosts: all
+  tasks:
+    - name: Assert Variables
+      fail:
+        msg: "You must define ansible_control_ip in group_vars/main.yaml"
+      when: ansible_control_ip is not defined
+  tags:
+    - never
+    - initial
+    - setup
+
+- name: Take Backups
+  hosts: all
+  become: yes
+  roles:
+    - backups
+  tags:
+    - never
+    - initial
+    - backups
+
+- name: Setup Firewall
+  hosts: all
+  become: yes
+  roles:
+    - firewall # copy current firewall rules, run lite if no scoring ip, otherwise harden that shit
+  tags:
+    - never
+    - initial
+    - firewall
+
+- name: Harden Kube Controller
+  hosts: kubemgr
+  become: yes
+  roles:
+    - kube
+  tags:
+    - never
+    - kube
+    - initial
+
+- name: Harden Kube Boxes
+  hosts: kube
+  become: yes
+  roles:
+    - kube
+  tags:
+    - never
+    - kube
+    - initial
+    
+- name: Harden OS
+  hosts: all
+  become: yes
+  roles:
+    - harden_os
+  tags:
+    - never
+    - initial
+    - harden
