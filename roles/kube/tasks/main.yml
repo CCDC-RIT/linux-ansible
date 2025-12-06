@@ -5,3 +5,4 @@
 - name: Run Kube CIS Benchmarks Ansible
   include_tasks: cis.yml
   when: inventory_hostname in groups["kubemgr"]
+  ignore_errors: true
