@@ -97,13 +97,13 @@
     jump: ACCEPT
   loop: "{{ groups['kube'] }}"
 
-# - name: Kube Firewall | Save iptables rules | Debian
-#   shell: iptables-save > /etc/iptables/rules.v4
-#   when: ansible_os_family == "Debian"
+- name: Kube Firewall | Save iptables rules | Debian
+  shell: iptables-save > /etc/iptables/rules.v4
+  when: ansible_os_family == "Debian"
 
-# - name: Kube Firewall | Save iptables rules | RHEL
-#   shell: service iptables save
-#   when: ansible_os_family == "RedHat"
+- name: Kube Firewall | Save iptables rules | RHEL
+  shell: service iptables save
+  when: ansible_os_family == "RedHat"
 
 #https://docs.oracle.com/en/operating-systems/olcne/1.1/start/ports.html
 #
