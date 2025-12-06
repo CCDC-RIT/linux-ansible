@@ -752,8 +752,12 @@
         backup: yes
 
     - name: "Restart sshd"
-      ansible.builtin.systemd:
-        name: sshd
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
         enabled: yes
         state: restarted
-        masked: no
+        masked: false
+      with_items: 
+        - ssh
+        - sshd
+      ignore_errors: true

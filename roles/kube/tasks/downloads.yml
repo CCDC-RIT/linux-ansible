@@ -79,7 +79,7 @@
 
 # - name: Update helm repos
 #   ansible.builtin.shell:
-#     cmd: helm repo Update
+#     cmd: helm repo update
 
 # - name: Install Kubeshark
 #   ansible.builtin.shell:
