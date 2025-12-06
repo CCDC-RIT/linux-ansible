@@ -864,16 +864,16 @@
     - "item.id not in interactive_usernames.stdout"
     - "'root' not in item.id"
 
-- name: "HARDEN_OS RHEL | Ensure systemd-journal-remote authentication is configured"
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/journal-upload.conf
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-  loop:
-    - { regexp: 'URL=', line: 'URL={{ remote_log_server }}'}
-    - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
-    - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
-    - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
+# - name: "HARDEN_OS RHEL | Ensure systemd-journal-remote authentication is configured"
+#   ansible.builtin.lineinfile:
+#     path: /etc/systemd/journal-upload.conf
+#     regexp: "{{ item.regexp }}"
+#     line: "{{ item.line }}"
+#   loop:
+#     - { regexp: 'URL=', line: 'URL={{ remote_log_server }}'}
+#     - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
+#     - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
+#     - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
 
 - name: "HARDEN_OS RHEL | Ensure systemd-journal-remote service is not in use"
   ansible.builtin.systemd:
@@ -922,54 +922,42 @@
     - /etc/security/opasswd.old
   ignore_errors: yes # If file doesn't exist, don't fatal error
 
-# ADD LOGIN.DEFS REPLACE TASK HERE
+- name: "HARDEN_OS RHEL | Drop in login.defs"
+  ansible.builtin.copy:
+    src: "rhel/login.defs"
+    dest: "/etc/login.defs"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
 
-# - name: HARDEN_OS RHEL | Ensure password expiration is 365 days or less
-#   block:
-#     - name: "Set PASS_MAX_DAYS in login.defs"
-#       ansible.builtin.lineinfile:
-#         path: /etc/login.defs
-#         regexp: '^PASS_MAX_DAYS'
-#         line: "PASS_MAX_DAYS {{ pass_max_days }}"
+- name: "HARDEN_OS RHEL | PAM settings"
+  block:
+    - name: "Drop in common-* files"
+      ansible.builtin.copy:
+        src: "rhel/pam.d/{{ item }}"
+        dest: /etc/pam.d/{{ item }}
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      with_items:
+        - system-auth
+        - password-auth
 
-#     - name: "Get existing users PASS_MAX_DAYS"
-#       ansible.builtin.shell: "awk -F: '(/^[^:]+:[^!*]/ && ($5> {{ pass_max_days }} || $5< {{ pass_max_days }} || $5 == -1)){print $1}' /etc/shadow"
-#       changed_when: false
-#       failed_when: false
-#       register: discovered_max_days
-
-#     - name: "Set existing users PASS_MAX_DAYS"
-#       ansible.builtin.user:
-#         name: "{{ item }}"
-#         password_expire_max: "{{ pass_max_days }}"
-#       loop: "{{ discovered_max_days.stdout_lines }}"
-#       when:
-#         - discovered_max_days.stdout_lines | length > 0
-#         - item in prelim_interactive_usernames.stdout
-#         - force_user_maxdays
-
-# - name: HARDEN_OS RHEL | Ensure password expiration warning days is configured
-#   block:
-#     - name: HARDEN_OS RHEL | set login.defs PASS_WARN_AGE
-#       ansible.builtin.lineinfile:
-#         path: /etc/login.defs
-#         regexp: '^PASS_WARN_AGE'
-#         line: "PASS_WARN_AGE {{ pass_warn_age }}"
-
-#     - name: HARDEN_OS RHEL | Get existing users WARN_DAYS
-#       ansible.builtin.shell: "awk -F: '/^[^:]+:[^!*]/ && $6< {{ pass_warn_age }} {print $1}' /etc/shadow"
-#       changed_when: false
-#       failed_when: false
-#       register: discovered_warn_days
-
-#     - name: HARDEN_OS RHEL | Set existing users WARN_DAYS
-#       ansible.builtin.command: "chage --warndays {{ pass['warn_age'] }} {{ item }}"
-#       changed_when: true
-#       loop: "{{ discovered_warn_days.stdout_lines }}"
-#       when:
-#         - discovered_warn_days.stdout_lines | length > 0
-#         - item in prelim_interactive_usernames.stdout
-#         - force_user_warnage
+    - name: "Drop in module configuration files"
+      ansible.builtin.copy:
+        src: "rhel/security/{{ item }}"
+        dest: "/etc/security/{{ item }}"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      with_items:
+        - pwquality.conf
+        - access.conf
+        - pwhistory.conf
+        - faillock.conf
 
 - name: HARDEN_OS RHEL | Make journald backup dir in /var/fonts
   file:
@@ -1003,12 +991,13 @@
     state: absent
 
 - name: HARDEN_OS RHEL | Copy over hardened journald.conf
-  copy:
+  ansible.builtin.copy:
     src: journald.conf
     dest: /etc/systemd/journald.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: 0644
+    backup: yes
   
 - name: HARDEN_OS RHEL | restart journald
   ansible.builtin.systemd:
@@ -1030,11 +1019,16 @@
 
 - name: HARDEN_OS RHEL | Ensure rsyslog log file creation mode is configured
   ansible.builtin.copy:
-    src: "{{ ansible_dir }}/rhel9/templates/etc/rsyslog.conf"
+    src: rhel/rsyslog.conf
     dest: /etc/rsyslog.conf
     owner: root
     group: root
-    mode: '0640'
+    mode: 0640
+
+- name: HARDEN_OS RHEL | restart rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
+    state: restarted
 
 - name: HARDEN_OS RHEL | Ensure access to all logfiles has been configured
   block:
