@@ -36,20 +36,27 @@
   loop: "{{ scoring_ip }}"
   ignore_errors: true
 
-- name: Allow SSH from Ansible Control
-  iptables:
-    chain: INPUT
+- name: Allow SSH to Ansible (OUTPUT - Source Port 22)
+  iptables: 
+    chain: OUTPUT
     protocol: tcp
-    destination_port: 22
-    source: "{{ ansible_control_ip }}"
+    destination: "{{ ansible_control_ip }}"
+    destination_port: "22"
     jump: ACCEPT
 
-- name: Allow SSH to Ansible Control
+- name: Allow SSH from Ansible (OUTPUT - Source Port 22)
+  iptables: 
+    chain: OUTPUT
+    protocol: tcp
+    source: "{{ ansible_control_ip }}"
+    destination_port: "22"
+    jump: ACCEPT
+
+- name: Allow HTTPS out
   iptables:
     chain: OUTPUT
     protocol: tcp
-    source_port: 22
-    destination: "{{ ansible_control_ip }}"
+    destination_port: 443
     jump: ACCEPT
 
 - name: Block everything else
