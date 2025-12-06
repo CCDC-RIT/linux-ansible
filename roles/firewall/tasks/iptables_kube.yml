@@ -65,9 +65,8 @@
 #shell because multi ports
 - name: Kube Firewall | Allow NodePort range 30000-32767 from all kube nodes
   shell: |
-    iptables -C INPUT -p tcp --dport 30000:32767 -s {{ item }} -j ACCEPT 2>/dev/null || \
-    iptables -A INPUT -p tcp --dport 30000:32767 -s {{ item }} -j ACCEPT
-  loop: "{{ groups['kubemgr'] + groups['kube'] }}"
+    iptables -C INPUT -p tcp --dport 30000:32767 -j ACCEPT 2>/dev/null || \
+    iptables -A INPUT -p tcp --dport 30000:32767 -j ACCEPT
 
 #for container pulls on workers
 - name: Kube Firewall | Allow HTTPS for image pulls
