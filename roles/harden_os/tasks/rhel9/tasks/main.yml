@@ -1,4 +1,7 @@
 ---
+- name: HARDEN_OS RHEL | Include vars for RHEL9
+  include_vars: rhel9.yml
+
 - name: HARDEN_OS RHEL | Ensure /etc/shadow password fields are not empty
   block:
     - name: HARDEN_OS RHEL | Find users with no password
@@ -710,16 +713,16 @@
         - "item.id not in prelim_interactive_usernames.stdout"
         - "'root' not in item.id"
 
-- name: "HARDEN_OS RHEL | Ensure systemd-journal-remote authentication is configured"
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/journal-upload.conf
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-  loop:
-    - { regexp: 'URL=', line: 'URL={{ remote_log_server }}'}
-    - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
-    - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
-    - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
+# - name: "HARDEN_OS RHEL | Ensure systemd-journal-remote authentication is configured"
+#   ansible.builtin.lineinfile:
+#     path: /etc/systemd/journal-upload.conf
+#     regexp: "{{ item.regexp }}"
+#     line: "{{ item.line }}"
+#   loop:
+#     - { regexp: 'URL=', line: 'URL={{ remote_log_server }}'}
+#     - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
+#     - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
+#     - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
 
 - name: "HARDEN_OS RHEL | Ensure systemd-journal-remote service is not in use"
   ansible.builtin.systemd:
@@ -925,4 +928,3 @@
           item == "/var/log/utmp" or
           item == "/var/log/wtmp" or
           item == "/var/log/lastlog"
-
