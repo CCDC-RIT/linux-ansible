@@ -79,6 +79,24 @@
     jump: ACCEPT
   loop: "{{ groups['kube'] }}"
 
+- name: Kube Firewall | Allow DNS TCP for image pulls
+  iptables:
+    chain: OUTPUT
+    protocol: tcp
+    destination_port: 53
+    source: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ groups['kube'] }}"
+
+- name: Kube Firewall | Allow DNS UDP for image pulls
+  iptables:
+    chain: OUTPUT
+    protocol: udp
+    destination_port: 53
+    source: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ groups['kube'] }}"
+
 # - name: Kube Firewall | Save iptables rules | Debian
 #   shell: iptables-save > /etc/iptables/rules.v4
 #   when: ansible_os_family == "Debian"
