@@ -21,13 +21,13 @@
     regexp: '<SIEM_IP>'  # Match the placeholder
     replace: "{{ siem_ip }}"  # Replace with the variable value in group_vars/all.yaml
 
-- name: Copy over Falco helm script (in case we need it)
-  ansible.builtin.copy:
-    src: falco_setup.sh
-    dest: /home/blueteam/get_helm.sh
-    owner: blueteam
-    group: blueteam
-    mode: '0700'
+# - name: Copy over Falco helm script (in case we need it)
+#   ansible.builtin.copy:
+#     src: falco_setup.sh
+#     dest: /home/blueteam/get_helm.sh
+#     owner: blueteam
+#     group: blueteam
+#     mode: '0700'
 
 - name: Copy over the Helm binary
   ansible.builtin.copy:
