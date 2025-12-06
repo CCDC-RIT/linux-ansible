@@ -60,6 +60,13 @@
     source: "{{ pod_network_cidr }}"
     jump: ACCEPT
   when: inventory_hostname in groups["kubemgr"]
+
+- name: Kube Firewall | Allow important network
+  iptables:
+    chain: OUTPUT
+    source: "172.17.0.0/16"
+    jump: ACCEPT
+  when: inventory_hostname in groups["kubemgr"]
   
 
 #shell because multi ports
