@@ -32,7 +32,7 @@
   iptables:
     chain: INPUT
     protocol: tcp
-    destination_port: "{{ rdp_port }}"
+    destination_port: "{{ xrdp_port }}"
     jump: ACCEPT
     state: present
 
