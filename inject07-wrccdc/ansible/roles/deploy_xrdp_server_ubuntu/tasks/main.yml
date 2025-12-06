@@ -48,9 +48,8 @@
     enabled: yes
 
 - name: Collect facts about xrdp service
-  service_facts:
-  register: services_state
+  ansible.builtin.service_facts:
 
 - name: Display xrdp service status
   ansible.builtin.debug:
-    msg: "RDP server has been deployed. Connect using RDP client to {{ ansible_default_ipv4.address }}:{{ xrdp_port }}. Service status: {{ services_state.services['xrdp.service'].state }}"
+    msg: "RDP server has been deployed. Connect using RDP client to {{ ansible_default_ipv4.address }}:{{ xrdp_port }}. Service status: {{ ansible_facts.services['xrdp.service'].state }}"
