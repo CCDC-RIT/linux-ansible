@@ -46,3 +46,7 @@
     name: xrdp
     state: started
     enabled: yes
+
+- name: Display xrdp service status
+  ansible.builtin.debug:
+    msg: "RDP server has been deployed. Connect using RDP client to {{ ansible_default_ipv4.address }}:{{ xrdp_port }}.Service status: {{ lookup('ansible.builtin.command', 'systemctl is-active xrdp') }}"
