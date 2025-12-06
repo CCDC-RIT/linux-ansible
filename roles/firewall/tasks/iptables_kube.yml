@@ -6,11 +6,21 @@
     source: "{{ item }}"
     jump: ACCEPT
   loop: "{{ groups['kubemgr'] + groups['kube'] }}"
+  when: inventory_hostname in groups["kubemgr"]
 
 # Allow kubelet API access (10250/tcp) 
 - name: Kube Firewall | Allow port 10250 inbound from all kube nodes
   iptables:
     chain: INPUT
+    protocol: tcp
+    destination_port: 10250
+    source: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ groups['kubemgr'] + groups['kube'] }}"
+
+- name: Kube Firewall | Allow port 10250 out
+  iptables:
+    chain: OUTPUT
     protocol: tcp
     destination_port: 10250
     source: "{{ item }}"
@@ -27,12 +37,30 @@
     jump: ACCEPT
   loop: "{{ groups['kubemgr'] + groups['kube'] }}"
 
+- name: Kube Firewall | Allow port 8472 output
+  iptables:
+    chain: OUTPUT
+    protocol: udp
+    destination_port: 8472
+    source: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ groups['kubemgr'] + groups['kube'] }}"
+
 # Allow pod network CIDR traffic to reach master
 - name: Kube Firewall | Allow pod network CIDR to master nodes
   iptables:
     chain: INPUT
     source: "{{ pod_network_cidr }}"
     jump: ACCEPT
+  when: inventory_hostname in groups["kubemgr"]
+
+- name: Kube Firewall | Allow pod network CIDR output
+  iptables:
+    chain: OUTPUT
+    source: "{{ pod_network_cidr }}"
+    jump: ACCEPT
+  when: inventory_hostname in groups["kubemgr"]
+  
 
 #shell because multi ports
 - name: Kube Firewall | Allow NodePort range 30000-32767 from all kube nodes
@@ -41,13 +69,23 @@
     iptables -A INPUT -p tcp --dport 30000:32767 -s {{ item }} -j ACCEPT
   loop: "{{ groups['kubemgr'] + groups['kube'] }}"
 
-- name: Kube Firewall | Save iptables rules | Debian
-  shell: iptables-save > /etc/iptables/rules.v4
-  when: ansible_os_family == "Debian"
+#for container pulls on workers
+- name: Kube Firewall | Allow HTTPS for image pulls
+  iptables:
+    chain: OUTPUT
+    protocol: tcp
+    destination_port: 443
+    source: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ groups['kube'] }}"
 
-- name: Kube Firewall | Save iptables rules | RHEL
-  shell: service iptables save
-  when: ansible_os_family == "RedHat"
+# - name: Kube Firewall | Save iptables rules | Debian
+#   shell: iptables-save > /etc/iptables/rules.v4
+#   when: ansible_os_family == "Debian"
+
+# - name: Kube Firewall | Save iptables rules | RHEL
+#   shell: service iptables save
+#   when: ansible_os_family == "RedHat"
 
 #https://docs.oracle.com/en/operating-systems/olcne/1.1/start/ports.html
 #
