@@ -1,0 +1,9 @@
+---
+- name: Deploy WireGuard Server
+  become: yes
+  roles:
+    - deploy_wireguard_server_ubuntu
+  hosts: superduty
+  vars:
+    wg_name: wg.example.dev
+    wg_server_ip: 192.168.220.250
