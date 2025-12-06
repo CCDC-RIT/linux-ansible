@@ -740,6 +740,44 @@
 
 --- like everything above this line is PAM - have fun max
 
+    - name: "5.4.1.5 | Getting user list"
+      ansible.builtin.command: "awk -F: '/^[^#:]+:[^\\!\\*:]*:[^:]*:[^:]*:[^:]*:[^:]*:(\\s*|-1|3[1-9]|[4-9][0-9]|[1-9][0-9][0-9]+):[^:]*:[^:]*\\s*$/ {print $1}' /etc/shadow"
+      changed_when: false
+      check_mode: false
+      register: discovered_passwdlck_user_list
+
+    - name: "5.4.1.5 | Apply Inactive setting to existing accounts"
+      ansible.builtin.command: chage --inactive {{ inactivelock.lock_days }} "{{ item }}"
+      changed_when: true
+      loop: "{{ discovered_passwdlck_user_list.stdout_lines }}"
+      when: item in prelim_interactive_usernames.stdout
+  when: rule_5_4_1_5
+
+^^^^^ PAM ^^^^^^^
+
+
+
+- name: "6.2.3.1 | PATCH | Ensure rsyslog installed"
+  ansible.builtin.package:
+    name: rsyslog
+    state: present
+  when:
+    - "'rsyslog' not in ansible_facts.packages"
+    - rule_6_2_3_1
+
+- name: "6.2.3.2 | PATCH | Ensure rsyslog Service is enabled and active"
+  ansible.builtin.systemd:
+    name: rsyslog
+    enabled: true
+    state: started
+  when: rule_6_2_3_2
+
+- name: "6.2.3.4 | PATCH | Ensure rsyslog log file creation mode is configured"
+  ansible.builtin.lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^\$FileCreateMode'
+    line: '$FileCreateMode 0640'
+  when: rule_6_2_3_4
 
 - name: "6.2.3.5 | PATCH | Ensure logging is configured"
   block:

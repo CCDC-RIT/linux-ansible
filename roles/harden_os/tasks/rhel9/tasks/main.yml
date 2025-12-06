@@ -442,13 +442,6 @@
     mode: 0744
     backup: yes
 
-- name: "HARDEN_OS RHEL | Ensure permissions on /etc/ssh/sshd_config are configured"
-  ansible.builtin.file:
-    path: "/etc/ssh/sshd_config"
-    owner: root
-    group: root
-    mode: 'go-rwx'
-
 - name: "HARDEN_OS RHEL | Ensure permissions on SSH private host key files are configured"
   block:
     - name: "5.1.2 | Find the SSH private host keys"
@@ -464,7 +457,7 @@
         path: "{{ item.path }}"
         owner: root
         group: root
-        mode: 'u-x,go-rwx'
+        mode: 0600
       loop: "{{ discovered_ssh_private_host_key.files }}"
       loop_control:
         label: "{{ item.path }}"
@@ -484,7 +477,7 @@
         path: "{{ item.path }}"
         owner: root
         group: root
-        mode: 'u-x,go-wx'
+        mode: 0600
       loop: "{{ discovered_ssh_public_host_key.files }}"
       loop_control:
         label: "{{ item.path }}"
@@ -493,59 +486,6 @@
   ansible.builtin.package:
     name: sudo
     state: present
-
-- name: "HARDEN_OS RHEL | Ensure sudo commands use pty"
-  ansible.builtin.lineinfile:
-    path: /etc/sudoers
-    line: "Defaults    use_pty"
-    validate: '/usr/sbin/visudo -cf %s'
-
-- name: "HARDEN_OS RHEL | Ensure sudo log file exists"
-  ansible.builtin.lineinfile:
-    path: /etc/sudoers
-    regexp: '^Defaults    logfile='
-    line: 'Defaults    logfile="{{ sudolog_location }}"'
-    validate: '/usr/sbin/visudo -cf %s'
-
-- name: "HARDEN_OS RHEL | Ensure users must provide password for escalation"
-  block:
-    - name: "HARDEN_OS RHEL | Discover accounts with NOPASSWD"
-      ansible.builtin.shell: grep -Ei '(nopasswd)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
-      become: true
-      changed_when: false
-      failed_when: false
-      register: discovered_nopasswd_sudoers
-
-    - name: "HARDEN_OS RHEL | Remove nopasswd for accounts not excluded"
-      ansible.builtin.replace:
-        path: "{{ item }}"
-        regexp: '^((?!#|{% for name in sudoers_exclude_nopasswd_list %}{{ name }}{% if not loop.last -%}|{%- endif -%}{% endfor %}).*)NOPASSWD(.*)'
-        replace: '\1PASSWD\2'
-        validate: '/usr/sbin/visudo -cf %s'
-      loop: "{{ discovered_nopasswd_sudoers.stdout_lines }}"
-      when: discovered_nopasswd_sudoers.stdout | length > 0
-
-- name: "HARDEN_OS RHEL | Ensure re-authentication for privilege escalation is not disabled globally"
-  block:
-    - name: "5.2.5"
-      ansible.builtin.shell: grep -Ei '(!authenticate)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
-      become: true
-      changed_when: false
-      failed_when: false
-      register: discovered_priv_reauth
-
-    - name: "5.2.5"
-      ansible.builtin.replace:
-        path: "{{ item }}"
-        regexp: '^([^#].*)!authenticate(.*)'
-        replace: '\1authenticate\2'
-        validate: '/usr/sbin/visudo -cf %s'
-      loop: "{{ discovered_priv_reauth.stdout_lines }}"
-      when: discovered_priv_reauth.stdout | length > 0
-  when: rule_5_2_5
-
-
-
 
 - name: Restart sshd
   ansible.builtin.systemd:
@@ -556,8 +496,8 @@
   ansible.builtin.systemd:
     daemon-reload: true
 
-- name: Authselect update
-  ansible.builtin.command: authselect apply-changes
+- name: Authselect NO MORE AUTHSELECT
+  ansible.builtin.command: authselect opt-out
   changed_when: true
 
 - name: Restart journald
@@ -588,7 +528,6 @@
     name: systemd-journald.service
     masked: false
     state: started
-  when: rule_6_2_1_1
 
 - name: "HARDEN_OS RHEL | Ensure journald log file access is configured"
   block:
@@ -624,28 +563,13 @@
     owner: root
     group: root
 
-- name: "HARDEN_OS RHEL | Ensure journald log file rotation is configured"
-  block:
-    - name: "Add file"
-      ansible.builtin.template:
-        src: "rhel/rotation.conf"
-        dest: /etc/systemd/journald.conf.d/rotation.conf
-        owner: root
-        group: root
-        mode: 0740
-
-# TODO replace with a default journald
-    - name: "6.2.1.3 | comment out current entries"
-      ansible.builtin.replace:
-        path: /etc/systemd/journald.conf
-        regexp: "{{ item }}"
-        replace: '#\1'
-      loop:
-        - '^(\s*SystemMaxUse\s*=.*)'
-        - '^(\s*SystemKeepFree\s*=.*)'
-        - '^(\s*RuntimeMaxUse\s*=)'
-        - '^(\s*RuntimeKeepFree\s*=.*)'
-        - '^(\s*MaxFileSec\s*=.*)'
+- name: "HARDEN_OS RHEL | copy our journald"
+  ansible.builtin.copy:
+    src: rhel/journald.conf
+    dest: /etc/systemd/journald.conf
+    owner: root
+    group: root
+    mode: 0755
 
 - name: "HARDEN_OS RHEL | Gather UID 0 accounts other than root"
   ansible.builtin.shell: "cat /etc/passwd | awk -F: '($3 == 0 && $1 != \"root\") {i++;print $1 } END {exit i}'"
@@ -847,7 +771,7 @@
 - name: "HARDEN_OS RHEL | Replace /etc/shells with our version"
   ansible.builtin.copy:
     src: rhel/shells
-    dest: /etc/shell
+    dest: /etc/shells
     owner: root
     group: root
     mode: 0644
@@ -950,12 +874,6 @@
     - { regexp: 'ServerKeyFile=', line: 'ServerKeyFile={{ journal_upload_serverkeyfile }}'}
     - { regexp: 'ServerCertificateFile=', line: 'ServerCertificateFile={{ journal_servercertificatefile }}'}
     - { regexp: 'TrustedCertificateFile=', line: 'TrustedCertificateFile={{ journal_trustedcertificatefile }}'}
-
-- name: "HARDEN_OS RHEL | Ensure systemd-journal-remote is enabled and active"
-  ansible.builtin.systemd:
-    name: systemd-journal-upload
-    masked: false
-    enabled: true
 
 - name: "HARDEN_OS RHEL | Ensure systemd-journal-remote service is not in use"
   ansible.builtin.systemd:
