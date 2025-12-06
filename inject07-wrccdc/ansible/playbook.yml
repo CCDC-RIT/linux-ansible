@@ -5,6 +5,6 @@
     - deploy_xrdp_server_ubuntu
   hosts: explorer
   vars:
-    xrdp_port: 3389
+    xrdp_port: '3389'
     max_sessions: 100
     desktop_env: xfce4
