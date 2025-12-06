@@ -762,3 +762,129 @@
     - /etc/security/opasswd
     - /etc/security/opasswd.old
   ignore_errors: yes # If file doesn't exist, don't fatal error
+
+# ADD LOGIN.DEFS REPLACE TASK HERE
+
+# - name: HARDEN_OS RHEL | Ensure password expiration is 365 days or less
+#   block:
+#     - name: "Set PASS_MAX_DAYS in login.defs"
+#       ansible.builtin.lineinfile:
+#         path: /etc/login.defs
+#         regexp: '^PASS_MAX_DAYS'
+#         line: "PASS_MAX_DAYS {{ pass_max_days }}"
+
+#     - name: "Get existing users PASS_MAX_DAYS"
+#       ansible.builtin.shell: "awk -F: '(/^[^:]+:[^!*]/ && ($5> {{ pass_max_days }} || $5< {{ pass_max_days }} || $5 == -1)){print $1}' /etc/shadow"
+#       changed_when: false
+#       failed_when: false
+#       register: discovered_max_days
+
+#     - name: "Set existing users PASS_MAX_DAYS"
+#       ansible.builtin.user:
+#         name: "{{ item }}"
+#         password_expire_max: "{{ pass_max_days }}"
+#       loop: "{{ discovered_max_days.stdout_lines }}"
+#       when:
+#         - discovered_max_days.stdout_lines | length > 0
+#         - item in prelim_interactive_usernames.stdout
+#         - force_user_maxdays
+
+# - name: HARDEN_OS RHEL | Ensure password expiration warning days is configured
+#   block:
+#     - name: HARDEN_OS RHEL | set login.defs PASS_WARN_AGE
+#       ansible.builtin.lineinfile:
+#         path: /etc/login.defs
+#         regexp: '^PASS_WARN_AGE'
+#         line: "PASS_WARN_AGE {{ pass_warn_age }}"
+
+#     - name: HARDEN_OS RHEL | Get existing users WARN_DAYS
+#       ansible.builtin.shell: "awk -F: '/^[^:]+:[^!*]/ && $6< {{ pass_warn_age }} {print $1}' /etc/shadow"
+#       changed_when: false
+#       failed_when: false
+#       register: discovered_warn_days
+
+#     - name: HARDEN_OS RHEL | Set existing users WARN_DAYS
+#       ansible.builtin.command: "chage --warndays {{ pass['warn_age'] }} {{ item }}"
+#       changed_when: true
+#       loop: "{{ discovered_warn_days.stdout_lines }}"
+#       when:
+#         - discovered_warn_days.stdout_lines | length > 0
+#         - item in prelim_interactive_usernames.stdout
+#         - force_user_warnage
+
+- name: HARDEN_OS RHEL | Ensure journald ForwardToSyslog is disabled
+  block:
+    - name: HARDEN_OS RHEL | Add file
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/forwardtosyslog.conf.j2"
+        dest: /etc/systemd/journald.conf.d/forwardtosyslog.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: HARDEN_OS RHEL | comment out current entries
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: ^(\s*ForwardToSyslog)
+        replace: '#\1'
+
+- name: HARDEN_OS RHEL | Ensure journald Compress is configured
+  block:
+    - name: HARDEN_OS RHEL | Add file
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"
+        dest: /etc/systemd/journald.conf.d/storage.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: HARDEN_OS RHEL | comment out current entries
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: ^(?i)(\s*compress=)
+        replace: '#\1'
+
+- name: HARDEN_OS RHEL | Ensure journald Storage is configured
+  block:
+    - name: HARDEN_OS RHEL | Add file
+      ansible.builtin.template:
+        src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/storage.conf.j2"
+        dest: /etc/systemd/journald.conf.d/storage.conf
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+
+    - name: HARDEN_OS RHEL | comment out current entries
+      ansible.builtin.replace:
+        path: /etc/systemd/journald.conf
+        regexp: ^(?i)(\s*storage=)
+        replace: '#\1'
+
+- name: HARDEN_OS RHEL | Ensure rsyslog installed
+  ansible.builtin.package:
+    name: rsyslog
+    state: present
+  when:
+    - "'rsyslog' not in ansible_facts.packages"
+
+- name: HARDEN_OS RHEL | Ensure rsyslog Service is enabled and active
+  ansible.builtin.systemd:
+    name: rsyslog
+    enabled: true
+    state: started
+
+- name: HARDEN_OS RHEL | Ensure journald is configured to send logs to rsyslog
+  ansible.builtin.copy:
+    src: "{{ ansible_dir }}/rhel9/templates/etc/systemd/journald.conf.d/journald.conf"
+    dest: /etc/systemd/journald.conf
+    owner: root
+    group: root
+    mode: '0640'
+
+- name: HARDEN_OS RHEL | Ensure rsyslog log file creation mode is configured
+  ansible.builtin.copy:
+    src: "{{ ansible_dir }}/rhel9/templates/etc/rsyslog.conf"
+    dest: /etc/rsyslog.conf
+    owner: root
+    group: root
+    mode: '0640'
