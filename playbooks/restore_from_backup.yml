@@ -1,5 +1,0 @@
----
-- name: Restore from backup
-  hosts: all #TODO change when you know what you are restoring
-  roles:
-    - restore
