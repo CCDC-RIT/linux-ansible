@@ -1,0 +1,11 @@
+---
+- name: Gathers facts
+  package_facts:
+
+- name: Reinstall apt
+  include_tasks: apt/tasks/main.yml
+  when: ansible_facts['os_family'] == "Debian"   
+
+- name: Reinstall dnf
+  include_tasks: dnf/tasks/main.yml
+  when: ansible_facts['os_family'] == "RedHat"

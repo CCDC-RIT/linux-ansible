@@ -39,6 +39,16 @@
     - deploy
     - backups
 
+- name: Reinstall Package Manager
+  hosts: all
+  become: yes
+  roles:
+    - reinstall-pacman
+  tags:
+    - never
+    - deploy
+    - reinstall-pacman
+
 - name: Setup Firewall
   hosts: all
   become: yes
