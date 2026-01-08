@@ -5,6 +5,7 @@ RESET='\e[0m'
 PURPLE="\033[0;35m"
 CYAN="\e[1;36m"
 BLUE="\e[1;34m"
+YELLOW="\e[0;33m"
 
 echo -e "\nDOCKER INVENTORY SCRIPT\n\n"
 
@@ -22,6 +23,30 @@ docker ps -a
 
 echo -e "${PURPLE}AVAILABLE IMAGES:\n${RESET}"
 docker images
+
+
+echo -e "${BLUE}\n\nDOCKER SECURITY AUDITING \n\n${RESET}"
+
+echo -e "${PURPLE}Checking users in Docker group...\n${RESET}"
+if getent group docker >/dev/null; then
+  getent group docker | cut -d: -f4 | tr ',' '\n' | sed '/^$/d'
+else
+  printf "${YELLOW}No docker group found.\n${RESET}"
+fi
+
+printf "${PURPLE}Checking Docker socket permissions...\n${RESET}"
+if [[ -S /var/run/docker.sock ]]; then
+  perms=$(stat -c "%a %U:%G" /var/run/docker.sock)
+  if [[ $(stat -c "%a" /var/run/docker.sock) -ge 666 ]]; then
+    printf "${RED}ALERT: docker.sock is world-writable (%s)\n${RESET}" "$perms"
+  else
+    printf "${GREEN}OK: docker.sock permissions (%s)\n${RESET}" "$perms"
+  fi
+else
+  printf "${RED}docker.sock not found.\n${RESET}"
+fi
+
+printf "${PURPLE}Containers running as root:\n${RESET}"
 
 echo -e "${BLUE}Searching for Dockerfiles...\n${RESET}"
 mapfile -t DOCKERFILES < <(
