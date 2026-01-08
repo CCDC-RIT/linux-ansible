@@ -27,7 +27,7 @@ mapfile -t DOCKERFILES < <(
     -not -path '/dev/*' \
     -not -path '/run/*' \
     -not -path '/tmp/*' \
-    -not -path '/mnt/*' \
+    -not -path '/var/lib/docker/*'
     2>/dev/null
 )
 if [[ ${#DOCKERFILES[@]} -eq 0 ]]; then
@@ -51,7 +51,7 @@ mapfile -t COMPOSEFILES < <(
   -not -path '/dev/*' \
   -not -path '/run/*' \
   -not -path '/tmp/*' \
-  -not -path '/mnt/*' \
+  -not -path '/var/lib/docker/*'
   2>/dev/null
 )
 if [[ ${#COMPOSEFILES[@]} -eq 0 ]]; then
