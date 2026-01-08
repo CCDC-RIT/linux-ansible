@@ -8,6 +8,10 @@ BLUE="\e[1;34m"
 
 echo -e "\nDOCKER INVENTORY SCRIPT\n\n"
 
+if [[ $EUID -ne 0 ]]; then
+  echo -e "\n${RED}WARNING: Not running as root. Results may be incomplete.\n\n${RESET}"
+fi
+
 echo -e "${BLUE}DOCKER CONTAINER INVENTORY \n${RESET}"
 
 echo -e "${PURPLE}RUNNING CONTAINERS: \n${RESET}"
@@ -27,7 +31,8 @@ mapfile -t DOCKERFILES < <(
     -not -path '/dev/*' \
     -not -path '/run/*' \
     -not -path '/tmp/*' \
-    -not -path '/var/lib/docker/*'
+    -not -path '/var/lib/docker/*' \
+    -not -path '/run/user/*' \
     2>/dev/null
 )
 if [[ ${#DOCKERFILES[@]} -eq 0 ]]; then
@@ -51,7 +56,8 @@ mapfile -t COMPOSEFILES < <(
   -not -path '/dev/*' \
   -not -path '/run/*' \
   -not -path '/tmp/*' \
-  -not -path '/var/lib/docker/*'
+  -not -path '/var/lib/docker/*' \
+  -not -path '/run/user/*' \
   2>/dev/null
 )
 if [[ ${#COMPOSEFILES[@]} -eq 0 ]]; then
