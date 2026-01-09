@@ -284,3 +284,13 @@
   when:
     - discovered_gid0_groups is defined
     - discovered_gid0_groups.stdout | length > 0
+
+- name: Get users with valid shells except for our big guys
+  ansible.builtin.shell: "awk -F: 'NR==FNR {shells[$1]; next} $NF in shells' /etc/shells /etc/passwd | grep -ve blueteam -e blackteam -e whiteteam -e black_team -e black-team -e white-team -e white_team | cut -d ':' -f 1"
+  register: users
+
+- name: Copy all ssh authorized keys to quarantine
+  ansible.builtin.shell: |
+    cp /home/{{ item }}/.ssh/authorized_keys {{ quarantine }}/authorized_keys_{{ item }}
+  loop: "{{ users.stdout_lines }}"
+  ignore_errors: yes
