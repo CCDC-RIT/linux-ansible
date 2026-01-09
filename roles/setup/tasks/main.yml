@@ -18,6 +18,7 @@
 
 - name: Create wheel group if doesn't exist on RedHat
   ansible.builtin.shell: groupadd -f wheel
+  when: ansible_os_family == "RedHat"
  
 - name: Add blueteam user to admin groups (RedHat)
   ansible.builtin.user:
