@@ -1,5 +1,4 @@
 ---
-
 - name: Assert Variables
   hosts: all
   tasks:
@@ -99,10 +98,12 @@
     - deploy
     - harden
 
-- name: Finish me off scotty
+- name: Finish me off
   hosts: all
   become: yes
   roles:
-    - keepTalkingImAlmostThere
+    - finishing_tasks
   tags:
+    - never
     - deploy
+    - finish
