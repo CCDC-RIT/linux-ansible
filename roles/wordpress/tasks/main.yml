@@ -1,0 +1,35 @@
+- name: Disable file editing
+  blockinfile:
+    dest:  "{{ wp_harden_root }}/wp-config.php"
+    create: no
+    backup: yes
+    insertbefore: ".*stop editing.*"
+    state: present
+    content: |
+      define('DISALLOW_FILE_EDIT', true);
+
+- name: Block wp-config.php
+  blockinfile:
+    dest:  "{{ wp_harden_root }}/.htaccess"
+    create: no
+    backup: yes
+    insertbefore: "# BEGIN WordPress"
+    state: present
+    content: |
+      <files wp-config.php>
+        order allow,deny
+        deny from all
+      </files>
+
+- name: Disable PHP execution in uploads directory.
+  blockinfile:
+    dest:  "{{ wp_harden_root }}/{{ wp_harden_uploads_dir | default('wp-content/uploads') }}/.htaccess"
+    create: yes
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: Kill PHP Execution"
+    insertafter: EOF
+    state: present
+    content: |
+      <Files ~ "\.ph(?:p[345]?|t|tml)$">
+         deny from all
+      </Files>
