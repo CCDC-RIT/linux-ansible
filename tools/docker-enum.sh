@@ -13,6 +13,14 @@ if [[ $EUID -ne 0 ]]; then
   echo -e "\n${RED}WARNING: Not running as root. Results may be incomplete.\n\n${RESET}"
 fi
 
+if command -v docker &> /dev/null
+then
+    :
+else
+    echo "Docker is not installed/not running\n"
+    exit 1
+fi
+
 echo -e "${BLUE}DOCKER CONTAINER INVENTORY \n${RESET}"
 
 echo -e "${PURPLE}RUNNING CONTAINERS: \n${RESET}"
@@ -26,9 +34,11 @@ fi
 echo -e "\n${PURPLE}ALL CONTAINERS: \n${RESET}"
 docker ps -a
 
-echo -e "${PURPLE}AVAILABLE IMAGES:\n${RESET}"
-echo -e "REPOSITORY\tTAG\tIMAGE ID\tCREATED\t   SIZE"
-NO_COLOR=true docker images --format "{{.Repository}} {{.Tag}} {{.ID}} "{{.CreatedAt}}" {{.Size}}"
+echo -e "\n${PURPLE}IMAGES ON DISK:\n${RESET}"
+(
+  echo "REPOSITORY TAG IMAGE_ID SIZE"
+  NO_COLOR=true docker images --format "{{.Repository}} {{.Tag}} {{.ID}} {{.Size}}"
+) | column -t
 
 
 echo -e "${BLUE}\n\nDOCKER SECURITY AUDITING \n\n${RESET}"
@@ -40,7 +50,7 @@ else
   printf "${YELLOW}No docker group found.\n${RESET}"
 fi
 
-printf "${PURPLE}Checking Docker socket permissions...\n${RESET}"
+printf "\n${PURPLE}Checking Docker socket permissions...\n${RESET}"
 if [[ -S /var/run/docker.sock ]]; then
   perms=$(stat -c "%a %U:%G" /var/run/docker.sock)
   if [[ $(stat -c "%a" /var/run/docker.sock) -ge 666 ]]; then
@@ -52,7 +62,8 @@ else
   printf "${RED}docker.sock not found.\n${RESET}"
 fi
 
-printf "${PURPLE}Containers running as root:\n${RESET}"
+printf "\n${PURPLE}Privileged Container IDs:\n\n${RESET}"
+docker inspect --format='{{.ID}} {{.HostConfig.Privileged}}' $(docker ps --format '{{.ID}}') | awk '$2 == "true" {print $1}'
 
 echo -e "\n${BLUE}Searching for Dockerfiles...\n${RESET}"
 mapfile -t DOCKERFILES < <(
