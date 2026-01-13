@@ -28,7 +28,7 @@ running_containers=$(docker ps)
 if [ "$(echo "$running_containers" | wc -l)" -lt 2 ]; then
     echo -e "${RED}No running containers.${RESET}"
 else
-    echo -e ${running_containers}
+    echo "$running_containers"
 fi
 
 echo -e "\n${PURPLE}ALL CONTAINERS: \n${RESET}"
