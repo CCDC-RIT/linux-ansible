@@ -16,9 +16,14 @@ fi
 echo -e "${BLUE}DOCKER CONTAINER INVENTORY \n${RESET}"
 
 echo -e "${PURPLE}RUNNING CONTAINERS: \n${RESET}"
-docker ps
+running_containers=$(docker ps)
+if [ "$(echo "$running_containers" | wc -l)" -lt 2 ]; then
+    echo -e "${RED}No running containers.${RESET}"
+else
+    echo -e ${running_containers}
+fi
 
-echo -e "${PURPLE}ALL CONTAINERS: \n${RESET}"
+echo -e "\n${PURPLE}ALL CONTAINERS: \n${RESET}"
 docker ps -a
 
 echo -e "${PURPLE}AVAILABLE IMAGES:\n${RESET}"
