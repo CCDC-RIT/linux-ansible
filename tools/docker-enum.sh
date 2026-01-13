@@ -22,7 +22,8 @@ echo -e "${PURPLE}ALL CONTAINERS: \n${RESET}"
 docker ps -a
 
 echo -e "${PURPLE}AVAILABLE IMAGES:\n${RESET}"
-docker images
+echo -e "REPOSITORY\tTAG\tIMAGE ID\tCREATED\t   SIZE"
+NO_COLOR=true docker images --format "{{.Repository}} {{.Tag}} {{.ID}} "{{.CreatedAt}}" {{.Size}}"
 
 
 echo -e "${BLUE}\n\nDOCKER SECURITY AUDITING \n\n${RESET}"
@@ -48,9 +49,9 @@ fi
 
 printf "${PURPLE}Containers running as root:\n${RESET}"
 
-echo -e "${BLUE}Searching for Dockerfiles...\n${RESET}"
+echo -e "\n${BLUE}Searching for Dockerfiles...\n${RESET}"
 mapfile -t DOCKERFILES < <(
-  sudo find / -type f -iname 'Dockerfile*' \
+  find / -type f -iname 'Dockerfile*' \
     -not -path '/proc/*' \
     -not -path '/sys/*' \
     -not -path '/dev/*' \
@@ -70,7 +71,7 @@ fi
 
 echo -e "${BLUE}Searching for Docker compose files...\n${RESET}"
 mapfile -t COMPOSEFILES < <(
-  sudo find / -type f \( \
+  find / -type f \( \
     -iname 'docker-compose.yml' \
     -o -iname 'docker-compose.yaml' \
     -o -iname 'compose.yml' \
