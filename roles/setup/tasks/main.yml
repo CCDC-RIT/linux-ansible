@@ -2,7 +2,10 @@
 
 - name: Gather facts for localhost
   ansible.builtin.setup:
-  delegate_to: localhost
+#  delegate_to: localhost :C
+
+- name: Gather package facts
+  ansible.builtin.package_facts:
 
 - name: Add blueteam user
   ansible.builtin.user: 
@@ -18,7 +21,7 @@
 
 - name: Create wheel group if doesn't exist on RedHat
   ansible.builtin.shell: groupadd -f wheel
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == 'RedHat'
  
 - name: Add blueteam user to admin groups (RedHat)
   ansible.builtin.user:
@@ -29,7 +32,7 @@
     - "wheel"
     - "adm"
     - "blueteam"
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Add blueteam user to admin groups (Debian)
   ansible.builtin.user:
@@ -40,7 +43,7 @@
     - "sudo"
     - "adm"
     - "blueteam"
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == 'Debian'
 
 # - name: Make sure inventory directory exists
 #   ansible.builtin.file:
