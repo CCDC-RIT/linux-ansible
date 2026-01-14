@@ -1,14 +1,14 @@
-###USAGE: ansible-playbook blockl-ip.yml -i inventory.ini --extra-vars:"ip:1.2.3.4"
+###USAGE: ansible-playbook block-ip.yml -i inventory.ini --extra-vars "ip:1.2.3.4"
 
 - name: Block IP Address 
   hosts: all
   become: true 
   tasks:
-    - name: Verify IP address is provided
+    - name: Verify IP address variable is provided
       ansible.builtin.assert:
         that:
           - ip is defined
-        fail_msg: "FATAL: No IP address provided"
+        fail_msg: "FATAL: No IP address variable provided"
         
     - name: Block inbound traffic
       ansible.builtin.iptables:

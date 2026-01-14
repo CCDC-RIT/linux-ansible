@@ -1,0 +1,32 @@
+###USAGE: ansible-playbook quarantine.yml -i inventory.ini --extra-vars "filepath:/usr/bin/evil"
+
+- name: Quarantine file 
+  hosts: all
+  become: true 
+  tasks:
+    - name: Verify filepath variable is provided
+      ansible.builtin.assert:
+        that:
+          - filepath is defined
+        fail_msg: "FATAL: No filepath variable provided"
+
+    - name: Set a fact with the current timestamp
+      ansible.builtin.set_fact:
+        current_timestamp: "{{ now(fmt='%Y-%m-%d-%H:%M:%S') }}"
+
+    - name: Create quarantine directory if it doesn't already exist
+      ansible.builtin.file:
+        path: /var/quar
+        state: directory
+    
+    - name: Make sure file exists on remote host
+      stat: "path={{ filepath }}"
+      register: file_exists
+
+    - name: Move foo to quarantine directory
+      shell: "mv {{ filepath }} /var/quar/{{ filepath | ansible.builtin.basename }}-{{ current_timestamp }}"
+      when: file_exists.stat.exists
+
+
+    
+
