@@ -5,6 +5,10 @@ backup_dir: "/usr/share/fonts/roboto-mono"
 quarantine: "/usr/share/fonts/quar-mono"
 audit_dir: "/opt/audit"
 password_manager_ip: ""
+
+# If controller is NOT in scope, leave variable empty. 
+# If controller IS in scope, include the IP/subnet that should be allowed on all firewalls
+controller_in_scope_allow_ip: ""
 firewall_logging: false
 logging_ports: [1514, 1515, 1516, 55000, 9200, 443, 9000, 9020]
 packet_users:
