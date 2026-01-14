@@ -10,9 +10,10 @@
 - name: "Reinstall package manager | Make dnf cache"
   command: "dnf makecache"
 
-- name: "Reinstall package manager | Get dnf version"
-  command: "dnf --version | head -n 1 | cut -c1-1"
-  register: dnf_version
+- name: Determine DNF version
+  set_fact:
+    dnf_version: >-
+      {{ 5 if 'dnf5' in ansible_facts.packages else 4 }}
 
 - name: "Reinstall package manager | Reinstall dnf4"
   when: dnf_version == "4"
