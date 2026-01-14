@@ -16,7 +16,7 @@
       {{ 5 if 'dnf5' in ansible_facts.packages else 4 }}
 
 - name: "Reinstall package manager | Reinstall dnf4"
-  when: dnf_version == "4"
+  when: dnf_version == 4
   block:
     - name: "Reinstall package manager | Reinstall dnf4 packages"
       command: "dnf reinstall {{ item }}"
@@ -29,7 +29,7 @@
       failed_when: rpm_out.stdout_lines | length > 0
 
 - name: "Reinstall package manager | Reinstall dnf5"
-  when: dnf_version == "5"
+  when: dnf_version == 5
   block:
     - name: "Reinstall package manager | Reinstall dnf5 packages"
       command: "dnf reinstall {{ item }}"
