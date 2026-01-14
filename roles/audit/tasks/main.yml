@@ -302,7 +302,7 @@
       -path /sys -prune -o \
       -path /dev -prune -o \
       -path /run -prune -o \
-      -type f -exec yara -w -C /opt/yara/rules/compiled.linux {} + \
+      -type f -exec yara -w -C /opt/yararules/compiled.linux {} + \
       > /var/log/yarascan.log 2>&1
   async: 7200
   poll: 0

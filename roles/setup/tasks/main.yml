@@ -231,3 +231,6 @@
   ansible.builtin.git:
     repo: 'https://github.com/ansible/ansible.git'
     dest: /opt/yararules
+
+- name: Compile YARA rules
+  shell: yarac /opt/yararules/YaraRules/Linux/* /opt/yararules/YaraRules/Multi/* /opt/yararules/forge.yar /opt/yararules/compiled.linux
