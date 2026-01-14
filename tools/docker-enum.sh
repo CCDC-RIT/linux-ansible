@@ -25,8 +25,10 @@ echo -e "${BLUE}DOCKER CONTAINER INVENTORY \n${RESET}"
 
 echo -e "${PURPLE}RUNNING CONTAINERS: \n${RESET}"
 running_containers=$(docker ps)
+running_containers_bool=true
 if [ "$(echo "$running_containers" | wc -l)" -lt 2 ]; then
     echo -e "${RED}No running containers.${RESET}"
+    running_containers_bool=false
 else
     echo "$running_containers"
 fi
@@ -63,7 +65,9 @@ else
 fi
 
 printf "\n${PURPLE}Privileged Container IDs:\n\n${RESET}"
-docker inspect --format='{{.ID}} {{.HostConfig.Privileged}}' $(docker ps --format '{{.ID}}') | awk '$2 == "true" {print $1}'
+if $running_containers_bool; then
+    docker inspect --format='{{.ID}} {{.HostConfig.Privileged}}' $(docker ps --format '{{.ID}}') | awk '$2 == "true" {print $1}'
+fi
 
 echo -e "\n${BLUE}Searching for Dockerfiles...\n${RESET}"
 mapfile -t DOCKERFILES < <(
