@@ -6,6 +6,7 @@ PURPLE="\033[0;35m"
 CYAN="\e[1;36m"
 BLUE="\e[1;34m"
 YELLOW="\e[0;33m"
+ORANGE="\033[38;5;208m"
 
 echo -e "\nDOCKER INVENTORY SCRIPT\n\n"
 
@@ -41,6 +42,24 @@ echo -e "\n${PURPLE}IMAGES ON DISK:\n${RESET}"
   echo "REPOSITORY TAG IMAGE_ID SIZE"
   NO_COLOR=true docker images --format "{{.Repository}} {{.Tag}} {{.ID}} {{.Size}}"
 ) | column -t
+
+echo -e "\n${PURPLE}HOST VOLUME MOUNTS:\n${RESET}"
+for cid in $(docker ps -q); do
+    name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's#^/##')
+
+    mounts=$(docker inspect --format '{{json .Mounts}}' "$cid")
+
+    [[ "$mounts" == "[]" ]] && continue
+
+    echo "Container '$name' ($cid) has host volume mounts:"
+     echo "$mounts" | jq -r '.[] | "\(.Source) -> \(.Destination) (\(.Mode))"' | while read line; do
+        if [[ "$line" == *"(rw)"* ]]; then
+            echo -e "${ORANGE}${line}${RESET}"
+        else
+            echo -e "${line}"
+        fi
+    done
+done
 
 
 echo -e "${BLUE}\n\nDOCKER SECURITY AUDITING \n\n${RESET}"
