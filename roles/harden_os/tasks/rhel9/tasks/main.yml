@@ -1,7 +1,4 @@
 ---
-- name: HARDEN_OS RHEL | Include vars for RHEL9
-  include_vars: rhel9.yml
-
 - name: HARDEN_OS RHEL | Ensure /etc/shadow password fields are not empty
   block:
     - name: HARDEN_OS RHEL | Find users with no password
