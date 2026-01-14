@@ -22,7 +22,7 @@
       command: "dnf reinstall {{ item }}"
       loop: "{{ dnf4_packages }}"
   rescue:
-    - name: "Reinstall package manager | Reinstall dnf4 packages"
+    - name: "Reinstall package manager | Upgrade dnf4 packages"
       command: "dnf upgrade {{ item }}"
       loop: "{{ dnf4_packages }}"
   always:
