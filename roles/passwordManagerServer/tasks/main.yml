@@ -1,0 +1,26 @@
+- name: Clone Repo
+  ansible.builtin.git:
+    repo: https://github.com/CCDC-RIT/Password-Manager.git
+    dest: /opt/ccdc-password-manager
+  when: ansible_default_ipv4.address == password_manager_ip
+
+- name: Copy Linux starting clients
+  ansible.builtin.lineinfile:
+    path: /opt/ccdc-password-manager/starting_clients.txt
+    line: "{{ lookup('file', '/opt/passwordmanager/linux_starting_clients.txt') }}"
+    create: yes
+  when: ansible_default_ipv4.address == password_manager_ip
+
+- name: Copy Windows starting clients
+  ansible.builtin.lineinfile:
+    path: /opt/ccdc-password-manager/starting_clients.txt
+    line: "{{ lookup('file', '/opt/passwordmanager/windows_starting_clients.txt') }}"
+    create: yes
+  when: ansible_default_ipv4.address == password_manager_ip
+
+- name: Start Server
+  community.docker.docker_compose:
+    project_src: /opt/ccdc-password-manager/
+    state: present
+    restarted: yes
+  when: ansible_default_ipv4.address == password_manager_ip

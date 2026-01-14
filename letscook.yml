@@ -88,6 +88,26 @@
 #     - kube
 #     - deploy
 
+- name: Setup Password Manager
+  hosts: all
+  become: yes
+  roles:
+    - passwordManagerServer
+  tags:
+    - never
+    - deploy
+    - password-manager
+
+- name: Setup Password Manager Client
+  hosts: all
+  become: yes
+  roles:
+    - passwordManagerClient
+  tags:
+    - never
+    - deploy
+    - password-manager
+
 - name: Harden OS
   hosts: all
   become: yes
