@@ -193,6 +193,7 @@
     name: "{{ item }}"
     state: present
   with_items:
+    - "yara"
     - "lsof"
     - "vim"
     - "curl"
@@ -208,3 +209,25 @@
     path: /etc/environment
     line: 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"'
     create: yes
+
+- name: Creates yararules directory
+  ansible.builtin.file:
+    path: /opt/yararules
+    state: directory
+
+- name: Download Yara Forge rules (zip file)
+  ansible.builtin.get_url:
+    url: https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip
+    dest: /var/tmp/forge.zip
+    mode: '0440'
+
+- name: Unzip forge.zip
+  ansible.builtin.unarchive:
+    src: /var/tmp/forge.zip
+    dest: /opt/yararules/forge.yar
+    remote_src: yes
+
+- name: Download RIT CCDC Yara rules
+  ansible.builtin.git:
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /opt/yararules
