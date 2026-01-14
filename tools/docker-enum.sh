@@ -84,10 +84,35 @@ else
     fi
 fi
 if [[ "$LOG_LEVEL" != "info" ]]; then
-    printf "${RED}Docker log level is ${LOG_LEVEL}${RESET}"
+    printf "${RED}Docker log level is ${LOG_LEVEL}${RESET}\n"
 else
-    printf "${GREEN}Docker log level is info${RESET}"
+    printf "${GREEN}Docker log level is info${RESET}\n"
 fi
+
+printf "\n${PURPLE}Checking for dangerous container capabilities...\n\n${RESET}"
+BAD_CAPS=(
+  CAP_SYS_ADMIN
+  CAP_NET_ADMIN
+  CAP_SYS_MODULE
+  CAP_SYS_PTRACE
+  CAP_DAC_OVERRIDE
+  CAP_NET_RAW
+)
+for cid in $(docker ps -q); do
+    name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's#^/##')
+
+    # Get CapAdd array (may be null)
+    caps=$(docker inspect --format '{{json .HostConfig.CapAdd}}' "$cid")
+
+    # Skip containers with no added caps
+    [[ "$caps" == "null" ]] && continue
+
+    for deny in "${BAD_CAPS[@]}"; do
+        if echo "$caps" | grep -q "\"$deny\""; then
+            printf "${RED}ALERT: Container ${name} ${cid} has dangerous capability: ${deny} ${RESET}\n"
+        fi
+    done
+done
 
 echo -e "\n${BLUE}Searching for Dockerfiles...\n${RESET}"
 mapfile -t DOCKERFILES < <(
@@ -104,7 +129,7 @@ mapfile -t DOCKERFILES < <(
     2>/dev/null
 )
 if [[ ${#DOCKERFILES[@]} -eq 0 ]]; then
-  printf "${RED}No Dockerfiles found.\n${RESET}"
+  printf "${RED}No Dockerfiles found.${RESET}\n"
 else
   for file in "${DOCKERFILES[@]}"; do
     printf "${GREEN}%s\n${RESET}" "$file"
@@ -129,7 +154,7 @@ mapfile -t COMPOSEFILES < <(
   2>/dev/null
 )
 if [[ ${#COMPOSEFILES[@]} -eq 0 ]]; then
-  printf "${RED}No Docker compose files found.\n${RESET}"
+  printf "${RED}No Docker compose files found.${RESET}\n"
 else
   for file in "${COMPOSEFILES[@]}"; do
     printf "${GREEN}%s\n${RESET}" "$file"
