@@ -20,16 +20,17 @@
   block:
     - name: "Reinstall package manager | Reinstall dnf4 packages"
       command: "dnf reinstall {{ item }}"
-      
+      loop: "{{ dnf4_packages }}"
   rescue:
     - name: "Reinstall package manager | Reinstall dnf4 packages"
       command: "dnf upgrade {{ item }}"
+      loop: "{{ dnf4_packages }}"
   always:
     - name: "Reinstall package manager | Verify RPM"
       command: "rpm -V {{ item }}"
       register: rpm_out
       failed_when: rpm_out.stdout_lines | length > 0
-  loop: "{{ dnf4_packages }}"
+      loop: "{{ dnf4_packages }}"
 
 - name: "Reinstall package manager | Reinstall dnf5"
   when: dnf_version == 5
