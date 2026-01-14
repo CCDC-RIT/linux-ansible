@@ -19,7 +19,7 @@
   when: dnf_version == 4
   block:
     - name: "Reinstall package manager | Reinstall dnf4 packages"
-      command: "dnf reinstall {{ item }}"
+      command: "dnf upgrade {{ item }}"
       loop: "{{ dnf4_packages }}"
 
     - name: "Reinstall package manager | Verify RPM"
@@ -32,7 +32,7 @@
   when: dnf_version == 5
   block:
     - name: "Reinstall package manager | Reinstall dnf5 packages"
-      command: "dnf reinstall {{ item }}"
+      command: "dnf upgrade {{ item }}"
       loop: "{{ dnf5_packages }}"
 
     - name: "Reinstall package manager | Verify RPM"
