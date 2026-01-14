@@ -1,4 +1,18 @@
 ---
+- name: Search for important service-specific files to back up
+  find:
+    paths: /
+    patterns: "{{ important_files_for_backup }}"
+  register: found_important_files
+  ignore_errors: yes
+
+- name: Back up important service-specific files
+  archive:
+    path: "{{ item.path }}"
+    dest: "/opt/backups/system_backups/{{ inventory_hostname }}_ansiblebackup_{{ ansible_date_time.date }}.tar.gz"
+  when: found_important_files.matched > 0
+  loop: "{{ found_important_files.files }}"
+
 - name: Deploy backup potentially sus files script
   ansible.builtin.template:
     src: backup_important_files.j2
