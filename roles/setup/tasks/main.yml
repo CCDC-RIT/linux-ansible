@@ -227,7 +227,7 @@
 - name: Unzip forge.zip
   ansible.builtin.unarchive:
     src: /var/tmp/forge.zip
-    dest: /opt/yararules/forge.yar
+    dest: /opt/yararules
     remote_src: yes
 
 - name: Download RIT CCDC Yara rules
