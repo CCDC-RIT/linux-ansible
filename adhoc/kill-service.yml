@@ -1,0 +1,25 @@
+###USAGE: ansible-playbook kill-service.yml -i inventory.ini --extra-vars "servicename:evil-httpd"
+
+- name: Stop + disable service
+  hosts: linux
+  become: true 
+  gather_facts: false
+  tasks:
+    - name: Verify servicename variable is provided
+      ansible.builtin.assert:
+        that:
+          - servicename is defined
+        fail_msg: "FATAL: No servicename variable provided"
+
+    - name: Stop and disable service
+      service:
+        name: "{{ servicename }}"
+        state: stopped
+        enabled: false
+
+
+    
+
+
+    
+

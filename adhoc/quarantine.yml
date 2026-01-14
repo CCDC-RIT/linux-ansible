@@ -1,8 +1,9 @@
 ###USAGE: ansible-playbook quarantine.yml -i inventory.ini --extra-vars "filepath:/usr/bin/evil"
 
 - name: Quarantine file 
-  hosts: all
+  hosts: linux
   become: true 
+  gather_facts: false
   tasks:
     - name: Verify filepath variable is provided
       ansible.builtin.assert:
@@ -23,7 +24,7 @@
       stat: "path={{ filepath }}"
       register: file_exists
 
-    - name: Move foo to quarantine directory
+    - name: Move file to quarantine directory
       shell: "mv {{ filepath }} /var/quar/{{ filepath | ansible.builtin.basename }}-{{ current_timestamp }}"
       when: file_exists.stat.exists
 

@@ -1,8 +1,9 @@
 ###USAGE: ansible-playbook block-ip.yml -i inventory.ini --extra-vars "ip:1.2.3.4"
 
 - name: Block IP Address 
-  hosts: all
-  become: true 
+  hosts: linux
+  become: true
+  gather_facts: false 
   tasks:
     - name: Verify IP address variable is provided
       ansible.builtin.assert:
