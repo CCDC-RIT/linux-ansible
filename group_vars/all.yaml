@@ -3,6 +3,7 @@
 # scoring_ip: # uncomment only when we know the scoring IP, otherwise skip
 backup_dir: "/usr/share/fonts/roboto-mono"
 quarantine: "/usr/share/fonts/quar-mono"
+audit_dir: "/opt/audit"
 password_manager_ip: ""
 firewall_logging: false
 logging_ports: [1514, 1515, 1516, 55000, 9200, 443, 9000, 9020]
@@ -10,4 +11,5 @@ packet_users:
   - harold
   - francis
   - williams
-
+important_files_for_backup:
+  - 
