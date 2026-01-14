@@ -205,6 +205,7 @@
     - "snoopy"
     - "lynis"
     - "iptables-persistent"
+    - "jq"
   ignore_errors: yes
 
 - name: Set PATH in /etc/environment

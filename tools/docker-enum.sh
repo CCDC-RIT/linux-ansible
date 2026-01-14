@@ -69,6 +69,26 @@ if $running_containers_bool; then
     docker inspect --format='{{.ID}} {{.HostConfig.Privileged}}' $(docker ps --format '{{.ID}}') | awk '$2 == "true" {print $1}'
 fi
 
+printf "\n${PURPLE}Checking Docker daemon logging level:\n\n${RESET}"
+LOG_LEVEL="info"   # Docker default
+if [[ -f /etc/docker/daemon.json && -s /etc/docker/daemon.json ]]; then
+    if command -v jq >/dev/null 2>&1; then
+        LOG_LEVEL=$(jq -r '."log-level" // "info"' /etc/docker/daemon.json)
+    else
+        echo "${YELLOW}jq not installed; assuming default log level${RESET}"
+    fi
+else
+    PS_ARGS=$(ps -o args= -C dockerd 2>/dev/null | head -n 1)
+    if [[ "$PS_ARGS" =~ --log-level=([^[:space:]]+) ]]; then
+        LOG_LEVEL="${BASH_REMATCH[1]}"
+    fi
+fi
+if [[ "$LOG_LEVEL" != "info" ]]; then
+    printf "${RED}Docker log level is ${LOG_LEVEL}${RESET}"
+else
+    printf "${GREEN}Docker log level is info${RESET}"
+fi
+
 echo -e "\n${BLUE}Searching for Dockerfiles...\n${RESET}"
 mapfile -t DOCKERFILES < <(
   find / -type f -iname 'Dockerfile*' \
@@ -79,6 +99,8 @@ mapfile -t DOCKERFILES < <(
     -not -path '/tmp/*' \
     -not -path '/var/lib/docker/*' \
     -not -path '/run/user/*' \
+    -not -path '/usr/share/man/*'\
+    -not -path '/usr/share/vim/*'\
     2>/dev/null
 )
 if [[ ${#DOCKERFILES[@]} -eq 0 ]]; then
