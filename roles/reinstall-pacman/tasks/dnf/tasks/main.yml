@@ -19,11 +19,11 @@
   block:
     - name: "Reinstall package manager | Reinstall dnf4 packages"
       command: "dnf reinstall {{ item }}"
-      loop: dnf4_packages
+      loop: "{{ dnf4_packages }}"
 
     - name: "Reinstall package manager | Verify RPM"
       command: "rpm -V {{ item }}"
-      loop: dnf4_packages
+      loop: "{{ dnf4_packages }}"
       register: rpm_out
       failed_when: rpm_out.stdout_lines | length > 0
 
@@ -32,10 +32,10 @@
   block:
     - name: "Reinstall package manager | Reinstall dnf5 packages"
       command: "dnf reinstall {{ item }}"
-      loop: dnf5_packages
+      loop: "{{ dnf5_packages }}"
 
     - name: "Reinstall package manager | Verify RPM"
       command: "rpm -V {{ item }}"
-      loop: dnf5_packages
+      loop: "{{ dnf5_packages }}"
       register: rpm_out
       failed_when: rpm_out.stdout_lines | length > 0
