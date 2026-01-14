@@ -7,5 +7,7 @@
 - name: "Reinstall Package Manager | Remove apt"
   command: dpkg -r apt
 
+# purge repos?
+
 - name: "Reinstall Package Manager | Install new apt"
   command: dpkg -i /tmp/apt.deb

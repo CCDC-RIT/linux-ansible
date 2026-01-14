@@ -1,0 +1,41 @@
+---
+- name: "Reinstall package manager | Remove dnf cache"
+  ansible.builtin.file:
+    path: /var/cache/dnf
+    state: absent
+
+- name: "Reinstall package manager | Clean dnf cache"
+  command: "dnf clean all"
+
+- name: "Reinstall package manager | Make dnf cache"
+  command: "dnf makecache"
+
+- name: "Reinstall package manager | Get dnf version"
+  command: "dnf --version | head -n 1 | cut -c1-1"
+  register: dnf_version
+
+- name: "Reinstall package manager | Reinstall dnf4"
+  when: dnf_version == 4
+  block:
+    - name: "Reinstall package manager | Reinstall dnf4 packages"
+      command: "dnf reinstall {{ item }}"
+      loop: dnf4_packages
+
+    - name: "Reinstall package manager | Verify RPM"
+      command: "rpm -V {{ item }}"
+      loop: dnf4_packages
+      register: rpm_out
+      failed_when: rpm_out.stdout_lines | length > 0
+
+- name: "Reinstall package manager | Reinstall dnf5"
+  when: dnf_version == 5
+  block:
+    - name: "Reinstall package manager | Reinstall dnf5 packages"
+      command: "dnf reinstall {{ item }}"
+      loop: dnf5_packages
+
+    - name: "Reinstall package manager | Verify RPM"
+      command: "rpm -V {{ item }}"
+      loop: dnf5_packages
+      register: rpm_out
+      failed_when: rpm_out.stdout_lines | length > 0
