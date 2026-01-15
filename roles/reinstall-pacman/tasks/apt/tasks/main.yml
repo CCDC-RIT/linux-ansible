@@ -36,7 +36,9 @@
     - "apt-utils_{{ apt_version }}_{{ deb_arch }}.deb"
 
 - name: "Reinstall Package Manager | Purge apt"
-  command: dpkg --purge apt apt-utils
+  command: dpkg --purge --force-depends apt apt-utils
+  register: dpkg_purge
+  failed_when: dpkg_purge.rc > 1
   ignore_errors: true
 
 - name: "Reinstall Package Manager | Install new debs"
