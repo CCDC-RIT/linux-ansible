@@ -175,7 +175,7 @@
   lineinfile:
     state: present
     insertafter: EOF
-    dest: /opt/audit_log.txt
+    dest: "{{ audit_dir }}/audit_log.txt"
     line: "{{ procs.stdout }}"
 
 - name: Poisoned Networking
@@ -191,7 +191,7 @@
   lineinfile:
     state: present
     insertafter: EOF
-    dest: /opt/audit_log.txt
+    dest: "{{ audit_dir }}/audit_log.txt"
     line: "{{ poisonednetworking.stdout }}"
 
 - name: IPs and MACs

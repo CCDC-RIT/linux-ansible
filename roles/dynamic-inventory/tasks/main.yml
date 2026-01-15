@@ -1,24 +1,136 @@
 ---
+# PHASE 0 - Setup
 - name: Ensure nmap is installed
   ansible.builtin.package:
     name: nmap
     state: present
   become: true
 
-- name: Get service using nmap
-  command: nmap -sT -sV -p- localhost | sed -n '6 p' | awk '{ print $3 }'
-  register: nmap_service
+# TODO: add creds for diff boxes in the topo. define a list of usernames and password combos and try them against all 
 
-- name: Get port using nmap
-  shell: nmap -sT -sV -p- localhost | sed -n '6 p' | awk -F/ '{ print $1 }'
-  register: nmap_port
+# PHASE 1 — Discover live hosts
+- name: Discover live hosts on subnet
+  ansible.builtin.command: >
+    nmap -sn {{ subnet }} -oG -
+  register: ping_scan
 
-- name: Save nmap results as custom facts
-  copy:
-    dest: "/etc/ansible/facts.d/nmap_results.fact"
+# TODO: also scan for 22 open as a backup for ping
+
+- name: Extract discovered IPs
+  ansible.builtin.set_fact:
+    discovered_ips: >-
+      {{
+        ping_scan.stdout_lines
+        | select('search', 'Up$')
+        | map('regex_search', '([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)')
+        | list
+      }}
+
+- name: Write IP list
+  ansible.builtin.copy:
+    dest: "{{ linux_inventory_output_file }}"
     content: |
-      {
-        "nmap_service": "{{ nmap_service.stdout }}",
-        "nmap_port": "{{ nmap_port.stdout }}"
-      }
+      {% for ip in discovered_ips %}
+      {{ ip }}
+      {% endfor %}
+
+# PHASE 2 - Scan hosts
+- name: Scan hosts for OS, hostname, and ports
+  ansible.builtin.command: >
+    nmap -O -sT -Pn {{ item }}
+  loop: "{{ discovered_ips }}"
+  register: scan_results
+  changed_when: false
+
+# PHASE 3 - Save results to file
+- name: Create CSV header
+  ansible.builtin.copy:
+    dest: "{{ output_file }}"
+    content: "ip address,hostname,operating system,ports\n"
+
+- name: Append scan results to file
+  ansible.builtin.lineinfile:
+    path: "{{ output_file }}"
+
+# PHASE 4 - Gather specific facts from each host
+- name: Add discovered hosts to inventory group
+  ansible.builtin.add_host:
+    name: "{{ item }}"
+    groups: discovered_hosts
+  loop: "{{ discovered_ips }}"
+
+- name: Gather system facts using Ansible facts
+  ansible.builtin.setup:
+    gather_subset:
+      - network
+      - hardware
+      - virtual
+      - distribution
+  delegate_to: "{{ inventory_hostname }}"
+  become: true
+  run_once: false
+  when: inventory_hostname in groups['discovered_hosts']
+
+- name: Get local users
+  ansible.builtin.command: getent passwd
+  register: passwd_output
+  changed_when: false
+
+# - name: Get all listening TCP/UDP ports
+#   ansible.builtin.command: ss -tulpen
+#   register: listening_ports
+#   changed_when: false
+
+- name: Gather listening sockets
+  community.general.netstat: # alternative to ansible command module ss
+    listen: true
+
+- debug:
+    var: ansible_netstat.tcp_listen
+
+- name: Build host profile
+  ansible.builtin.set_fact:
+    host_profile:
+      ip: "{{ ansible_host | default(inventory_hostname) }}"
+      hostname: "{{ ansible_facts.hostname }}"
+      fqdn: "{{ ansible_facts.fqdn | default('unknown') }}"
+      domain: "{{ ansible_facts.domain | default('unknown') }}"
+      os: "{{ ansible_facts.distribution }}"
+      os_version: "{{ ansible_facts.distribution_version }}"
+      os_release: "{{ ansible_facts.distribution_release }}"
+      mac_addresses: >-
+        {{
+          ansible_facts.interfaces
+          | map('extract', ansible_facts)
+          | selectattr('macaddress', 'defined')
+          | map(attribute='macaddress')
+          | list
+        }}
+      users: "{{ local_users | default([]) }}"
+      listening_ports: "{{ listening_ports.stdout_lines }}"
+
+- name: Save host profile JSON on control node
+  ansible.builtin.copy:
+    dest: "{{ control_output_dir }}/{{ inventory_hostname }}.json"
+    content: "{{ host_profile | to_nice_json }}"
+    mode: '0644'
   delegate_to: localhost
+  become: false
+
+# - name: Get service using nmap
+#   command: nmap -sT -sV -p- localhost | sed -n '6 p' | awk '{ print $3 }'
+#   register: nmap_service
+
+# - name: Get port using nmap
+#   shell: nmap -sT -sV -p- localhost | sed -n '6 p' | awk -F/ '{ print $1 }'
+#   register: nmap_port
+
+# - name: Save nmap results as custom facts
+#   copy:
+#     dest: "/etc/ansible/facts.d/nmap_results.fact"
+#     content: |
+#       {
+#         "nmap_service": "{{ nmap_service.stdout }}",
+#         "nmap_port": "{{ nmap_port.stdout }}"
+#       }
+#   delegate_to: localhost
