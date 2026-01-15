@@ -1,4 +1,4 @@
-###USAGE: ansible-playbook block-ip.yml -i inventory.ini --extra-vars "ip:1.2.3.4"
+###USAGE: ansible-playbook block-ip.yml -i inventory.ini --extra-vars "ip=1.2.3.4"
 
 - name: Block IP Address 
   hosts: all

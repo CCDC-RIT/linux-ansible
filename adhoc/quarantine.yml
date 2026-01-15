@@ -1,4 +1,4 @@
-###USAGE: ansible-playbook quarantine.yml -i inventory.ini --extra-vars "filepath:/usr/bin/evil"
+###USAGE: ansible-playbook quarantine.yml -i inventory.ini --extra-vars "filepath=/usr/bin/evil"
 
 - name: Quarantine file 
   hosts: all
