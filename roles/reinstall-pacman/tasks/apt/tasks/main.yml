@@ -12,9 +12,11 @@
   set_fact:
     libapt_pkg_name: >-
       {{
-        'libapt-pkg6.0'
-        if apt_version is version('2.4', '>=')
-        else 'libapt-pkg5.0'
+        ansible_facts.packages
+        | dict2items
+        | selectattr('key', 'match', '^libapt-pkg')
+        | map(attribute='key')
+        | first
       }}
 
 - name: Create temporary directory
