@@ -40,7 +40,7 @@
   ignore_errors: true
 
 - name: "Reinstall Package Manager | Install new debs"
-  command: dpkg -i {{ apt_reinstall_dir }}/*.deb
+  command: dpkg -i "/tmp/apt-reinstall/*.deb
   register: dpkg_install
   failed_when: dpkg_install.rc > 1
 
