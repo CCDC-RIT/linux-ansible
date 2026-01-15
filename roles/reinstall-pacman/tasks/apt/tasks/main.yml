@@ -26,7 +26,7 @@
 - name: "Reinstall Package Manager | Download debs"
   command: > # get_url unreliable for some reason
     wget -O /tmp/apt-reinstall/{{ item  }}
-    "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/{{ item }}"
+    "https://mirrors.edge.kernel.org/ubuntu/pool/main/a/apt/{{ item }}"
   changed_when: true
   loop:
     - "apt_{{ apt_version }}_{{ deb_arch }}.deb"
