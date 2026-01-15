@@ -1,7 +1,7 @@
 ###USAGE: ansible-playbook quarantine.yml -i inventory.ini --extra-vars "filepath:/usr/bin/evil"
 
 - name: Quarantine file 
-  hosts: linux
+  hosts: all
   become: true 
   gather_facts: false
   tasks:
