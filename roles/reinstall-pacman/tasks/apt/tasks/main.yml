@@ -17,21 +17,28 @@
         else 'libapt-pkg5.0'
       }}
 
-- name: Create temporary directory
+- name: "Reinstall Package Manager | Create temporary directory"
   file:
     path: "/tmp/apt-reinstall"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: "Reinstall Package Manager | Download debs"
-  get_url:
-    url: "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/{{ item }}"
-    dest: "/tmp/apt-reinstall/{{ item }}"
-    mode: '0644'
+  command: > # get_url unreliable for some reason
+    wget -O /tmp/apt-reinstall/{{ item  }}
+    "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/{{ item }}"
+  changed_when: true
   loop:
     - "apt_{{ apt_version }}_{{ deb_arch }}.deb"
     - "{{ libapt_pkg_name }}_{{ apt_version }}_{{ deb_arch }}.deb"
     - "apt-utils_{{ apt_version }}_{{ deb_arch }}.deb"
+
+- name: "Reinstall Package Manager | chmod debs"
+  file: 
+    path: "/tmp/apt-reinstall/"
+    state: directory
+    recurse: true
+    mode: "0644"
 
 - name: "Reinstall Package Manager | Purge apt"
   command: dpkg --purge apt apt-utils
