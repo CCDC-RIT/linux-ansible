@@ -32,15 +32,19 @@
       failed_when: rpm_out.stdout_lines | length > 0
       loop: "{{ dnf4_packages }}"
 
-- name: "Reinstall package manager | Reinstall dnf5"
+- name: "Reinstall package manager | Reinstall dnf4"
   when: dnf_version == 5
   block:
-    - name: "Reinstall package manager | Reinstall dnf5 packages"
-      command: "dnf upgrade {{ item }}"
+    - name: "Reinstall package manager | Reinstall dnf4 packages"
+      shell: "dnf reinstall {{ item }} -y && exit"
       loop: "{{ dnf5_packages }}"
-
+  rescue:
+    - name: "Reinstall package manager | Upgrade dnf4 packages"
+      shell: "dnf upgrade {{ item }} -y && exit"
+      loop: "{{ dnf5_packages }}"
+  always:
     - name: "Reinstall package manager | Verify RPM"
-      command: "rpm -V {{ item }}"
-      loop: "{{ dnf5_packages }}"
+      shell: "rpm -V {{ item }} && exit"
       register: rpm_out
       failed_when: rpm_out.stdout_lines | length > 0
+      loop: "{{ dnf5_packages }}"
