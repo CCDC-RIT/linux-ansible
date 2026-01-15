@@ -19,11 +19,11 @@
   when: dnf_version == 4
   block:
     - name: "Reinstall package manager | Reinstall dnf4 packages"
-      shell: "dnf reinstall {{ item }} && exit"
+      shell: "dnf reinstall {{ item }} -y && exit"
       loop: "{{ dnf4_packages }}"
   rescue:
     - name: "Reinstall package manager | Upgrade dnf4 packages"
-      shell: "dnf upgrade {{ item }} && exit"
+      shell: "dnf upgrade {{ item }} -y && exit"
       loop: "{{ dnf4_packages }}"
   always:
     - name: "Reinstall package manager | Verify RPM"
