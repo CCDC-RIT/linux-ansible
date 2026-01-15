@@ -1,7 +1,11 @@
 ---
+- name: Reinstall Package Manager | Determine apt version"
+  set_fact:
+    apt_version: "{{ ansible_facts.packages['apt']['version'] }}"
+
 - name: "Reinstall Package Manager | Download deb"
   get_url:
-    url: http://mirrors.edge.kernel.org/ubuntu/pool/main/a/apt/apt_3.1.6ubuntu2_amd64.deb
+    url: "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/apt_{{ apt_version }}_amd64.deb"
     dest: /tmp/apt.deb
 
 - name: "Reinstall Package Manager | Remove apt"
