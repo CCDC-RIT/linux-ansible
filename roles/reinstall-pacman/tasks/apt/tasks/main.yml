@@ -1,17 +1,50 @@
 ---
-- name: Reinstall Package Manager | Determine apt version"
+- name: "Reinstall Package Manager | Determine apt package"
   set_fact:
-    apt_version: "{{ ansible_facts.packages['apt']['version'] }}"
+    apt_pkg: "{{ ansible_facts.packages['apt'][0] }}"
 
-- name: "Reinstall Package Manager | Download deb"
+- name: "Reinstall Package Manager | Determine apt version and arch"
+  set_fact:
+    apt_version: "{{ apt_pkg.version }}"
+    deb_arch: "{{ apt_pkg.arch }}"
+
+- name: "Reinstall Package Manager | Determine libapt-pkg package name"
+  set_fact:
+    libapt_pkg_name: >-
+      {{
+        'libapt-pkg6.0'
+        if apt_version is version('2.4', '>=')
+        else 'libapt-pkg5.0'
+      }}
+
+- name: Create temporary directory
+  file:
+    path: "/tmp/apt-reinstall"
+    state: directory
+    mode: '0755'
+
+- name: "Reinstall Package Manager | Download debs"
   get_url:
-    url: "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/apt_{{ apt_version }}_amd64.deb"
-    dest: /tmp/apt.deb
+    url: "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/{{ item }}"
+    dest: "/tmp/apt-reinstall/{{ item }}"
+    mode: '0644'
+  loop:
+    - "apt_{{ apt_version }}_{{ deb_arch }}.deb"
+    - "{{ libapt_pkg_name }}_{{ apt_version }}_{{ deb_arch }}.deb"
+    - "apt-utils_{{ apt_version }}_{{ deb_arch }}.deb"
 
-- name: "Reinstall Package Manager | Remove apt"
-  command: dpkg -r apt
+- name: "Reinstall Package Manager | Purge apt"
+  command: dpkg --purge apt apt-utils
+  ignore_errors: true
 
-# purge repos?
+- name: "Reinstall Package Manager | Install new debs"
+  command: dpkg -i {{ apt_reinstall_dir }}/*.deb
+  register: dpkg_install
+  failed_when: dpkg_install.rc > 1
 
-- name: "Reinstall Package Manager | Install new apt"
-  command: dpkg -i /tmp/apt.deb
+- name: "Reinstall Package Manager | Fix dependencies"
+  command: apt-get -f install -y
+
+- name: "Reinstall Package Manager | Verify apt"
+  command: apt --version
+  changed_when: false
