@@ -40,7 +40,7 @@
 
 - name: Reinstall Package Manager
   hosts: all
-  become: yes
+  become: true
   roles:
     - reinstall-pacman
   tags:
