@@ -172,7 +172,7 @@
 
 - name: Update the package cache and all packages (Debian/Ubuntu)
   ansible.builtin.apt:
-    update_cache: yes # Equivalent of "apt-get update"
+    update_cache: true # Equivalent of "apt-get update"
     # name: "*"
     # state: latest # Update all packages to their latest version
   when: ansible_facts['os_family'] == 'Debian'

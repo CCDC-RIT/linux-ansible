@@ -19,7 +19,7 @@
   when: ansible_default_ipv4.address == password_manager_ip
 
 - name: Start Server
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: /opt/ccdc-password-manager/
     state: present
     restarted: yes
