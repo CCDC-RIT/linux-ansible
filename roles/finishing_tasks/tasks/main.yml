@@ -52,6 +52,7 @@
       shell: "curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > {{ audit_dir }}/linpeas.txt"
       async: 0
       poll: 0
+      creates: "{{ audit_dir }}/linpeas.txt"
       ignore_errors: true
     
     - name: Store Linpeas Output onto local Ansible Box
@@ -64,10 +65,12 @@
 - name: Run Lynis Audit
   shell: "lynis audit system > {{ audit_dir }}/lynis.txt"
   ignore_errors: true
+  creates: "{{ audit_dir }}/lynis.txt"
 
 - name: Run RKHunter
   shell: "rkhunter --check > {{ audit_dir }}/rkhunter.txt"
   ignore_errors: true
+  creates: "{{ audit_dir }}/rkunter.txt"
 
 - name: Store Audit Script Output onto local Ansible Box
   fetch:
