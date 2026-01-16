@@ -29,15 +29,9 @@
 - name: Copy Linux starting clients
   ansible.builtin.lineinfile:
     path: /opt/ccdc-password-manager/starting_clients.txt
-    line: "{{ lookup('file', '/opt/ccdc-password-manager/linux_starting_clients.txt') }}"
-    create: yes
-  when: ansible_default_ipv4.address == password_manager_ip
-
-- name: Copy Windows starting clients
-  ansible.builtin.lineinfile:
-    path: /opt/ccdc-password-manager/starting_clients.txt
-    line: "{{ lookup('file', '/opt/ccdc-password-manager/windows_starting_clients.txt') }}"
-    create: yes
+    content: |
+      {{ lookup('file', '/opt/ccdc-password-manager/linux_starting_clients.txt') }}
+      {{ lookup('file', '/opt/ccdc-password-manager/windows_starting_clients.txt') }}
   when: ansible_default_ipv4.address == password_manager_ip
 
 - name: Start Server
