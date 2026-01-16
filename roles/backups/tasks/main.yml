@@ -59,6 +59,7 @@
     path: "backups"
     state: directory
     mode: '0755'
+  become: false
   ignore_errors: yes
 
 - name: Move backups to a well-structured directory on manager node
