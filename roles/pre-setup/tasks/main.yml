@@ -8,15 +8,18 @@
     state: present
     password: "{{ blueteam_password | password_hash('sha512') }}"
     shell: /bin/bash
+  become: true
 
 - name: Make blueteam group
   ansible.builtin.group:
     name: blueteam
     state: present
+  become: true
 
 - name: Create wheel group if doesn't exist on RedHat
   ansible.builtin.shell: groupadd -f wheel
   when: ansible_facts['os_family'] == 'RedHat'
+  become: true
  
 - name: Add blueteam user to admin groups (RedHat)
   ansible.builtin.user:
@@ -27,6 +30,7 @@
     - "wheel"
     - "adm"
     - "blueteam"
+  become: true
   when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Add blueteam user to admin groups (Debian)
@@ -38,6 +42,7 @@
     - "sudo"
     - "adm"
     - "blueteam"
+  become: true
   when: ansible_facts['os_family'] == 'Debian'
 
 - name: Check if a SSH key already exists
