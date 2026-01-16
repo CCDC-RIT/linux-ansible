@@ -40,14 +40,16 @@
   ignore_errors: yes
 
 ###### External Audit Scripts #######
-- name: Copy Linpeas
-  copy:
-    src: linpeas.sh
-    dest: /tmp/linpeas.sh
-  ignore_errors: true
+# - name: Copy Linpeas
+#   copy:
+#     src: linpeas.sh
+#     dest: /tmp/linpeas.sh
+#   ignore_errors: true
 
 - name: Run Linpeas Audit
   shell: "curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > {{ audit_dir }}/linpeas.txt"
+  async: 0
+  poll: 0
   ignore_errors: true
 
 - name: Run Lynis Audit
