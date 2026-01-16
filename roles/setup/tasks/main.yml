@@ -72,8 +72,8 @@
 #   become: false
 #   when: not ssh_key_check.stat.exists
 
-- name: Include SSH key generation tasks
-  include_tasks: gen-ssh-key.yml
+# - name: Include SSH key generation tasks
+#   include_tasks: gen-ssh-key.yml
 
 - name: Add key to blueteam user
   ansible.posix.authorized_key:

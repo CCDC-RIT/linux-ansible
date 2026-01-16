@@ -11,6 +11,16 @@
     - deploy
     - setup
 
+- name: Generate SSH key combination
+  hosts: localhost
+  become: false
+  roles:
+    - pre-setup
+  tags:
+    - never
+    - deploy
+    - setup
+
 - name: Initial Run
   hosts: all
   become: yes
