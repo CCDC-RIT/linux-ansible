@@ -47,10 +47,19 @@
 #   ignore_errors: true
 
 - name: Run Linpeas Audit
-  shell: "curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > {{ audit_dir }}/linpeas.txt"
+  block:
+    - name: Curl linpeas script and run it 
+      shell: "curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > {{ audit_dir }}/linpeas.txt"
+      ignore_errors: true
+    
+    - name: Store Linpeas Output onto local Ansible Box
+      fetch:
+        src: "{{ audit_dir }}/linpeas.txt"
+        dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
+        flat: yes
+        fail_on_missing: no
   async: 0
   poll: 0
-  ignore_errors: true
 
 - name: Run Lynis Audit
   shell: "lynis audit system > {{ audit_dir }}/lynis.txt"
@@ -64,13 +73,6 @@
   fetch:
     src: "{{ audit_dir }}/audit_log.txt"
     dest: /opt/inventory/{{ ansible_hostname }}-audit.txt
-    flat: yes
-    fail_on_missing: no
-
-- name: Store Linpeas Output onto local Ansible Box
-  fetch:
-    src: "{{ audit_dir }}/linpeas.txt"
-    dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
     flat: yes
     fail_on_missing: no
     
