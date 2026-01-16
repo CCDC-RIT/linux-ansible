@@ -50,6 +50,8 @@
   block:
     - name: Curl linpeas script and run it 
       shell: "curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > {{ audit_dir }}/linpeas.txt"
+      async: 0
+      poll: 0
       ignore_errors: true
     
     - name: Store Linpeas Output onto local Ansible Box
@@ -58,8 +60,6 @@
         dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
         flat: yes
         fail_on_missing: no
-  async: 0
-  poll: 0
 
 - name: Run Lynis Audit
   shell: "lynis audit system > {{ audit_dir }}/lynis.txt"
