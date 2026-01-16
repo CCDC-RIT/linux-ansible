@@ -1,0 +1,19 @@
+---
+- name: Gather facts for localhost
+  ansible.builtin.setup:
+  delegate_to: localhost
+
+- name: Check if a SSH key already exists
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.ssh/id_ed25519"
+  delegate_to: localhost
+  become: false
+  register: ssh_key_check
+
+- name: Generate SSH key on Ansible controller
+  shell: "ssh-keygen -t ed25519 -f {{ ansible_env.HOME }}/.ssh/id_ed25519 -N \"\" -q"
+  args:
+    creates: '{{ ansible_env.HOME }}/.ssh/id_ed25519'
+  delegate_to: localhost
+  become: false
+  when: not ssh_key_check.stat.exists
