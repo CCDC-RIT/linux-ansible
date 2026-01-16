@@ -5,14 +5,15 @@ backup_dir: "/usr/share/fonts/roboto-mono"
 quarantine: "/usr/share/fonts/quar-mono"
 audit_dir: "/opt/audit"
 password_manager_ip: ""
+stabvest_controller_ip: ""
 # If controller is NOT in scope, leave variable empty. 
 # If controller IS in scope, include the IP/subnet that should be allowed on all firewalls
 controller_in_scope_allow_ip: ""
 subnet: "192.168.1.0/24" # for linux dynamic inventory
 linux_inventory_output_file: "" # for linux dynamic inventory - what james requested (list of linux IPs)
 control_output_dir: "/tmp" # for linux dynamic inventory
-firewall_logging: false
-logging_ports: [1514, 1515, 1516, 55000, 9200, 443, 9000, 9020]
+firewall_logging: true
+logging_ports: [3000, 3100]
 packet_users:
   - harold
   - francis

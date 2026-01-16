@@ -6,3 +6,12 @@
     destination_port: "443"
     destination: "{{ password_manager_ip }}"
     jump: ACCEPT
+
+- name: Allow output to the Stabvest server
+  ansible.builtin.iptables:
+    chain: OUTPUT
+    protocol: tcp
+    destination_port: "443"
+    destination: "{{ stabvest_controller_ip: }}"
+    jump: ACCEPT
+  when: stabvest_controller_ip | length > 0
