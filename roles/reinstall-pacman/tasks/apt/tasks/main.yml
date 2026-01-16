@@ -1,4 +1,9 @@
 ---
+- name: "Reinstall Package Manager | Create log file"
+  file:
+    path: "{{ audit_dir }}/pacman.log"
+    state: touch
+
 - name: "Reinstall Package Manager | Determine apt package"
   set_fact:
     apt_pkg: "{{ ansible_facts.packages['apt'][0] }}"

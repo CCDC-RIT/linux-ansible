@@ -1,4 +1,9 @@
 ---
+- name: "Reinstall Package Manager | Create log file"
+  file:
+    path: "{{ audit_dir }}/pacman.log"
+    state: touch
+
 - name: "Reinstall package manager | Remove dnf cache"
   ansible.builtin.file:
     path: /var/cache/dnf
