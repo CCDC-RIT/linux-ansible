@@ -1,0 +1,55 @@
+---
+- name: "Reinstall Package Manager | Create log file"
+  file:
+    path: "{{ audit_dir }}/pacman.log"
+    state: touch
+
+- name: "Reinstall package manager | Remove dnf cache"
+  ansible.builtin.file:
+    path: /var/cache/dnf
+    state: absent
+
+- name: "Reinstall package manager | Clean dnf cache"
+  command: "dnf clean all"
+
+- name: "Reinstall package manager | Make dnf cache"
+  command: "dnf makecache"
+
+- name: "Reinstall package manager | Determine DNF version"
+  set_fact:
+    dnf_version: >-
+      {{ 5 if 'dnf5' in ansible_facts.packages else 4 }}
+
+- name: "Reinstall package manager | Reinstall dnf4"
+  when: dnf_version == 4
+  block:
+    - name: "Reinstall package manager | Reinstall dnf4 packages"
+      shell: "dnf reinstall {{ item }} -y && exit"
+      loop: "{{ dnf4_packages }}"
+  rescue:
+    - name: "Reinstall package manager | Upgrade dnf4 packages"
+      shell: "dnf upgrade {{ item }} -y && exit"
+      loop: "{{ dnf4_packages }}"
+  always:
+    - name: "Reinstall package manager | Verify RPM"
+      shell: "rpm -V {{ item }} && exit"
+      register: rpm_out
+      failed_when: rpm_out.stdout_lines | length > 0
+      loop: "{{ dnf4_packages }}"
+
+- name: "Reinstall package manager | Reinstall dnf4"
+  when: dnf_version == 5
+  block:
+    - name: "Reinstall package manager | Reinstall dnf4 packages"
+      shell: "dnf reinstall {{ item }} -y && exit"
+      loop: "{{ dnf5_packages }}"
+  rescue:
+    - name: "Reinstall package manager | Upgrade dnf4 packages"
+      shell: "dnf upgrade {{ item }} -y && exit"
+      loop: "{{ dnf5_packages }}"
+  always:
+    - name: "Reinstall package manager | Verify RPM"
+      shell: "rpm -V {{ item }} && exit"
+      register: rpm_out
+      failed_when: rpm_out.stdout_lines | length > 0
+      loop: "{{ dnf5_packages }}"

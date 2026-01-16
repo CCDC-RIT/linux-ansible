@@ -11,6 +11,24 @@
     - deploy
     - setup
 
+- name: Generate SSH key combination
+  hosts: localhost
+  become: false
+  roles:
+    - pre-setup
+  tags:
+    - never
+    - presetup
+    - setup
+  vars_prompt:
+  # TODO: Make this into a handler/function to prevent double prompt
+  - name: blueteam_password
+    prompt: Enter blueteam user password 
+    private: true
+    confirm: true
+    # unsafe: true # If using special characters such as { or %, uncomment this line.
+    salt_size: 7
+
 - name: Initial Run
   hosts: all
   become: yes
@@ -18,7 +36,6 @@
     - setup # create blue user, adds key to user, creates backup directory, installs common packages
   tags:
     - never
-    - deploy
     - setup
   vars_prompt:
   - name: blueteam_password
@@ -40,7 +57,7 @@
 
 - name: Reinstall Package Manager
   hosts: all
-  become: yes
+  become: true
   roles:
     - reinstall-pacman
   tags:

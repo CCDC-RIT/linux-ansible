@@ -23,6 +23,8 @@
   
 - name: Run backup sus files script
   ansible.builtin.shell: /tmp/imp_files.sh
+  args:
+    creates: "{{ backup_dir }}/sus_files/log.txt"
 
 - name: Create /var/www directory
   file:
@@ -57,6 +59,7 @@
     path: "backups"
     state: directory
     mode: '0755'
+  become: false
   ignore_errors: yes
 
 - name: Move backups to a well-structured directory on manager node
@@ -66,15 +69,17 @@
     /opt/backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
   args:
     creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+  become: false
   ignore_errors: yes
 
 - name: Zip all backups into one file
   delegate_to: localhost
-  ansible.builtin.shell: zip -r /opt/backups/linux_backups.zip /opt/backups
+  become: false
+  ansible.builtin.shell: zip -r backups/linux_backups.zip backups/
 
 - name: Send that file everywhere
   ansible.builtin.copy:
-    src: /opt/backups/linux_backups.zip
+    src: backups/linux_backups.zip
     dest: "{{ backup_dir }}/linux_backups.zip"
     owner: root
     group: root

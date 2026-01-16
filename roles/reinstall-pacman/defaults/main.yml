@@ -1,0 +1,12 @@
+# packages for each major dnf version
+
+dnf4_packages:
+  - dnf 
+  - dnf-plugins-core 
+  - libdnf 
+  - python3-dnf
+dnf5_packages:
+  - dnf5 
+  - dnf5-plugins 
+  - libdnf5
+  - python3-libdnf5
