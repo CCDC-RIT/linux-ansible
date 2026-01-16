@@ -1,0 +1,4 @@
+---
+- name: "Grafana | Gather ansible facts"
+  ansible.builtin.package_facts:
+
