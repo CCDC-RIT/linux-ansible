@@ -93,7 +93,7 @@
 #   changed_when: false
 
 - name: Gather listening sockets
-  community.general.netstat: # alternative to ansible command module ss
+  community.general.listen_ports_facts: # alternative to ansible command module ss
     listen: true
 
 - debug:
