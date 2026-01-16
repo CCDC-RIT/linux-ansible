@@ -68,10 +68,12 @@
     /opt/backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
   args:
     creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+  become: false
   ignore_errors: yes
 
 - name: Zip all backups into one file
   delegate_to: localhost
+  become: false
   ansible.builtin.shell: zip -r /opt/backups/linux_backups.zip /opt/backups
 
 - name: Send that file everywhere
