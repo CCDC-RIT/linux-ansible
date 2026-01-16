@@ -221,7 +221,7 @@
     create: yes
 
 - name: Delete yararules directory if present
-  ansible.builtin.lineinfile:
+  ansible.builtin.file:
     path: /opt/yararules
     state: absent
 
