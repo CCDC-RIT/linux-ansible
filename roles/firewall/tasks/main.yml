@@ -11,6 +11,10 @@
   include_tasks: iptables_logging.yml
   when: firewall_logging is true
 
+- name: Extra services
+  include_tasks: iptables_fun.yml
+  when: password_manager_ip | length > 0
+
 # - name: kube worker
 #   include_tasks: old_iptables_kube.yml
 #   when: inventory_hostname in groups["kube"]
