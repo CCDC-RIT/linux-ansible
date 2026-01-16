@@ -45,9 +45,9 @@
     destination_port: "22"
     jump: ACCEPT
 
-- name: Allow SSH from Ansible (OUTPUT - Source Port 22)
+- name: Allow SSH from Ansible (INPUT - Source Port 22)
   iptables: 
-    chain: OUTPUT
+    chain: INPUT
     protocol: tcp
     source: "{{ ansible_control_ip }}"
     destination_port: "22"
