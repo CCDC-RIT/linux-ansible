@@ -3,8 +3,8 @@
 # to save output in separate logs, one on each managed node, set the no_target_syslog and syslog_facility settings in ansible.cfg -- this is probably what we prefer
 ##### BASIC #####
 - name: Copy append_to_audit_log.sh
-  copy:
-    src: append_to_audit_log.sh
+  template:
+    src: append_to_audit_log.j2
     dest: /root/append_to_audit_log.sh 
     mode: 0755
 
