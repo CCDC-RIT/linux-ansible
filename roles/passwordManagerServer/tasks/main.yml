@@ -1,7 +1,15 @@
+- name: Create directory
+  ansible.builtin.file:
+    path: "/opt/ccdc-password-manager"
+    owner: blueteam
+    group: blueteam
+    state: directory
+    mode: 0755
+
 - name: Clone Repo
   ansible.builtin.git:
     repo: https://github.com/CCDC-RIT/Password-Manager.git
-    dest: /opt/ccdc-password-manager
+    dest: /opt/ccdc-password-manager/Password-Manager
   when: ansible_default_ipv4.address == password_manager_ip
 
 - name: Copy Linux starting clients

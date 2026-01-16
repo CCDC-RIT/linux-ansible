@@ -1,3 +1,11 @@
+- name: Create directory
+  ansible.builtin.file:
+    path: "/opt/ccdc-password-manager-client"
+    owner: blueteam
+    group: blueteam
+    state: directory
+    mode: 0755
+
 - name: Download Password Manager Client
   ansible.builtin.get_url:
     url: https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux
