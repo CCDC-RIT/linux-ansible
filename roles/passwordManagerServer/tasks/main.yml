@@ -12,17 +12,31 @@
     dest: /opt/ccdc-password-manager/Password-Manager
   when: ansible_default_ipv4.address == password_manager_ip
 
+- name: Copy Linux Starting clients to Remote
+  ansible.builtin.copy:
+    src: /opt/passwordmanager/linux_starting_clients.txt
+    dest: /opt/ccdc-password-manager/linux_starting_clients.txt
+    mode: '0644'
+  when: ansible_default_ipv4.address == password_manager_ip
+
+- name: Copy Windows Starting clients to Remote
+  ansible.builtin.copy:
+    src: /opt/passwordmanager/windows_starting_clients.txt
+    dest: /opt/ccdc-password-manager/windows_starting_clients.txt
+    mode: '0644'
+  when: ansible_default_ipv4.address == password_manager_ip
+
 - name: Copy Linux starting clients
   ansible.builtin.lineinfile:
     path: /opt/ccdc-password-manager/starting_clients.txt
-    line: "{{ lookup('file', '/opt/passwordmanager/linux_starting_clients.txt') }}"
+    line: "{{ lookup('file', '/opt/ccdc-password-manager/linux_starting_clients.txt') }}"
     create: yes
   when: ansible_default_ipv4.address == password_manager_ip
 
 - name: Copy Windows starting clients
   ansible.builtin.lineinfile:
     path: /opt/ccdc-password-manager/starting_clients.txt
-    line: "{{ lookup('file', '/opt/passwordmanager/windows_starting_clients.txt') }}"
+    line: "{{ lookup('file', '/opt/ccdc-password-manager/windows_starting_clients.txt') }}"
     create: yes
   when: ansible_default_ipv4.address == password_manager_ip
 
