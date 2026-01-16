@@ -28,7 +28,7 @@
 
 - name: Write IP list
   ansible.builtin.copy:
-    dest: "{{ linux_inventory_output_file }}"
+    dest: "/opt/linuxrecon/{{ linux_inventory_output_file }}"
     content: |
       {% for ip in discovered_ips %}
       {{ ip }}
@@ -109,13 +109,15 @@
       users: "{{ local_users | default([]) }}"
       listening_ports: "{{ listening_ports.stdout_lines }}"
 
-- name: Save host profile JSON on control node
-  ansible.builtin.copy:
-    dest: "{{ control_output_dir }}/{{ inventory_hostname }}.json"
-    content: "{{ host_profile | to_nice_json }}"
-    mode: '0644'
-  delegate_to: localhost
-  become: false
+# TODO: save all info to CSV
+
+# - name: Save host profile JSON on control node
+#   ansible.builtin.copy:
+#     dest: "{{ control_output_dir }}/{{ inventory_hostname }}.json"
+#     content: "{{ host_profile | to_nice_json }}"
+#     mode: '0644'
+#   delegate_to: localhost
+#   become: false
 
 # - name: Get service using nmap
 #   command: nmap -sT -sV -p- localhost | sed -n '6 p' | awk '{ print $3 }'
