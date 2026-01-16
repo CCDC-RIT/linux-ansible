@@ -251,3 +251,4 @@
 
 - name: Compile YARA rules
   shell: yarac /opt/yararules/YaraRules/Linux/* /opt/yararules/YaraRules/Multi/* /opt/yararules/forge.yar /opt/yararules/compiled.linux
+  ignore_errors: true
