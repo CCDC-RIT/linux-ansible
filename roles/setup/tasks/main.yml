@@ -241,7 +241,7 @@
   ignore_errors: true
 
 - name: Download RIT CCDC Yara rules
-  ansible.builtin.shell: git clone https://github.com/CCDC-RIT/YaraRules /opt/yararules/
+  ansible.builtin.shell: git clone https://github.com/CCDC-RIT/YaraRules /opt/yararules/YaraRules
   ignore_errors: true
 
 - name: Compile YARA rules
