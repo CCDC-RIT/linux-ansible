@@ -23,7 +23,8 @@
   
 - name: Run backup sus files script
   ansible.builtin.shell: /tmp/imp_files.sh
-  creates: "{{ backup_dir }}/sus_files/log.txt"
+  args:
+    creates: "{{ backup_dir }}/sus_files/log.txt"
 
 - name: Create /var/www directory
   file:
