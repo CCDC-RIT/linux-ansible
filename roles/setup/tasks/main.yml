@@ -74,7 +74,6 @@
 
 - name: Include SSH key generation tasks
   include_tasks: gen-ssh-key.yml
-  delegate_to: localhost
 
 - name: Add key to blueteam user
   ansible.posix.authorized_key:
