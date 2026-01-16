@@ -18,7 +18,6 @@
     - pre-setup
   tags:
     - never
-    - deploy
     - setup
 
 - name: Initial Run
@@ -28,7 +27,6 @@
     - setup # create blue user, adds key to user, creates backup directory, installs common packages
   tags:
     - never
-    - deploy
     - setup
   vars_prompt:
   - name: blueteam_password
