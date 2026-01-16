@@ -57,7 +57,7 @@
     - name: Store Linpeas Output onto local Ansible Box
       fetch:
         src: "{{ audit_dir }}/linpeas.txt"
-        dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
+        dest: host-audit-script-output/{{ ansible_hostname }}-linpeas.txt
         flat: yes
         fail_on_missing: no
 
@@ -72,14 +72,21 @@
 - name: Store Audit Script Output onto local Ansible Box
   fetch:
     src: "{{ audit_dir }}/audit_log.txt"
-    dest: /opt/inventory/{{ ansible_hostname }}-audit.txt
+    dest: host-audit-script-output/{{ ansible_hostname }}-audit.txt
     flat: yes
     fail_on_missing: no
     
 - name: Store Lynis Output onto local Ansible Box
   fetch:
     src: "{{ audit_dir }}/lynis.txt"
-    dest: /opt/inventory/{{ ansible_hostname }}-lynis.txt
+    dest: host-audit-script-output/{{ ansible_hostname }}-lynis.txt
+    flat: yes
+    fail_on_missing: no
+
+- name: Store rkhunter Output onto local Ansible Box
+  fetch:
+    src: "{{ audit_dir }}/rkhunter.txt"
+    dest: host-audit-script-output/{{ ansible_hostname }}-rkhunter.txt
     flat: yes
     fail_on_missing: no
 
