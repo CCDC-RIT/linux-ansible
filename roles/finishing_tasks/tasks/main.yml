@@ -18,12 +18,6 @@
     - "git"
   ignore_errors: yes
 
-- name: Upgrade packages
-  package: 
-    name: "*"
-    state: latest
-  when: ansible_facts['os_family'] == 'Debian'
-
 ###### External Audit Scripts #######
 - name: Copy Linpeas
   copy:
@@ -32,33 +26,42 @@
   ignore_errors: true
 
 - name: Run Linpeas Audit
-  shell: curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > linpeas.txt
+  shell: "curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh > {{ audit_dir }}/linpeas.txt"
   ignore_errors: true
 
 - name: Run Lynis Audit
-  shell: lynis audit system > lynis.txt
+  shell: "lynis audit system > {{ audit_dir }}/lynis.txt"
+  ignore_errors: true
+
+- name: Run RKHunter
+  shell: "rkhunter --check > {{ audit_dir }}/rkhunter.txt"
   ignore_errors: true
 
 - name: Store Audit Script Output onto local Ansible Box
   fetch:
-    src: audit_log.txt
+    src: "{{ audit_dir }}/audit_log.txt"
     dest: /opt/inventory/{{ ansible_hostname }}-audit.txt
     flat: yes
     fail_on_missing: no
 
 - name: Store Linpeas Output onto local Ansible Box
   fetch:
-    src: linpeas.txt
+    src: "{{ audit_dir }}/linpeas.txt"
     dest: /opt/inventory/{{ ansible_hostname }}-linpeas.txt
     flat: yes
     fail_on_missing: no
     
 - name: Store Lynis Output onto local Ansible Box
   fetch:
-    src: lynis.txt
+    src: "{{ audit_dir }}/lynis.txt"
     dest: /opt/inventory/{{ ansible_hostname }}-lynis.txt
     flat: yes
     fail_on_missing: no
+
+- name: Upgrade packages
+  package: 
+    name: "*"
+    state: latest
 
 - name: Include APT tasks
   include_tasks: apt.yml
