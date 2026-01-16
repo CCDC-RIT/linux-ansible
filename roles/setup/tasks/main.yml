@@ -61,6 +61,7 @@
   ansible.builtin.stat:
     path: "{{ ansible_env.HOME }}/.ssh/id_ed25519"
   delegate_to: localhost
+  become: false
   register: ssh_key_check
 
 - name: Generate SSH key on Ansible controller
