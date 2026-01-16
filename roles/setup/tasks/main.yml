@@ -220,6 +220,11 @@
     line: 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"'
     create: yes
 
+- name: Delete yararules directory if present
+  ansible.builtin.lineinfile:
+    path: /opt/yararules
+    state: absent
+
 - name: Creates yararules directory
   ansible.builtin.file:
     path: /opt/yararules
