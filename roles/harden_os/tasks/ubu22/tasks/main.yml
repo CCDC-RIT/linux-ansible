@@ -140,7 +140,7 @@
   failed_when: prelim_dconf_system_db.rc not in [ 0, 1 ]
   register: prelim_dconf_system_db
 
-- name: "HARDEN_OS UBUNTU | Disable IPv6"
+- name: "HARDEN_OS UBUNTU | Disable IPv6 (DOES NOT ACTUALLY DISABLE IPv6)"
   block:
     - name: "Copy GRUB config"
       ansible.builtin.copy:
