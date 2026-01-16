@@ -2,6 +2,44 @@
 - name: Gather facts for localhost
   ansible.builtin.setup:
 
+- name: Add blueteam user
+  ansible.builtin.user: 
+    name: blueteam
+    state: present
+    password: "{{ blueteam_password | password_hash('sha512') }}"
+    shell: /bin/bash
+
+- name: Make blueteam group
+  ansible.builtin.group:
+    name: blueteam
+    state: present
+
+- name: Create wheel group if doesn't exist on RedHat
+  ansible.builtin.shell: groupadd -f wheel
+  when: ansible_facts['os_family'] == 'RedHat'
+ 
+- name: Add blueteam user to admin groups (RedHat)
+  ansible.builtin.user:
+    name: blueteam
+    groups: '{{ item }}'
+    append: yes
+  with_items:
+    - "wheel"
+    - "adm"
+    - "blueteam"
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Add blueteam user to admin groups (Debian)
+  ansible.builtin.user:
+    name: blueteam
+    groups: '{{ item }}'
+    append: yes
+  with_items:
+    - "sudo"
+    - "adm"
+    - "blueteam"
+  when: ansible_facts['os_family'] == 'Debian'
+
 - name: Check if a SSH key already exists
   ansible.builtin.stat:
     path: "{{ ansible_env.HOME }}/.ssh/id_ed25519"
