@@ -75,11 +75,11 @@
 - name: Zip all backups into one file
   delegate_to: localhost
   become: false
-  ansible.builtin.shell: zip -r /opt/backups/linux_backups.zip /opt/backups
+  ansible.builtin.shell: zip -r backups/linux_backups.zip backups/
 
 - name: Send that file everywhere
   ansible.builtin.copy:
-    src: /opt/backups/linux_backups.zip
+    src: backups/linux_backups.zip
     dest: "{{ backup_dir }}/linux_backups.zip"
     owner: root
     group: root
