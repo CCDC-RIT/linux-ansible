@@ -1,4 +1,6 @@
 #!/bin/bash
+#Docker inventory and audit script
+#Author: Braeden Villano
 RED='\e[0;31m'
 GREEN='\e[0;32m'
 RESET='\e[0m'
