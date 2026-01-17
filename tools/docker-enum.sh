@@ -161,6 +161,24 @@ for cid in $(docker ps -q); do
     done
 done
 
+echo -e "\n${PURPLE}RUNTIME USER CHECK (docker exec whoami):${RESET}"
+
+printf "%-25s %-15s %s\n" "CONTAINER" "ID" "USER"
+for cid in $(docker ps -q); do
+    name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's#^/##')
+    short_id=${cid:0:12}
+    user=$(docker exec "$cid" whoami 2>/dev/null)
+    if [[ -z "$user" ]]; then
+        printf "${YELLOW}%-25s %-15s %s${RESET}\n" "$name" "$short_id" "? (Binary_Missing)"
+    elif [[ "$user" == *"unable to start container process"* ]]; then
+        printf "${YELLOW}%-25s %-15s %s${RESET}\n" "$name" "$short_id" "? (Binary_Missing)"
+    elif [[ "$user" == "root" ]]; then
+        printf "${RED}%-25s %-15s %s${RESET}\n" "$name" "$short_id" "root"
+    else
+        printf "${GREEN}%-25s %-15s %s${RESET}\n" "$name" "$short_id" "$user"
+    fi
+done
+
 echo -e "\n${BLUE}Searching for Dockerfiles...\n${RESET}"
 mapfile -t DOCKERFILES < <(
   find / -type f -iname 'Dockerfile*' \
