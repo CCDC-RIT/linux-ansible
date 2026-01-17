@@ -61,6 +61,34 @@ for cid in $(docker ps -q); do
     done
 done
 
+echo -e "\n${PURPLE}DOCKER PUBLISHED PORTS:\n${RESET}"
+(
+    echo "CONTAINER ID PROTO HOST_IP HOST_PORT CONT_PORT"
+    for cid in $(docker ps -q); do
+        # Fetch Name, Mode, and Port JSON in one go using '|' as delimiter
+        IFS='|' read -r name mode ports <<< "$(docker inspect --format '{{.Name}}|{{.HostConfig.NetworkMode}}|{{json .NetworkSettings.Ports}}' "$cid")"
+        name=${name#/} 
+
+        # Handle --net=host
+        if [[ "$mode" == "host" ]]; then
+            echo -e "${RED}$name ${cid::12} TCP/UDP * * (Host_Net)${RESET}"
+            continue
+        fi
+
+        # Parse, Filter (0.0.0.0/127.0.0.1), and Format
+        if [[ "$ports" != "null" ]]; then
+            echo "$ports" | jq -r '
+                to_entries[] | select(.value) | .key as $kp | .value[] | 
+                select(.HostIp == "0.0.0.0" or .HostIp == "127.0.0.1") | 
+                "\($kp) \(.HostIp) \(.HostPort)"' | \
+            while read -r kp hip hport; do
+                 # kp=80/tcp -> ${kp#*/}=tcp, ${kp%/*}=80
+                 echo "$name ${cid::12} ${kp#*/} $hip $hport ${kp%/*}"
+            done
+        fi
+    done
+) | column -t
+
 
 echo -e "${BLUE}\n\nDOCKER SECURITY AUDITING \n\n${RESET}"
 
