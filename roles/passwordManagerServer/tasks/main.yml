@@ -131,4 +131,4 @@
       community.docker.docker_compose_v2:
         project_src: /opt/ccdc-password-manager/Password-Manager
       when: ansible_default_ipv4.address == password_manager_ip
-  when: not manager_exists.stat.exists
+  when: not manager_exists.stat.exists and ansible_default_ipv4.address == password_manager_ip

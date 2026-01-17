@@ -76,6 +76,7 @@
   delegate_to: localhost
   become: false
   ansible.builtin.shell: zip -r backups/linux_backups.zip backups/
+  ignore_errors: yes
 
 - name: Send that file everywhere
   ansible.builtin.copy:
@@ -84,3 +85,4 @@
     owner: root
     group: root
     mode: 0644
+  ignore_errors: yes
