@@ -47,7 +47,7 @@
 
 - name: Write IP list
   ansible.builtin.copy:
-    dest: "/opt/linuxrecon/{{ linux_inventory_output_file }}"
+    dest: "/opt/linuxrecon/discovered_ips.txt"
     content: |
       {% for ip in discovered_ips %}
       {{ ip }}
