@@ -69,13 +69,13 @@ HOME_EXTS=(
 
 BACKUP_DIR="{{ backup_dir }}"
 
-mkdir -p "$BACKUP_DIR/sus_files"
+mkdir -p "$BACKUP_DIR/important_files"
 
-touch "$BACKUP_DIR/sus_files/log.txt"
+touch "$BACKUP_DIR/important_files/log.txt"
 
 backup_file() {
   local file="$1"
-  echo "Backing up: $file" >> "$BACKUP_DIR/sus_files/log.txt"
+  echo "Backing up: $file" >> "$BACKUP_DIR/important_files/log.txt"
   cp --parents -a "$file" "$BACKUP_DIR" 2>/dev/null || true
 }
 

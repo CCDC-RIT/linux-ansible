@@ -13,7 +13,7 @@
   when: found_important_files.matched > 0
   loop: "{{ found_important_files.files }}"
 
-- name: Deploy backup potentially sus files script
+- name: Deploy backup potentially important files script
   ansible.builtin.template:
     src: backup_important_files.j2
     dest: /tmp/imp_files.sh
@@ -21,10 +21,10 @@
     group: root
     mode: 0744
   
-- name: Run backup sus files script
+- name: Run backup important files script
   ansible.builtin.shell: /tmp/imp_files.sh
   args:
-    creates: "{{ backup_dir }}/sus_files/log.txt"
+    creates: "{{ backup_dir }}/important_files/log.txt"
 
 - name: Create /var/www directory
   file:
