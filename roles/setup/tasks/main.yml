@@ -220,6 +220,7 @@
     - "iptables-persistent"
     - "jq"
     - "unzip"
+    - "git"
   ignore_errors: yes
 
 - name: Set PATH in /etc/environment
