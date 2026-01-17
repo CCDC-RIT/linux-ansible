@@ -14,10 +14,18 @@
     nmap -sn {{ subnet }} -oG -
   register: ping_scan
 
+- name: Show live hosts from ping scan
+  ansible.builtin.debug:
+    var: ping_scan.stdout_lines
+
 - name: Discover live hosts on subnet (SSH)
   ansible.builtin.command: >
     nmap -p 22 --open -Pn {{ subnet }} -oG -
   register: ssh_scan
+
+- name: Show live hosts from SSH scan
+  ansible.builtin.debug:
+    var: ssh_scan.stdout_lines
 
 # TODO: diff and/or just create a union of both scan results to get more complete list of live hosts
 

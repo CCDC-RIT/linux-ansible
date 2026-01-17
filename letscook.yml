@@ -30,7 +30,7 @@
     salt_size: 7
 
 - name: Linux Recon Discovery
-  hosts: all
+  hosts: localhost
   become: yes
   roles:
     - linux-recon
