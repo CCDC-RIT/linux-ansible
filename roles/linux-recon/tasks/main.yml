@@ -27,16 +27,24 @@
   ansible.builtin.debug:
     var: ssh_scan.stdout_lines
 
-# TODO: diff and/or just create a union of both scan results to get more complete list of live hosts
-
-
-- name: Extract discovered IPs
+# create a union of both scan results to get all live hosts
+- name: Get IPs of live hosts from both scans
   ansible.builtin.set_fact:
-    discovered_ips: # awk '{print $2}' to get IP from nmap grepable output
-      "{{ (ping_scan.stdout_lines + ssh_scan.stdout_lines)
+    combined_live_hosts: >
+      {{
+        (ping_scan.stdout_lines + ssh_scan.stdout_lines)
         | select('search', '^Host:')
         | map('regex_search', '^Host: (\\S+)', '\\1')
-        | list }}"
+        | list
+      }}
+
+# - name: Extract discovered IPs
+#   ansible.builtin.set_fact:
+#     discovered_ips: # awk '{print $2}' to get IP from nmap grepable output
+#       "{{ (ping_scan.stdout_lines + ssh_scan.stdout_lines)
+#         | select('search', '^Host:')
+#         | map('regex_search', '^Host: (\\S+)', '\\1')
+#         | list }}"
 
 - name: Output discovered IPs
   ansible.builtin.debug:
@@ -49,6 +57,8 @@
       {% for ip in discovered_ips %}
       {{ ip }}
       {% endfor %}
+  delegate_to: localhost
+  run_once: true
 
 # PHASE 2 - Scan hosts
 - name: Scan hosts for OS, hostname, and ports
