@@ -7,11 +7,20 @@
     destination: "{{ password_manager_ip }}"
     jump: ACCEPT
 
+- name: Allow inbound if this is the Password Manager server
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "443"
+    destination: "{{ password_manager_ip }}"
+    jump: ACCEPT
+  when: ansible_default_ipv4.address == password_manager_ip
+
 - name: Allow output to the Stabvest server
   ansible.builtin.iptables:
     chain: OUTPUT
     protocol: tcp
     destination_port: "443"
-    destination: "{{ stabvest_controller_ip: }}"
+    destination: "{{ stabvest_controller_ip }}"
     jump: ACCEPT
   when: stabvest_controller_ip | length > 0
