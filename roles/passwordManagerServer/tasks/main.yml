@@ -20,6 +20,13 @@
         dest: /opt/ccdc-password-manager/Password-Manager
       when: ansible_default_ipv4.address == password_manager_ip
 
+    - name: Set permissions
+      ansible.builtin.file:
+        path: /opt/ccdc-password-manager/Password-Manager
+        owner: blueteam
+        group: blueteam
+        recurse: yes
+
     - name: Copy Linux Starting clients to Remote
       ansible.builtin.copy:
         src: /opt/passwordmanager/linux_starting_clients.txt
