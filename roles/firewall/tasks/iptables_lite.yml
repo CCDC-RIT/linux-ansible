@@ -113,7 +113,7 @@
 - name: If laptops are in scope, allow IP/Subnet in on all firewalls
   iptables:
     chain: INPUT
-    source: {{ controller_in_scope_allow_ip }}
+    source: "{{ controller_in_scope_allow_ip }}"
     jump: ACCEPT
   when:
     controller_in_scope_allow_ip | length > 0
