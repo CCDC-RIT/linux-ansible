@@ -250,6 +250,7 @@
 
 - name: LOG Repositories
   shell: bash /root/append_to_audit_log.sh "Repositories" "{{ repos.stdout }}"
+  ignore_errors: true
 
 # - name: Malware? (Debian)
 #   shell: |
