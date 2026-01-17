@@ -10,7 +10,7 @@ stabvest_controller_ip: ""
 # If controller IS in scope, include the IP/subnet that should be allowed on all firewalls
 controller_in_scope_allow_ip: ""
 subnet: "192.168.1.0/24" # for linux dynamic inventory
-linux_inventory_output_file: "" # for linux dynamic inventory - what james requested (list of linux IPs)
+linux_inventory_output_file: "/opt/passwordmanager/linux_starting_clients.txt" # for linux dynamic inventory - what james requested (list of linux IPs)
 control_output_dir: "/tmp" # for linux dynamic inventory
 firewall_logging: true
 logging_ports: [3000, 3100]

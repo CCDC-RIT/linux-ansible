@@ -34,7 +34,7 @@
     state: present
   with_items:
     - "nethogs"
-    - "rkhunter"
+    # - "rkhunter"
     - "python3-pip"
     - "git"
   ignore_errors: yes
@@ -69,11 +69,11 @@
   args:
     creates: "{{ audit_dir }}/lynis.txt"
 
-- name: Run RKHunter
-  shell: "rkhunter --check > {{ audit_dir }}/rkhunter.txt"
-  ignore_errors: true
-  args:
-    creates: "{{ audit_dir }}/rkunter.txt"
+# - name: Run RKHunter
+#   shell: "rkhunter --check > {{ audit_dir }}/rkhunter.txt"
+#   ignore_errors: true
+#   args:
+#     creates: "{{ audit_dir }}/rkunter.txt"
 
 - name: Store Audit Script Output onto local Ansible Box
   fetch:
@@ -89,12 +89,12 @@
     flat: yes
     fail_on_missing: no
 
-- name: Store rkhunter Output onto local Ansible Box
-  fetch:
-    src: "{{ audit_dir }}/rkhunter.txt"
-    dest: host-audit-script-output/{{ ansible_hostname }}-rkhunter.txt
-    flat: yes
-    fail_on_missing: no
+# - name: Store rkhunter Output onto local Ansible Box
+#   fetch:
+#     src: "{{ audit_dir }}/rkhunter.txt"
+#     dest: host-audit-script-output/{{ ansible_hostname }}-rkhunter.txt
+#     flat: yes
+#     fail_on_missing: no
 
 - name: Upgrade packages
   package: 
