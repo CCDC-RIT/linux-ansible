@@ -39,6 +39,14 @@
     destination_port: "22"
     jump: ACCEPT
 
+- name: Allow SSH from Ansible (INPUT - Source Port 22)
+  ansible.builtin.iptables: 
+    chain: INPUT
+    protocol: tcp
+    source: "{{ ansible_control_ip }}"
+    destination_port: "22"
+    jump: ACCEPT
+
 - name: Allow HTTPS out
   iptables:
     chain: OUTPUT
@@ -101,6 +109,14 @@
     chain: OUTPUT
     out_interface: lo
     jump: ACCEPT
+
+- name: If laptops are in scope, allow IP/Subnet in on all firewalls
+  iptables:
+    chain: INPUT
+    source: {{ controller_in_scope_allow_ip }}
+    jump: ACCEPT
+  when:
+    controller_in_scope_allow_ip | length > 0
 
 - name: Block everything else
   iptables:

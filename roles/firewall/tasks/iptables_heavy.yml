@@ -22,7 +22,7 @@
   when: inventory_hostname not in groups["kubemgr"] + groups["kube"]
 
 - name: Allow scoring (INPUT, Source IP)
-  iptables:
+  ansible.builtin.iptables:
     chain: "INPUT"
     source: "{{ item }}"
     jump: ACCEPT
@@ -30,7 +30,7 @@
   ignore_errors: true
 
 - name: Allow scoring (OUTPUT, Destination IP)
-  iptables:
+  ansible.builtin.iptables:
     chain: "OUTPUT"
     destination: "{{ item }}"
     jump: ACCEPT
@@ -38,7 +38,7 @@
   ignore_errors: true
 
 - name: Allow SSH to Ansible (OUTPUT - Source Port 22)
-  iptables: 
+  ansible.builtin.iptables: 
     chain: OUTPUT
     protocol: tcp
     destination: "{{ ansible_control_ip }}"
@@ -46,7 +46,7 @@
     jump: ACCEPT
 
 - name: Allow SSH from Ansible (INPUT - Source Port 22)
-  iptables: 
+  ansible.builtin.iptables: 
     chain: INPUT
     protocol: tcp
     source: "{{ ansible_control_ip }}"
@@ -54,7 +54,7 @@
     jump: ACCEPT
 
 - name: Allow HTTPS out
-  iptables:
+  ansible.builtin.iptables:
     chain: OUTPUT
     protocol: tcp
     destination_port: 443
