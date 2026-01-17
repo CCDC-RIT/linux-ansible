@@ -30,7 +30,7 @@
   ansible.builtin.shell: |
     cat /opt/ccdc-password-manager/linux_starting_clients.txt \
         /opt/ccdc-password-manager/windows_starting_clients.txt \
-        > /opt/ccdc-password-manager/starting_clients.txt
+        > /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
   args:
     creates: /opt/ccdc-password-manager/starting_clients.txt
   when: ansible_default_ipv4.address == password_manager_ip
