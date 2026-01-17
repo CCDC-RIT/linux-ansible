@@ -13,6 +13,15 @@
     state: present
     password: "{{ blueteam_password | password_hash('sha512') }}"
     shell: /bin/bash
+  when: ansible_facts['os_family'] != 'Alpine'
+
+- name: Add blueteam user (Alpine)
+  ansible.builtin.user:
+    name: blueteam
+    state: present
+    password: "{{ blueteam_password | password_hash('sha512') }}"
+    shell: /bin/sh
+  when: ansible_facts['os_family'] == 'Alpine'
 
 - name: Make blueteam group
   ansible.builtin.group:
