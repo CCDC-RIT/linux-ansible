@@ -123,6 +123,4 @@
 - name: Start Server
   community.docker.docker_compose_v2:
     project_src: /opt/ccdc-password-manager/Password-Manager
-    state: started
-    recreate: always
   when: ansible_default_ipv4.address == password_manager_ip
