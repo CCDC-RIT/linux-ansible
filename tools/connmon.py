@@ -2,10 +2,17 @@
 
 import psutil
 import socket
+import os,sys
 
 #COLOR CODE CONTANTS
 RED = "\033[91m"
 RESET = "\033[0m"
+
+def check_root():
+    if os.geteuid() != 0:
+        print("Error: This script requires root privileges.")
+        print("Please run with 'sudo'.")
+        sys.exit(1)  
 
 def get_listening():
     conns = psutil.net_connections(kind='inet')
@@ -40,6 +47,7 @@ def get_established():
     
 
 def main():
+    check_root()
     get_listening()
     get_established()
     
