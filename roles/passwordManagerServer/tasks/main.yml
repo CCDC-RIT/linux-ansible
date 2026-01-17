@@ -26,19 +26,99 @@
     mode: '0644'
   when: ansible_default_ipv4.address == password_manager_ip
 
-- name: Copy Linux starting clients
-  ansible.builtin.lineinfile:
-    path: /opt/ccdc-password-manager/starting_clients.txt
-    line: "{{ lookup('file', '/opt/ccdc-password-manager/linux_starting_clients.txt') }}"
-    create: yes
+- name: Combine starting client files
+  ansible.builtin.shell: |
+    cat /opt/ccdc-password-manager/linux_starting_clients.txt \
+        /opt/ccdc-password-manager/windows_starting_clients.txt \
+        > /opt/ccdc-password-manager/starting_clients.txt
+  args:
+    creates: /opt/ccdc-password-manager/starting_clients.txt
   when: ansible_default_ipv4.address == password_manager_ip
 
-- name: Copy Windows starting clients
-  ansible.builtin.lineinfile:
-    path: /opt/ccdc-password-manager/starting_clients.txt
-    line: "{{ lookup('file', '/opt/ccdc-password-manager/windows_starting_clients.txt') }}"
-    create: yes
-  when: ansible_default_ipv4.address == password_manager_ip
+# install docker
+
+- name: Gathers facts
+  package_facts:
+
+- name: install docker ubuntu
+  block:
+  - name: Install Docker | Install dependencies
+    ansible.builtin.apt:
+      pkg:
+        - "gcc"
+        - "python3-setuptools"
+        - "python3-dev"
+        - "python3-pip"
+        - "virtualenv"
+      update_cache: true
+
+  - name: Install Docker | Download Docker GPG key
+    ansible.builtin.get_url:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      dest: /etc/apt/keyrings/docker.asc
+      mode: '0644'
+
+  - name: Install Docker | Add Docker Repository
+    ansible.builtin.apt_repository:
+      repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable"
+      state: present
+      filename: docker
+
+  - name: Install Docker | Install docker
+    ansible.builtin.apt:
+      pkg:
+        - docker-ce
+        - docker-compose-plugin
+      update_cache: true
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: install docker redhat
+  block:
+  - name: Add Docker GPG key.
+    rpm_key:
+      key: "https://download.docker.com/linux/{{ 'fedora' if ansible_facts.distribution == 'Fedora' else 'rhel' if ansible_facts.distribution == 'RedHat' else 'centos' }}/gpg"
+      state: present
+  - name: Add Docker repository.
+    get_url:
+      url: "https://download.docker.com/linux/{{ 'fedora' if ansible_facts.distribution == 'Fedora' else 'rhel' if ansible_facts.distribution == 'RedHat' else 'centos' }}/docker-{{ docker_edition }}.repo"
+      dest: "/etc/yum.repos.d/docker-ce.repo"
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Remove Docker Nightly repo.
+    ini_file:
+      dest: "/etc/yum.repos.d/docker-ce.repo"
+      section: "docker-ce-nightly"
+      state: absent
+
+  - name: Configure Docker Test repo.
+    ini_file:
+      dest: "/etc/yum.repos.d/docker-ce.repo"
+      section: "docker-ce-test"
+      option: enabled
+      value: "0"
+      mode: 0644
+      no_extra_spaces: true
+
+  - name: Configure containerd on RHEL 8.
+    block:
+      - name: Ensure runc is not installed.
+        package:
+          name: runc
+          state: absent
+
+      - name: Ensure container-selinux is installed.
+        package:
+          name: container-selinux
+          state: present
+
+      - name: Ensure containerd.io is installed.
+        package:
+          name: containerd.io
+          state: present
+    when: ansible_facts.distribution_major_version | int == 8
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Start Server
   community.docker.docker_compose_v2:

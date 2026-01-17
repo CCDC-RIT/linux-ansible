@@ -9,12 +9,18 @@
 # TODO: add creds for diff boxes in the topo. define a list of usernames and password combos and try them against all 
 
 # PHASE 1 — Discover live hosts
-- name: Discover live hosts on subnet
+- name: Discover live hosts on subnet (ping)
   ansible.builtin.command: >
     nmap -sn {{ subnet }} -oG -
   register: ping_scan
 
-# TODO: also scan for 22 open as a backup for ping
+- name: Discover live hosts on subnet (SSH)
+  ansible.builtin.command: >
+    nmap -p 22 --open -Pn {{ subnet }} -oG -
+  register: ssh_scan
+
+# TODO: diff and/or just create a union of both scan results to get more complete list of live hosts
+
 
 - name: Extract discovered IPs
   ansible.builtin.set_fact:
@@ -25,10 +31,15 @@
         | map('regex_search', '([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)')
         | list
       }}
+# maybe make it do stdout | awk '{print $2}'
+
+- name: Output discovered IPs
+  ansible.builtin.debug:
+    var: discovered_ips
 
 - name: Write IP list
   ansible.builtin.copy:
-    dest: "{{ linux_inventory_output_file }}"
+    dest: "/opt/linuxrecon/{{ linux_inventory_output_file }}"
     content: |
       {% for ip in discovered_ips %}
       {{ ip }}
@@ -81,11 +92,20 @@
 #   register: listening_ports
 #   changed_when: false
 
-- name: Gather listening sockets
-  community.general.netstat: # alternative to ansible command module ss
-    listen: true
+- name: Gather listening ports
+  community.general.listen_ports_facts: # will use first found supported command on the system (ss or netstat)
+    # include_non_listening: true
 
-- debug:
+- name: List TCP ports
+  ansible.builtin.debug:
+    msg: "{{ ansible_facts.tcp_listen | map(attribute='port') | sort | list }}"
+
+- name: List UDP ports
+  ansible.builtin.debug:
+    msg: "{{ ansible_facts.udp_listen | map(attribute='port') | sort | list }}"
+
+- name: Debug netstat TCP listen
+  ansible.builtin.debug:
     var: ansible_netstat.tcp_listen
 
 - name: Build host profile
@@ -109,13 +129,15 @@
       users: "{{ local_users | default([]) }}"
       listening_ports: "{{ listening_ports.stdout_lines }}"
 
-- name: Save host profile JSON on control node
-  ansible.builtin.copy:
-    dest: "{{ control_output_dir }}/{{ inventory_hostname }}.json"
-    content: "{{ host_profile | to_nice_json }}"
-    mode: '0644'
-  delegate_to: localhost
-  become: false
+# TODO: save all info to CSV
+
+# - name: Save host profile JSON on control node
+#   ansible.builtin.copy:
+#     dest: "{{ control_output_dir }}/{{ inventory_hostname }}.json"
+#     content: "{{ host_profile | to_nice_json }}"
+#     mode: '0644'
+#   delegate_to: localhost
+#   become: false
 
 # - name: Get service using nmap
 #   command: nmap -sT -sV -p- localhost | sed -n '6 p' | awk '{ print $3 }'

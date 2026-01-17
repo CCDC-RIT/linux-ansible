@@ -29,6 +29,16 @@
     # unsafe: true # If using special characters such as { or %, uncomment this line.
     salt_size: 7
 
+- name: Linux Recon Discovery
+  hosts: all
+  become: yes
+  roles:
+    - linux-recon
+  tags:
+    - never
+    - deploy
+    - linux-recon
+
 - name: Initial Run
   hosts: all
   become: yes
