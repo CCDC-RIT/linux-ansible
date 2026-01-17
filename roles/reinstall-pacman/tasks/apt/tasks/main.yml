@@ -30,15 +30,52 @@
     state: directory
     mode: '0755'
 
-- name: "Reinstall Package Manager | Download debs"
-  get_url:
-    url: "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/{{ item }}"
-    dest: "/tmp/apt-reinstall/{{ item }}"
-    mode: '0644'
-  loop:
-    - "apt_{{ apt_version }}_{{ deb_arch }}.deb"
-    - "{{ libapt_pkg_name }}_{{ apt_version }}_{{ deb_arch }}.deb"
-    - "apt-utils_{{ apt_version }}_{{ deb_arch }}.deb"
+# 100% ai  :C
+- name: Define apt debs to download
+  set_fact:
+    apt_debs:
+      - "apt_{{ apt_version }}_{{ deb_arch }}.deb"
+      - "{{ libapt_pkg_name }}_{{ apt_version }}_{{ deb_arch }}.deb"
+      - "apt-utils_{{ apt_version }}_{{ deb_arch }}.deb"
+
+- block:
+    - name: "Download debs from Ubuntu pool"
+      get_url:
+        url: "https://mirrors.rit.edu/ubuntu/pool/main/a/apt/{{ item }}"
+        dest: "/tmp/apt-reinstall/{{ item }}"
+        mode: '0644'
+      loop: "{{ apt_debs }}"
+      register: ubuntu_download
+      ignore_errors: yes
+
+    - name: "Fail if any Ubuntu download failed"
+      fail:
+        msg: "One or more debs failed to download from Ubuntu pool"
+      when: >
+        ubuntu_download.results
+        | selectattr('failed', 'defined')
+        | selectattr('failed')
+        | list
+        | length > 0
+
+  rescue:
+    - name: "Determine failed debs"
+      set_fact:
+        failed_debs: >-
+          {{
+            ubuntu_download.results
+            | selectattr('failed', 'defined')
+            | selectattr('failed')
+            | map(attribute='item')
+            | list
+          }}
+
+    - name: "Redownload failed debs from Debian pool"
+      get_url:
+        url: "https://deb.debian.org/debian/pool/main/a/apt/{{ item }}"
+        dest: "/tmp/apt-reinstall/{{ item }}"
+        mode: '0644'
+      loop: "{{ failed_debs }}"
 
 - name: "Reinstall Package Manager | Purge apt"
   command: dpkg --purge --force-depends apt apt-utils
