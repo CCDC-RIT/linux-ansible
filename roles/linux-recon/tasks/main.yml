@@ -32,14 +32,11 @@
 
 - name: Extract discovered IPs
   ansible.builtin.set_fact:
-    discovered_ips: >-
-      {{
-        ping_scan.stdout_lines
-        | select('search', 'Up$')
-        | map('regex_search', '([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)')
-        | list
-      }}
-# maybe make it do stdout | awk '{print $2}'
+    discovered_ips: # awk '{print $2}' to get IP from nmap grepable output
+      "{{ (ping_scan.stdout_lines + ssh_scan.stdout_lines)
+        | select('search', '^Host:')
+        | map('regex_search', '^Host: (\\S+)', '\\1')
+        | list }}"
 
 - name: Output discovered IPs
   ansible.builtin.debug:
