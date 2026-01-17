@@ -41,10 +41,13 @@
     mode: '0600'
     owner: root
     group: root
+  
+- name: reload Service Daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
 
 - name: Enable and start Password Manager Client service
   ansible.builtin.systemd:
     name: ccdc-password-manager-client.service
     enabled: yes
     state: started
-    daemon_reload: yes
