@@ -92,17 +92,17 @@
 #   register: listening_ports
 #   changed_when: false
 
-- name: Gather listening sockets
+- name: Gather listening ports
   community.general.listen_ports_facts: # will use first found supported command on the system (ss or netstat)
     # include_non_listening: true
 
-- name: List TCP ports
-  ansible.builtin.debug:
-    msg: "{{ ansible_facts.tcp_listen | map(attribute='port') | sort | list }}"
+    - name: List TCP ports
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts.tcp_listen | map(attribute='port') | sort | list }}"
 
-- name: List UDP ports
-  ansible.builtin.debug:
-    msg: "{{ ansible_facts.udp_listen | map(attribute='port') | sort | list }}"
+    - name: List UDP ports
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts.udp_listen | map(attribute='port') | sort | list }}"
 
 - debug:
     var: ansible_netstat.tcp_listen
