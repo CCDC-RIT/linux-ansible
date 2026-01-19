@@ -3,6 +3,8 @@
 # use env PY_VERSION to set version to build
 set -euox pipefail
 
+SERVER_HOST=192.168.1.62 # improve
+
 # determine package manager
 if command -v apt > /dev/null 2>&1; then
     pacman="apt"
@@ -28,9 +30,9 @@ else
     sudo dnf builddep python3 -y
 fi
 
-# clone repo
+# ~~clone repo~~; download from local server instead
 rm -rf cpython
-git clone https://github.com/python/cpython.git # check for dns poising with github
+wget --no-parent -r http://${SERVER_HOST}/cpython/
 cd cpython
 
 # switch to version if defined
