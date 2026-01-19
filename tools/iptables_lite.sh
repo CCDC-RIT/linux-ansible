@@ -1,12 +1,15 @@
 #!/bin/bash
 # iptables firewall hardening - lite
 # knightswhosayni
-set -euox pipefail
+set -euo pipefail
 
 ANSIBLE_CONTROLLER=192.168.1.62 # best way to do this? env var?
 PASSWORD_MANAGER=192.168.1.63
 STABVEST_CONTROLLER=192.168.1.64
 CONTROLLER_IN_SCOPE_IP=""
+
+tcp_ports=
+udp_ports=
 
 RED="\e[0;31m"
 GREEN="\e[0;32m"
@@ -22,9 +25,22 @@ write-line() {
 }
 
 if [[ $EUID -ne 0 ]]; then
-  write-line "${RED} RUN AS ROOT"
+  write-line "${RED}RUN AS ROOT"
   exit
 fi
+
+while getopts "t:u:" flag; do
+    case $flag in
+    t) tcp_ports="$OPTARG";;
+    u) udp_ports="$OPTARG";;
+    ?) write-line "${BLUE}iptables_lite${RESET} - ${GREEN}LITE${RESET} iptables rules for bash
+run with the following optiions:
+    ${BLUE}-t${RESET} x,y,z - tcp ports separated by commas
+    ${BLUE}-u${RESET} a,b,c - udp ports separated by commas";;
+    esac
+done
+
+read -p "pause"
 
 write-line "${GREEN}Backup existing rules"
 iptables-save >> /etc/iptables_rules.v4_pre_lite
@@ -52,7 +68,35 @@ iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
 write-line "${BLUE}Allow HTTP out"
 iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
 
-# how to do scored services?
+write-line "${BLUE}Allow DNS tcp"
+iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+
+write-line "${BLUE}Allow DNS udp"
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+
+write-line "${BLUE}Scored TCP ports"
+if [ -n "${tcp_ports}" ]; then
+    write-line "${GREEN}Adding rules for scored tcp ports"
+    
+    IFS=';' read -ra ports <<< "$tcp_ports"
+    for i in "${ports[@]}"; do
+        iptables -A OUTPUT -p tcp --dport $i -j ACCEPT
+    done
+else
+    write-line "${RED}NO TCP SCORED PORTS DEFINED; ignoring"
+fi
+
+write-line "${BLUE}Scored UDP ports"
+if [ -n "${udp_ports}" ]; then
+    write-line "${GREEN}Adding rules for scored udp ports"
+    
+    IFS=';' read -ra ports <<< "$udp_ports"
+    for i in "${ports[@]}"; do
+        iptables -A OUTPUT -p udp --dport $i -j ACCEPT
+    done
+else
+    write-line "${RED}NO TCP SCORED PORTS DEFINED; ignoring"
+fi
 
 write-line "${BLUE}Allow related and established connections in"
 iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
