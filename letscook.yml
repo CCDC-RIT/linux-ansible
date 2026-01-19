@@ -55,6 +55,16 @@
     - deploy
     - backups
 
+- name: Verify pacman
+  hosts: all
+  become: yes
+  roles:
+    - verify-pacman
+  tags:
+    - never
+    - deploy
+    - verify-pacman
+
 - name: Setup Firewall
   hosts: all
   become: yes
@@ -65,15 +75,15 @@
     - deploy
     - firewall
 
-- name: Reinstall Package Manager
-  hosts: all
-  become: true
-  roles:
-    - reinstall-pacman
-  tags:
-    - never
-    - deploy
-    - reinstall-pacman
+# - name: Reinstall Package Manager
+#   hosts: all
+#   become: true
+#   roles:
+#     - reinstall-pacman
+#   tags:
+#     - never
+#     - deploy
+#     - reinstall-pacman
 
 - name: Audit System
   hosts: all

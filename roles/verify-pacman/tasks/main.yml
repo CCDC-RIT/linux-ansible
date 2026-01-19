@@ -1,0 +1,43 @@
+---
+# verify pacman integrity
+
+- name: "Verify package manaer | Verify apt integrity"
+  block:
+    - name: "Verify package manaer | Copy debsums"
+      ansible.builtin.copy:
+        src: roles/verify-pacman/files/debsums_3.0.2.3_all.deb
+        dest: debsums.deb
+    
+    - name: "Verify package manaer | verify packages"
+      command: "debsums -s {{ item }}"
+      register: integrity
+      changed_when: false
+      failed_when: integrity.rc != 0
+      loop:
+        - apt
+        - libapt-pkg
+        - apt-utils
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: "Verify package manaer | Verify dnf integrity"
+  block:
+    - name: "Verify package manager | Determine DNF version"
+      set_fact:
+        dnf_version: >-
+          {{ 5 if 'dnf5' in ansible_facts.packages else 4 }}
+    
+    - name: "Verify package manager | Verify dnf4"
+      shell: "rpm -V {{ item }}"
+      register: rpm_out
+      failed_when: rpm_out.stdout_lines | length > 0
+      loop: "{{ dnf4_packages }}"
+      when: dnf_version == 4
+
+    - name: "Verify package manager | Verify dnf5"
+      shell: "rpm -V {{ item }}"
+      register: rpm_out
+      failed_when: rpm_out.stdout_lines | length > 0
+      loop: "{{ dnf5_packages }}"
+      when: dnf_version == 5
+
+  when: ansible_facts['os_family'] == "RedHat"
