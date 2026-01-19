@@ -3,7 +3,7 @@
 # knightswhosayni
 set -euox pipefail
 
-ANSIBLE_CONTROLLER=192.168.1.18
+ANSIBLE_CONTROLLER=192.168.1.62 # best way to do this? env var?
 
 RED='\e[0;31m'
 GREEN='\e[0;32m'
