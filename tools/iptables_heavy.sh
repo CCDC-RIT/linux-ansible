@@ -1,11 +1,12 @@
 #!/bin/bash
-# iptables firewall hardening - lite
+# iptables firewall hardening - heavy
 # knightswhosayni
 set -euox pipefail
 
 ANSIBLE_CONTROLLER=192.168.1.62 # best way to do this? env var?
 PASSWORD_MANAGER=192.168.1.63
 STABVEST_CONTROLLER=192.168.1.64
+SCORING_IP=192.168.1.65
 CONTROLLER_IN_SCOPE_IP=""
 
 RED="\e[0;31m"
@@ -37,6 +38,12 @@ write-line "${BLUE}Flush rules"
 iptables -F INPUT
 iptables -F OUTPUT
 
+write-line "${BLUE}Allow scoring in"
+iptables -A INPUT -s $SCORING_IP -j ACCEPT
+
+write-line "${BLUE}Allow scoring out"
+iptables -A OUTPUT -d $SCORING_IP -j ACCEPT
+
 write-line "${BLUE}Allows all traffic from Ansible"
 iptables -A INPUT -s $ANSIBLE_CONTROLLER -j ACCEPT
 
@@ -44,27 +51,10 @@ write-line "${BLUE}Allow SSH to Ansible"
 iptables -A OUTPUT -p tcp -d $ANSIBLE_CONTROLLER --dport 22 -j ACCEPT
 
 write-line "${BLUE}Allow SSH from Ansible"
-iptables -A INPUT -p tcp -s $ANSIBLE_CONTROLLER --dport 22 -j ACCEPT
+iptables -A INPUR -p tcp -s $ANSIBLE_CONTROLLER --dport 22 -j ACCEPT
 
 write-line "${BLUE}Allow HTTPS out"
 iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
-
-write-line "${BLUE}Allow HTTP out"
-iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
-
-# how to do scored services?
-
-write-line "${BLUE}Allow related and established connections in"
-iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-
-write-line "${BLUE}Allow related and established connections out"
-iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-
-write-line "${BLUE}Allow related loopback in"
-iptables -A INPUT -i lo -j ACCEPT
-
-write-line "${BLUE}Allow related loopback out"
-iptables -A OUTPUT -o lo -j ACCEPT
 
 write-line "${BLUE}If laptops in scope, allow ip in on all firewalls"
 if [ -n "$CONTROLLER_IN_SCOPE_IP" ]; then
