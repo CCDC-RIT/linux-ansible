@@ -27,6 +27,13 @@ if [[ $EUID -ne 0 ]]; then
   exit
 fi
 
+while getopts "" flag; do
+    case $flag in
+    ?) write-line "${BLUE}iptables_lite${RESET} - ${RED}HEAVY${RESET} iptables rules for bash"
+    exit;;
+    esac
+done
+
 write-line "${GREEN}Backup existing rules"
 iptables-save >> /etc/iptables_rules.v4_pre_lite
 
