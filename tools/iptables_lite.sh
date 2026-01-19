@@ -36,8 +36,8 @@ while getopts "t:u:" flag; do
     ?) write-line "${BLUE}iptables_lite${RESET} - ${GREEN}LITE${RESET} iptables rules for bash
 run with the following optiions:
     ${BLUE}-t${RESET} x,y,z - tcp ports separated by commas
-    ${BLUE}-u${RESET} a,b,c - udp ports separated by commas";;
-    exit
+    ${BLUE}-u${RESET} a,b,c - udp ports separated by commas"
+    exit;;
     esac
 done
 
