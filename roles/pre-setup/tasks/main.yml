@@ -55,3 +55,6 @@
   args:
     creates: '{{ ansible_env.HOME }}/.ssh/id_ed25519'
   when: not ssh_key_check.stat.exists
+
+- name: Include Downloads
+  include_tasks: downloads.yml
