@@ -24,8 +24,37 @@
       stat: "path={{ filepath }}"
       register: file_exists
 
+    - name: Set quarantine_filepath fact
+      ansible.builtin.set_fact:
+        quarantine_filepath: "/var/quar/{{ filepath | ansible.builtin.basename }}-{{ current_timestamp }}"
+
+    - name: Find PIDs using the file
+      ansible.builtin.shell: "lsof -t {{ filepath }}"
+      register: pids_output
+      changed_when: false
+      ignore_errors: true
+      args:
+        warn: false
+
+    - name: Kill processes using the file
+      ansible.builtin.shell: "kill {{ item }}"
+      loop: "{{ pids_output.stdout_lines }}"
+      when: pids_output.stdout_lines | length > 0
+      ignore_errors: true
+
     - name: Move file to quarantine directory
-      shell: "mv {{ filepath }} /var/quar/{{ filepath | ansible.builtin.basename }}-{{ current_timestamp }}"
+      shell: "mv {{ filepath }} {{ quarantine_filepath }}"
+      when: file_exists.stat.exists
+
+    - name: Make file read only
+      ansible.builtin.file:
+        path: "{{ quarantine_filepath }}"
+        owner: blueteam
+        group: blueteam
+        mode: '0444'
+
+    - name: Chattr it
+      shell: "chattr +i {{ quarantine_filepath }}"
       when: file_exists.stat.exists
 
 
