@@ -55,10 +55,10 @@ iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
 # how to do scored services?
 
 write-line "${BLUE}Allow related and established connections in"
-iptables -A INPUT --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
 write-line "${BLUE}Allow related and established connections out"
-iptables -A OUTPUT --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
 write-line "${BLUE}Allow related loopback in"
 iptables -A INPUT -i lo -j ACCEPT
