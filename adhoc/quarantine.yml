@@ -33,8 +33,6 @@
       register: pids_output
       changed_when: false
       ignore_errors: true
-      args:
-        warn: false
 
     - name: Kill processes using the file
       ansible.builtin.shell: "kill {{ item }}"
