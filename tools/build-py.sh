@@ -32,6 +32,7 @@ fi
 
 # ~~clone repo~~; download from local server instead
 rm -rf cpython
+#git clone https://github.com/python/cypthon.git
 wget --no-parent -r http://${SERVER_HOST}/cpython/
 cd cpython
 
