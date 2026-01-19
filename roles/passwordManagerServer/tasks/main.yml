@@ -15,8 +15,8 @@
       when: ansible_default_ipv4.address == password_manager_ip
 
     - name: Clone Repo
-      ansible.builtin.git:
-        repo: https://github.com/CCDC-RIT/Password-Manager.git
+      ansible.builtin.copy:
+        src: downloads/Password-Manager
         dest: /opt/ccdc-password-manager/Password-Manager
       when: ansible_default_ipv4.address == password_manager_ip
 
