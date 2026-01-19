@@ -10,10 +10,15 @@ if ! command -v git &> /dev/null; then
     exit 1
 fi
 write-line "Cloning linux-ansible repo..."
-write-line "Copy tools directory to /var/ccdc..."
 git clone https://github.com/CCDC-RIT/linux-ansible
+
+write-line "Copy tools directory to /var/ccdc..."
 mkdir -p /var/ccdc
 cp linux-ansible/tools/ -r /var/ccdc
+
+write-line "Clone other repositories"
 cd /var/ccdc
 git clone https://github.com/CCDC-RIT/YaraRules
+git clone https://github.com/python/cpython.git
+
 write-line "Files finished downloading... \nHost http server  in /var/ccdc with:\n python3 -m http.server 8080"
