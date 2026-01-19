@@ -30,7 +30,7 @@ fi
 
 # clone repo
 rm -rf cpython
-git clone https://github.com/python/cpython.git
+git clone https://github.com/python/cpython.git # check for dns poising with github
 cd cpython
 
 # switch to version if defined
