@@ -37,10 +37,9 @@ while getopts "t:u:" flag; do
 run with the following optiions:
     ${BLUE}-t${RESET} x,y,z - tcp ports separated by commas
     ${BLUE}-u${RESET} a,b,c - udp ports separated by commas";;
+    exit
     esac
 done
-
-read -p "pause"
 
 write-line "${GREEN}Backup existing rules"
 iptables-save >> /etc/iptables_rules.v4_pre_lite
@@ -78,7 +77,7 @@ write-line "${BLUE}Scored TCP ports"
 if [ -n "${tcp_ports}" ]; then
     write-line "${GREEN}Adding rules for scored tcp ports"
     
-    IFS=';' read -ra ports <<< "$tcp_ports"
+    IFS=',' read -ra ports <<< "$tcp_ports"
     for i in "${ports[@]}"; do
         iptables -A OUTPUT -p tcp --dport $i -j ACCEPT
     done
@@ -90,7 +89,7 @@ write-line "${BLUE}Scored UDP ports"
 if [ -n "${udp_ports}" ]; then
     write-line "${GREEN}Adding rules for scored udp ports"
     
-    IFS=';' read -ra ports <<< "$udp_ports"
+    IFS=',' read -ra ports <<< "$udp_ports"
     for i in "${ports[@]}"; do
         iptables -A OUTPUT -p udp --dport $i -j ACCEPT
     done
