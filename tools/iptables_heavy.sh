@@ -1,7 +1,7 @@
 #!/bin/bash
 # iptables firewall hardening - heavy
 # knightswhosayni
-set -euox pipefail
+set -euo pipefail
 
 ANSIBLE_CONTROLLER=192.168.1.62 # best way to do this? env var?
 PASSWORD_MANAGER=192.168.1.63
