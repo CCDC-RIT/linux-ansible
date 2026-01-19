@@ -23,7 +23,7 @@ if [[ $EUID -ne 0 ]]; then
   exit
 fi
 
-write-line "${BLUE}Backup existing rules"
+write-line "${GREEN}Backup existing rules"
 iptables-save >> /etc/iptables_rules.v4_pre_lite
 
 write-line "${BLUE}Accept policies"
@@ -40,3 +40,35 @@ iptables -A INPUT -s $ANSIBLE_CONTROLLER -j ACCEPT
 write-line "${BLUE}Allow SSH to Ansible"
 iptables -A OUTPUT -p tcp -d $ANSIBLE_CONTROLLER --dport 22 -j ACCEPT
 
+write-line "${BLUE}Allow SSH from Ansible"
+iptables -A OUTPUT -p tcp -s $ANSIBLE_CONTROLLER --sport 22 -j ACCEPT
+
+write-line "${BLUE}Allow SSH from Ansible"
+iptables -A OUTPUT -p tcp -s $ANSIBLE_CONTROLLER --sport 22 -j ACCEPT
+
+write-line "${BLUE}Allow HTTPS out"
+iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+
+write-line "${BLUE}Allow HTTP out"
+iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+
+# how to do scored services?
+
+write-line "${BLUE}Allow related and established connections in"
+iptables -A INPUT --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+write-line "${BLUE}Allow related and established connections out"
+iptables -A OUTPUT --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+write-line "${BLUE}Allow related loopback in"
+iptables -A INPUT -i lo -j ACCEPT
+
+write-line "${BLUE}Allow related loopback out"
+iptables -A OUTPUT -o lo -j ACCEPT
+
+write-line "${ORANGE}Block everything else"
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+
+write-line "${GREEN}Save new rules"
+iptables-save >> /etc/iptables_rules.v4
