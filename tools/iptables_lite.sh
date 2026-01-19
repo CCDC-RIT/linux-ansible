@@ -4,6 +4,8 @@
 set -euox pipefail
 
 ANSIBLE_CONTROLLER=192.168.1.62 # best way to do this? env var?
+PASSWORD_MANAGER=192.168.1.63
+STABVEST_CONTROLLER=192.168.1.64
 
 RED='\e[0;31m'
 GREEN='\e[0;32m'
@@ -65,6 +67,23 @@ iptables -A INPUT -i lo -j ACCEPT
 
 write-line "${BLUE}Allow related loopback out"
 iptables -A OUTPUT -o lo -j ACCEPT
+
+# fun
+write-line "${BLUE}Allow output to password manager server"
+iptables -A OUTPUT -p tcp -d $PASSWORD_MANAGER --dport 443 -j ACCEPT
+
+# check if this machine is the password manager server
+write-line "${BLUE}Allow inbound if this is the password manager server"
+MATCH=$(ip -o -4 addr list | awk '{print $4}' | cut -d/ -f1 | grep -F -x "$PASSWORD_MANAGER")
+if [ -n "$MATCH" ]; then
+    write-line "${GREEN}Match found; applying rule"
+    iptables -A INPUT -p tcp -d $PASSWORD_MANAGER --dport 443 -j ACCEPT
+else
+    write-line "${RED}No match found; continuing"
+fi
+
+write-line "${BLUE}Allow output to stabvest server"
+iptables -A OUTPUT -p tcp -d $STABVEST_CONTROLLER --dport 443 -j ACCEPT
 
 write-line "${ORANGE}Block everything else"
 iptables -P INPUT DROP
