@@ -11,12 +11,12 @@
   ignore_errors: true
 
 - name: Reinstall PAM-related packages 
-  shell: "apt-get reinstall {{ item }}"
+  shell: "DEBIAN_FRONTEND=noninteractive apt-get reinstall {{ item }}"
   loop: "{{ pam_packages.stdout_lines }}"
   ignore_errors: true
 
 - name: Reinstall static packages 
-  shell: "apt-get reinstall {{ item }}"
+  shell: "DEBIAN_FRONTEND=noninteractive apt-get reinstall {{ item }}"
   loop:
     - coreutils
     - passwd
@@ -29,6 +29,8 @@
   ansible.builtin.apt:
     name: "{{ packages }}"
     state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
   vars:
     packages:
     - debsums
@@ -68,6 +70,8 @@
   ansible.builtin.apt:
     name: unattended-upgrades
     state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
 
 - name: Apt - Enable automatic package upgrades
   ansible.builtin.copy:
