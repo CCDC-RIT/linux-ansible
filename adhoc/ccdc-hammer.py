@@ -14,7 +14,7 @@ PRIVATE_DATA_DIR = '/tmp/ansible-data'
 def block_ip():
     ip = input("IP Address To Block: ").strip()
     r = ansible_runner.run(
-    private_data_dir=PRIVATE_DATA_DIR,playbook="block-ip.yaml",inventory="inventory.ini")
+    private_data_dir=PRIVATE_DATA_DIR,playbook="block-ip.yaml",inventory="inventory.ini",extravars={'ip':ip})
     print("Events:")
     for event in r.events:
         print(event['event'])
