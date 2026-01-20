@@ -91,7 +91,7 @@ case "$OS_FAMILY" in
     usermod -aG sudo,adm,blueteam "${BLUETEAM_USER}"
     ;;
 esac
-b
+
 # add key to blueteam user
 # if [ -f "$SSH_PUBKEY_FILE" ]; then
 #   echo "[*] Installing SSH key"
