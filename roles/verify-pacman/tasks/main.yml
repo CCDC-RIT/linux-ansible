@@ -3,31 +3,31 @@
 - name: Gathers facts
   package_facts:
 
-- name: "Verify package manager | Verify apt integrity"
-  block:
-    - name: "Verify package manager | Copy debsums"
-      ansible.builtin.copy:
-        src: roles/verify-pacman/files/
-        dest: /tmp/debsums/
+# - name: "Verify package manager | Verify apt integrity"
+#   block:
+#     - name: "Verify package manager | Copy debsums"
+#       ansible.builtin.copy:
+#         src: roles/verify-pacman/files/
+#         dest: /tmp/debsums/
     
-    - name: "Verify package manager | install libs"
-      shell: "dpkg -i /tmp/debsums/{{ item }}.deb || exit"
-      loop:
-        - libdpkg-perl_1.22.21_all
-        - libfile-fnmatch-perl_0.02-3+b4_amd64
+#     - name: "Verify package manager | install libs"
+#       shell: "dpkg -i /tmp/debsums/{{ item }}.deb || exit"
+#       loop:
+#         - libdpkg-perl_1.22.21_all
+#         - libfile-fnmatch-perl_0.02-3+b4_amd64
 
-    - name: "Verify package manager | install debsums"
-      shell: "dpkg -i /tmp/debsums/debsums_3.0.2.3.deb || exit"
+#     - name: "Verify package manager | install debsums"
+#       shell: "dpkg -i /tmp/debsums/debsums_3.0.2.3.deb || exit"
 
-    - name: "Verify package manager | verify packages"
-      command: "debsums -s {{ item }}"
-      register: integrity
-      changed_when: false
-      failed_when: integrity.rc != 0
-      loop:
-        - apt
-        - libapt-pkg
-        - apt-utils
+#     - name: "Verify package manager | verify packages"
+#       command: "debsums -s {{ item }}"
+#       register: integrity
+#       changed_when: false
+#       failed_when: integrity.rc != 0
+#       loop:
+#         - apt
+#         - libapt-pkg
+#         - apt-utils
 
   when: ansible_facts['os_family'] == 'Debian'
 

@@ -75,15 +75,14 @@
     - deploy
     - firewall
 
-# - name: Reinstall Package Manager
-#   hosts: all
-#   become: true
-#   roles:
-#     - reinstall-pacman
-#   tags:
-#     - never
-#     - deploy
-#     - reinstall-pacman
+- name: Reinstall Package Manager
+  hosts: all
+  become: true
+  roles:
+    - reinstall-pacman
+  tags:
+    - never
+    - reinstall-pacman
 
 - name: Audit System
   hosts: all
