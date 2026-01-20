@@ -13,7 +13,7 @@
 
 - name: Generate SSH key combination
   hosts: localhost
-  become: false
+  # become: false
   roles:
     - pre-setup
   tags:
