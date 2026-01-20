@@ -1,4 +1,30 @@
 ---
+- name: Define Wazuh Logging ports
+  ansible.builtin.set_fact:
+    logging_ports:
+      - 1514
+      - 1515
+  when: siem == 'wazuh'
+
+- name: Define Splunk Logging ports
+  ansible.builtin.set_fact:
+    logging_ports:
+      - 9997
+  when: siem == 'splunk'
+
+- name: Define Grafana logging ports
+  ansible.builtin.set_fact:
+    logging_ports:
+      - 3000
+      - 3100
+  when: siem == 'grafana'
+
+- name: Define Graylog logging ports
+  ansible.builtin.set_fact:
+    logging_ports:
+      - 12201
+  when: siem == 'graylog's
+
 - name: Allow logging communication from other connected boxes to the logging manager
   ansible.builtin.iptables:
     chain: INPUT
