@@ -14,7 +14,7 @@
       shell: "dpkg -i /tmp/debsums/{{ item }}.deb || exit"
       loop:
         - libdpkg-perl_1.22.21_all
-        - libfile-fnmatch-perl_0.022-3+b4_amd64
+        - libfile-fnmatch-perl_0.02-3+b4_amd64
 
     - name: "Verify package manager | install debsums"
       shell: "dpkg -i /tmp/debsums/debsums_3.0.2.3.deb || exit"
