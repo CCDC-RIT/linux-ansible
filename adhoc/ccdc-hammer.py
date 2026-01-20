@@ -18,7 +18,12 @@ def block_ip():
     print("Final stats:")
     print(r.stats,end="\n\n")
 
-    
+def quarantine():
+    filepath = input("Filepath to quarantine: ").strip()
+    r = ansible_runner.run(
+    private_data_dir=PRIVATE_DATA_DIR,playbook=f"{os.getcwd()}/quarantine.yml",inventory=f"{os.getcwd()}/inventory.ini",extravars={'filepath':filepath})
+    print("Final stats:")
+    print(r.stats,end="\n\n")
 
 def main():
     os.makedirs(PRIVATE_DATA_DIR, exist_ok=True)
@@ -29,6 +34,9 @@ def main():
         match userin.strip():
             case "1":
                 block_ip()
+                continue
+            case "2":
+                quarantine()
                 continue
             case "5":
                 quit()
