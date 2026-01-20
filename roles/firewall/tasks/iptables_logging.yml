@@ -35,6 +35,7 @@
   delegate_to: "{{ groups['logging'][0] }}"
   loop: "{{ groups['all'] | product(logging_ports) | list }}"
   when: firewall_logging
+  ignore_errors: true
 
 - name: Allow output to the logging manager box
   ansible.builtin.iptables:
@@ -45,3 +46,4 @@
     jump: ACCEPT
   loop: "{{ logging_ports }}"
   when: firewall_logging
+  ignore_errors: true
