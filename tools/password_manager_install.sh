@@ -16,11 +16,7 @@ fi
 mkdir -p /opt/ccdc-password-manager/
 scp blueteam@$ANSIBLE_CONTROLLER_IP:/opt/passwordmanager/Password-Manager /opt/ccdc-password-manager/
 chown -R blueteam:blueteam /opt/ccdc-password-manager
-scp blueteam@$ANSIBLE_CONTROLLER_IP:/opt/passwordmanager/linux_starting_clients.txt /opt/ccdc-password-manager/linux_starting_clients.txt
-scp blueteam@$ANSIBLE_CONTROLLER_IP:/opt/passwordmanager/windows_starting_clients.txt /opt/ccdc-password-manager/windows_starting_clients.txt
-cat /opt/ccdc-password-manager/linux_starting_clients.txt \
-            /opt/ccdc-password-manager/windows_starting_clients.txt \
-            > /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
+scp blueteam@$ANSIBLE_CONTROLLER_IP:/opt/passwordmanager/starting_clients.txt /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
 
 # Install Docker
 apt update
