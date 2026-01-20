@@ -24,6 +24,7 @@ def block_ip():
     
 
 def main():
+    os.makedirs(PRIVATE_DATA_DIR, exist_ok=True)
     while True:
         print(MENU)
         userin = input("> ")
