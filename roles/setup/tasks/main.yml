@@ -90,12 +90,12 @@
     state: directory
     mode: 0755
     
-- name: Create hosts list
-  set_fact:
-    build_hosts: |
-      {% for host in groups['all'] %}
-      {{ hostvars[host]['inventory_hostname'] }} {{ hostvars[host]['ansible_hostname'] }}
-      {% endfor %}
+# - name: Create hosts list
+#   set_fact:
+#     build_hosts: |
+#       {% for host in groups['all'] %}
+#       {{ hostvars[host]['inventory_hostname'] }} {{ hostvars[host]['ansible_hostname'] }}
+#       {% endfor %}
 
 - name: Append to /etc/hosts our new hosts
   lineinfile:
