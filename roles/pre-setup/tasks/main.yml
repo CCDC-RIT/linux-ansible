@@ -58,3 +58,4 @@
 
 - name: Include Downloads
   include_tasks: downloads.yml
+  become: true
