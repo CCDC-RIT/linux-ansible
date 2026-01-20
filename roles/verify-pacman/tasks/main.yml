@@ -1,5 +1,7 @@
 ---
 # verify pacman integrity
+- name: Gathers facts
+  package_facts:
 
 - name: "Verify package manager | Verify apt integrity"
   block:
