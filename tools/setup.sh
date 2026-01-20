@@ -93,16 +93,16 @@ case "$OS_FAMILY" in
 esac
 
 # add key to blueteam user
-if [ -f "$SSH_PUBKEY_FILE" ]; then
-  echo "[*] Installing SSH key"
-  mkdir -p /home/${BLUETEAM_USER}/.ssh
-  cat "$SSH_PUBKEY_FILE" >> /home/${BLUETEAM_USER}/.ssh/authorized_keys
-  chown -R ${BLUETEAM_USER}:${BLUETEAM_USER} /home/${BLUETEAM_USER}/.ssh
-  chmod 700 /home/${BLUETEAM_USER}/.ssh
-  chmod 600 /home/${BLUETEAM_USER}/.ssh/authorized_keys
-else
-  echo "[!] SSH public key not found, skipping"
-fi
+# if [ -f "$SSH_PUBKEY_FILE" ]; then
+#   echo "[*] Installing SSH key"
+#   mkdir -p /home/${BLUETEAM_USER}/.ssh
+#   cat "$SSH_PUBKEY_FILE" >> /home/${BLUETEAM_USER}/.ssh/authorized_keys
+#   chown -R ${BLUETEAM_USER}:${BLUETEAM_USER} /home/${BLUETEAM_USER}/.ssh
+#   chmod 700 /home/${BLUETEAM_USER}/.ssh
+#   chmod 600 /home/${BLUETEAM_USER}/.ssh/authorized_keys
+# else
+#   echo "[!] SSH public key not found, skipping"
+# fi
 
 # create backup, quarantine, inventory, and audit directories
 mkdir -p "$BACKUP_DIR" "$QUARANTINE_DIR" "$INVENTORY_DIR" "$AUDIT_DIR"
@@ -111,6 +111,7 @@ chown -R ${BLUETEAM_USER}:${BLUETEAM_USER} \
 chmod 755 "$INVENTORY_DIR" "$AUDIT_DIR"
 
 # update and upgrade packages, then install based on OS
+echo "[*] Installing required packages..."
 case "$OS_FAMILY" in
   Debian)
     apt update -y

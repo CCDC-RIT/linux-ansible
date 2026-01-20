@@ -54,36 +54,6 @@
     - "blueteam"
   when: ansible_facts['os_family'] == 'Debian'
 
-# - name: Make sure inventory directory exists
-#   ansible.builtin.file:
-#     path: /opt/inventory
-#     state: directory
-#     mode: '0755'
-
-# - name: Make sure key file is there
-#   ansible.builtin.file:
-#     path: /opt/inventory/id_ed25519.pub
-#     state: touch #TODO: make this "file" fr
-#     mode: '0755'
-
-# - name: Check if a SSH key already exists
-#   ansible.builtin.stat:
-#     path: "{{ ansible_env.HOME }}/.ssh/id_ed25519"
-#   delegate_to: localhost
-#   become: false
-#   register: ssh_key_check
-
-# - name: Generate SSH key on Ansible controller
-#   shell: "ssh-keygen -t ed25519 -f {{ ansible_env.HOME }}/.ssh/id_ed25519 -N \"\" -q"
-#   args:
-#     creates: '{{ ansible_env.HOME }}/.ssh/id_ed25519'
-#   delegate_to: localhost
-#   become: false
-#   when: not ssh_key_check.stat.exists
-
-# - name: Include SSH key generation tasks
-#   include_tasks: gen-ssh-key.yml
-
 - name: Add key to blueteam user
   ansible.posix.authorized_key:
     user: blueteam
