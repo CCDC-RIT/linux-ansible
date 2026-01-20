@@ -200,6 +200,7 @@
     - "jq"
     - "unzip"
     - "git"
+    - "whois"
   ignore_errors: yes
 
 - name: Set PATH in /etc/environment
