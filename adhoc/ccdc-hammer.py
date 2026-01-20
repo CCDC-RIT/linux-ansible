@@ -25,7 +25,28 @@ def quarantine():
     print("Final stats:")
     print(r.stats,end="\n\n")
 
+def killsvc():
+    servicename = input("Name of service to stop + disable: ").strip()
+    r = ansible_runner.run(private_data_dir=PRIVATE_DATA_DIR,playbook=f"{os.getcwd()}/kill-service.yml",inventory=f"{os.getcwd()}/inventory.ini",extravars={'servicename':servicename})
+    print("Final stats:")
+    print(r.stats,end="\n\n")
+
+def password_change():
+    username = input("Username to reset password for: ").strip()
+    newpass = input("New Password: ").strip()
+    r = ansible_runner.run(private_data_dir=PRIVATE_DATA_DIR,playbook=f"{os.getcwd()}/password-change.yml",inventory=f"{os.getcwd()}/inventory.ini",extravars={'username':username,'new_pass':newpass})
+    print("Final stats:")
+    print(r.stats,end="\n\n")
+
 def main():
+    print(r"""
+ _____ _   _ _____    ____ ____ ____   ____   _   _    _    __  __ __  __ _____ ____  
+|_   _| | | | ____|  / ___/ ___|  _ \ / ___| | | | |  / \  |  \/  |  \/  | ____|  _ \ 
+  | | | |_| |  _|   | |  | |   | | | | |     | |_| | / _ \ | |\/| | |\/| |  _| | |_) |
+  | | |  _  | |___  | |__| |___| |_| | |___  |  _  |/ ___ \| |  | | |  | | |___|  _ < 
+  |_| |_| |_|_____|  \____\____|____/ \____| |_| |_/_/   \_\_|  |_|_|  |_|_____|_| \_\
+                                                                                        
+""")
     os.makedirs(PRIVATE_DATA_DIR, exist_ok=True)
     while True:
         print(MENU)
@@ -37,6 +58,12 @@ def main():
                 continue
             case "2":
                 quarantine()
+                continue
+            case "3":
+                killsvc()
+                continue
+            case "4":
+                password_change()
                 continue
             case "5":
                 quit()
