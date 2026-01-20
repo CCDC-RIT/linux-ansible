@@ -31,12 +31,7 @@
 - name: Get IPs of live hosts from both scans
   ansible.builtin.set_fact:
     combined_live_hosts: >
-      {{
-        (ping_scan.stdout_lines + ssh_scan.stdout_lines)
-        | select('search', '^Host:')
-        | map('regex_search', '^Host: (\\S+)', '\\1')
-        | list
-      }}
+      {{(ping_scan.stdout_lines + ssh_scan.stdout_lines) | map('regex_search', '^Host: (\\S+)', '\\1') | list}}
 
 # - name: Extract discovered IPs
 #   ansible.builtin.set_fact:

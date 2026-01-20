@@ -1,7 +1,7 @@
 #!/bin/bash
 # iptables firewall hardening - heavy
 # knightswhosayni
-set -euox pipefail
+set -euo pipefail
 
 ANSIBLE_CONTROLLER=192.168.1.62 # best way to do this? env var?
 PASSWORD_MANAGER=192.168.1.63
@@ -26,6 +26,13 @@ if [[ $EUID -ne 0 ]]; then
   write-line "${RED} RUN AS ROOT"
   exit
 fi
+
+while getopts "" flag; do
+    case $flag in
+    ?) write-line "${BLUE}iptables_lite${RESET} - ${RED}HEAVY${RESET} iptables rules for bash"
+    exit;;
+    esac
+done
 
 write-line "${GREEN}Backup existing rules"
 iptables-save >> /etc/iptables_rules.v4_pre_lite

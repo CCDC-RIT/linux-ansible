@@ -29,16 +29,6 @@
     # unsafe: true # If using special characters such as { or %, uncomment this line.
     salt_size: 7
 
-- name: Linux Recon Discovery
-  hosts: localhost
-  become: yes
-  roles:
-    - linux-recon
-  tags:
-    - never
-    - deploy
-    - linux-recon
-
 - name: Initial Run
   hosts: all
   become: yes
@@ -65,15 +55,15 @@
     - deploy
     - backups
 
-- name: Reinstall Package Manager
+- name: Verify pacman
   hosts: all
-  become: true
+  become: yes
   roles:
-    - reinstall-pacman
+    - verify-pacman
   tags:
     - never
     - deploy
-    - reinstall-pacman
+    - verify-pacman
 
 - name: Setup Firewall
   hosts: all
@@ -85,6 +75,15 @@
     - deploy
     - firewall
 
+- name: Reinstall Package Manager
+  hosts: all
+  become: true
+  roles:
+    - reinstall-pacman
+  tags:
+    - never
+    - reinstall-pacman
+
 - name: Audit System
   hosts: all
   become: yes
@@ -94,26 +93,6 @@
     - never
     - deploy
     - audit
-
-# - name: Harden NGINX
-#   hosts: nginx_server
-#   become: yes
-#   roles:
-#     - nginx
-#   tags:
-#     - never
-#     - nginx
-#     - deploy
-
-# - name: Harden Kube Controller
-#   hosts: kubemgr
-#   become: yes
-#   roles:
-#     - kube
-#   tags:
-#     - never
-#     - kube
-#     - deploy
 
 - name: Setup Password Manager
   hosts: all
@@ -145,7 +124,37 @@
     - deploy
     - harden
 
-- name: Finish me off
+- name: Harden WordPress
+  hosts: wordpress_server
+  become: yes
+  roles:
+    - wordpress
+  tags:
+    - never
+    - wordpress
+    - deploy
+
+# - name: Harden NGINX
+#   hosts: nginx_server
+#   become: yes
+#   roles:
+#     - nginx
+#   tags:
+#     - never
+#     - nginx
+#     - deploy
+
+# - name: Harden Kube Controller
+#   hosts: kubemgr
+#   become: yes
+#   roles:
+#     - kube
+#   tags:
+#     - never
+#     - kube
+#     - deploy
+
+- name: Finishing tasks
   hosts: all
   become: yes
   roles:
