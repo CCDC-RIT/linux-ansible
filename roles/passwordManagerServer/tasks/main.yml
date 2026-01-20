@@ -36,18 +36,9 @@
 
     - name: Copy Windows Starting clients to Remote
       ansible.builtin.copy:
-        src: /opt/passwordmanager/windows_starting_clients.txt
-        dest: /opt/ccdc-password-manager/windows_starting_clients.txt
+        src: /opt/passwordmanager/starting_clients.txt
+        dest: /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
         mode: '0644'
-      when: ansible_default_ipv4.address == password_manager_ip
-
-    - name: Combine starting client files
-      ansible.builtin.shell: |
-        cat /opt/ccdc-password-manager/linux_starting_clients.txt \
-            /opt/ccdc-password-manager/windows_starting_clients.txt \
-            > /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
-      args:
-        creates: /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
       when: ansible_default_ipv4.address == password_manager_ip
 
     # install docker
