@@ -23,7 +23,7 @@
   ansible.builtin.set_fact:
     logging_ports:
       - 12201
-  when: siem == 'graylog's
+  when: siem == 'graylog'
 
 - name: Allow logging communication from other connected boxes to the logging manager
   ansible.builtin.iptables:
