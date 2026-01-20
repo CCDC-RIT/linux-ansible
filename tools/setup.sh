@@ -44,7 +44,7 @@ unset BLUETEAM_PASS BLUETEAM_PASS_CONFIRM
 if [ -f /etc/os-release ]; then
   . /etc/os-release
   OS_FAMILY=""
-  case "$ID_LIKE $ID" in
+  case "${ID_LIKE:-} $ID" in
     *alpine*)
       OS_FAMILY="Alpine"
       ;;
@@ -116,20 +116,17 @@ case "$OS_FAMILY" in
   Debian)
     apt update -y
     apt install -y \
-      yara lsof vim curl openssl iptables \
-      snoopy lynis iptables-persistent jq unzip git || true
+      yara lsof vim curl openssl iptables snoopy lynis iptables-persistent jq unzip git || true
     ;;
   RedHat)
     dnf makecache -y
     dnf install -y \
-      yara lsof vim curl openssl iptables \
-      snoopy lynis jq unzip git || true
+      yara lsof vim curl openssl iptables snoopy lynis jq unzip git || true
     ;;
   Suse)
     zypper refresh
     zypper install -y \
-      yara lsof vim curl openssl iptables \
-      lynis jq unzip git || true
+      yara lsof vim curl openssl iptables lynis jq unzip git || true
     ;;
 esac
 
