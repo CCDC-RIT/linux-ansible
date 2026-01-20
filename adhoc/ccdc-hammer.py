@@ -15,11 +15,8 @@ def block_ip():
     ip = input("IP Address To Block: ").strip()
     r = ansible_runner.run(
     private_data_dir=PRIVATE_DATA_DIR,playbook=f"{os.getcwd()}/block-ip.yml",inventory=f"{os.getcwd()}/inventory.ini",extravars={'ip':ip})
-    print("Events:")
-    for event in r.events:
-        print(event['event'])
     print("Final stats:")
-    print(r.stats)
+    print(r.stats,end="\n\n")
 
     
 
