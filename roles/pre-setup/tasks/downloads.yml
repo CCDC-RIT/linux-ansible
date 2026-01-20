@@ -3,20 +3,24 @@
   ansible.builtin.file:
     path: /opt/passwordmanager
     state: directory
+  become: true
 
 - name: Clone Password Manager Repo
   ansible.builtin.git:
     repo: https://github.com/CCDC-RIT/Password-Manager.git
     dest: /opt/passwordmanager/Password-Manager
+  become: true
 
 - name: Download Password Manager Client
   ansible.builtin.get_url:
     url: https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux
     dest: /opt/passwordmanager/ccdc-password-manager-client
     mode: '0550'
+  become: true
 
 - name: Download Password Manager Service File
   ansible.builtin.get_url:
     url: https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service
     dest: /opt/passwordmanager/ccdc-password-manager-client.service
     mode: '0644'
+  become: true
