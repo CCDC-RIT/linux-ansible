@@ -62,7 +62,6 @@
     - verify-pacman
   tags:
     - never
-    - deploy
     - verify-pacman
 
 - name: Setup Firewall
@@ -84,16 +83,6 @@
     - never
     - reinstall-pacman
 
-- name: Audit System
-  hosts: all
-  become: yes
-  roles: 
-    - audit 
-  tags:
-    - never
-    - deploy
-    - audit
-
 - name: Setup Password Manager
   hosts: all
   become: yes
@@ -113,6 +102,16 @@
     - never
     - deploy
     - password-manager
+
+- name: Audit System
+  hosts: all
+  become: yes
+  roles: 
+    - audit 
+  tags:
+    - never
+    - deploy
+    - audit
 
 - name: Harden OS
   hosts: all

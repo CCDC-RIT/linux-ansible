@@ -8,14 +8,14 @@
 
 - name: Download Password Manager Client
   ansible.builtin.copy:
-    url: downloads/ccdc-password-manager-client
-    dest: /opt/ccdc-password-manager-client/ccdc-password-manager-client/
-    mode: '0550'
+    src: /opt/passwordmanager/ccdc-password-manager-client
+    dest: /opt/ccdc-password-manager-client/ccdc-password-manager-client
+    mode: '0554'
 
 - name: Download Password Manager Service File
-  ansible.builtin.get_url:
-    url: downloads/ccdc-password-manager-client.service
-    dest: /etc/systemd/system/ccdc-password-manager-client.service
+  ansible.builtin.copy:
+    src: /opt/passwordmanager/ccdc-password-manager-client.service
+    dest: /etc/systemd/system/pwclient.service
     mode: '0644'
 
 - name: Setup conf folder
@@ -48,6 +48,6 @@
 
 - name: Enable and start Password Manager Client service
   ansible.builtin.systemd:
-    name: ccdc-password-manager-client.service
+    name: pwclient.service
     enabled: yes
     state: started

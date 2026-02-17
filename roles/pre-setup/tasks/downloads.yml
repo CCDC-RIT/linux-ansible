@@ -15,7 +15,7 @@
   ansible.builtin.get_url:
     url: https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux
     dest: /opt/passwordmanager/ccdc-password-manager-client
-    mode: '0550'
+    mode: '0554'
   become: true
 
 - name: Download Password Manager Service File

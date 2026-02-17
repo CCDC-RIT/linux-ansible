@@ -16,8 +16,8 @@
 
     - name: Clone Repo
       ansible.builtin.copy:
-        src: downloads/Password-Manager
-        dest: /opt/ccdc-password-manager/Password-Manager
+        src: /opt/passwordmanager/Password-Manager
+        dest: /opt/ccdc-password-manager/
       when: ansible_default_ipv4.address == password_manager_ip
 
     - name: Set permissions
@@ -27,14 +27,14 @@
         group: blueteam
         recurse: yes
 
-    - name: Copy Linux Starting clients to Remote
+    - name: Zero out Database
       ansible.builtin.copy:
-        src: /opt/passwordmanager/linux_starting_clients.txt
-        dest: /opt/ccdc-password-manager/linux_starting_clients.txt
+        content: ""
+        dest: /opt/ccdc-password-manager/Password-Manager/password_manager.db
         mode: '0644'
       when: ansible_default_ipv4.address == password_manager_ip
 
-    - name: Copy Windows Starting clients to Remote
+    - name: Copy starting clients
       ansible.builtin.copy:
         src: /opt/passwordmanager/starting_clients.txt
         dest: /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
