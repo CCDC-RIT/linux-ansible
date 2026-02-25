@@ -14,7 +14,7 @@
         mode: 0755
       when: ansible_default_ipv4.address == password_manager_ip
 
-    - name: Clone Repo
+    - name: Copy Repo
       ansible.builtin.copy:
         src: /opt/passwordmanager/Password-Manager
         dest: /opt/ccdc-password-manager/
