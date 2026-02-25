@@ -108,20 +108,26 @@
           mode: 0644
           no_extra_spaces: true
 
-      - name: Ensure runc is not installed.
+      - name: Install Docker Engine
         package:
-          name: runc
-          state: absent
-
-      - name: Ensure container-selinux is installed.
-        package:
-          name: container-selinux
+          name:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
           state: present
 
-      - name: Ensure containerd.io is installed.
-        package:
-          name: containerd.io
-          state: present
+      - name: Configure containerd on RHEL 8.
+        block:
+          - name: Ensure runc is not installed.
+            package:
+              name: runc
+              state: absent
+
+          - name: Ensure container-selinux is installed.
+            package:
+              name: container-selinux
+              state: present
+        when: ansible_facts.distribution_major_version | int == 8
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Start Server
