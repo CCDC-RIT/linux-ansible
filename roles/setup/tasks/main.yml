@@ -227,9 +227,9 @@
       
   - name: Get Yara source code
     ansible.builtin.get_url:
-    url: https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz
-    dest: /var/tmp/yarasrc.tar.gz
-    mode: '0755'
+      url: https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz
+      dest: /var/tmp/yarasrc.tar.gz
+      mode: '0755'
 
   - name: Unzip Yara source code
     ansible.builtin.command:
