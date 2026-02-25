@@ -34,12 +34,12 @@
         mode: '0644'
       when: ansible_default_ipv4.address == password_manager_ip
 
-    - name: Copy starting clients
-      ansible.builtin.copy:
-        src: /opt/passwordmanager/starting_clients.txt
-        dest: /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
-        mode: '0644'
-      when: ansible_default_ipv4.address == password_manager_ip
+    # - name: Copy starting clients
+    #   ansible.builtin.copy:
+    #     src: /opt/passwordmanager/starting_clients.txt
+    #     dest: /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
+    #     mode: '0644'
+    #   when: ansible_default_ipv4.address == password_manager_ip
 
     # install docker
 
