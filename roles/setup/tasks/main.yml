@@ -201,6 +201,11 @@
     - "unzip"
     - "git"
     - "whois"
+    - "automake"
+    - "libtool"
+    - "make"
+    - "gcc"
+    - "pkg-config"
   ignore_errors: yes
 
 - name: Set PATH in /etc/environment
@@ -212,6 +217,35 @@
 - name: Get installed Yara version
   ansible.builtin.shell: yara -v
   register: yara_version
+
+- name: Install Yara from source
+  block:
+  - name: Remove Yara
+    package: 
+      name: yara
+      state: absent
+      
+  - name: Get Yara source code
+    ansible.builtin.get_url:
+    url: https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz
+    dest: /var/tmp/yarasrc.tar.gz
+    mode: '0755'
+
+  - name: Unzip Yara source code
+    ansible.builtin.command:
+      cmd: tar -xzvf /var/tmp/yarasrc.tar.gz
+      chdir: /var/tmp
+
+  - name: Run build script
+    ansible.builtin.command:
+      cmd: ./build.sh
+      chdir: /var/tmp/yara-4.5.4
+
+  - name: Move compiled Yara binary to dir in PATH
+    ansible.builtin.command:
+      cmd: mv /var/tmp/yara-4.5.4/yara /usr/local/bin/yara
+      
+  when: yara_version.stdout is version('4.5.4','<')
 
 
 
