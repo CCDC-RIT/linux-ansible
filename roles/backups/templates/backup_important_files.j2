@@ -105,10 +105,6 @@ if [ -d "/srv/www" ]; then
   zip -r "$BACKUP_DIR/important_files/srvwww.zip" /srv/www
 fi
 
-if [ -d "/opt" ]; then
-  zip -r "$BACKUP_DIR/important_files/opt.zip" /opt
-fi
-
 find / -xdev \
   -path /proc -prune -o \
   -path /sys -prune -o \
@@ -119,7 +115,10 @@ find / -xdev \
   -path /usr/src -prune -o \
   -path /var/www -prune -o \
   -path /srv/www -prune -o \
-  -path /opt -prune -o \
+  -path /var/lib/containerd -prune -o \
+  -path /usr/share/ca-certificates -prune -o \
+  -path /usr/share/doc -prune -o \
+  -path /etc/pki/ca-trust -prune -o \
   -path "$BACKUP_DIR" -prune -o \
   -type f \( "${FILES_FIND[@]}" \) -print0 |
   while IFS= read -r -d '' file; do
