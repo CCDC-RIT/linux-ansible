@@ -128,6 +128,13 @@
               name: container-selinux
               state: present
         when: ansible_facts.distribution_major_version | int == 8
+
+      - name: Start docker daemon
+        service:
+          name: docker
+          state: started
+          enabled: true
+          
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Start Server
