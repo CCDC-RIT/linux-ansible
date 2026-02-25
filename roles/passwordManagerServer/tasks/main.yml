@@ -84,6 +84,7 @@
         rpm_key:
           key: "https://download.docker.com/linux/{{ 'fedora' if ansible_facts.distribution == 'Fedora' else 'rhel' if ansible_facts.distribution == 'RedHat' else 'centos' }}/gpg"
           state: present
+
       - name: Add Docker repository.
         get_url:
           url: "https://download.docker.com/linux/{{ 'fedora' if ansible_facts.distribution == 'Fedora' else 'rhel' if ansible_facts.distribution == 'RedHat' else 'centos' }}/docker-ce.repo"
@@ -107,23 +108,20 @@
           mode: 0644
           no_extra_spaces: true
 
-      - name: Configure containerd on RHEL 8.
-        block:
-          - name: Ensure runc is not installed.
-            package:
-              name: runc
-              state: absent
+      - name: Ensure runc is not installed.
+        package:
+          name: runc
+          state: absent
 
-          - name: Ensure container-selinux is installed.
-            package:
-              name: container-selinux
-              state: present
+      - name: Ensure container-selinux is installed.
+        package:
+          name: container-selinux
+          state: present
 
-          - name: Ensure containerd.io is installed.
-            package:
-              name: containerd.io
-              state: present
-        when: ansible_facts.distribution_major_version | int == 8
+      - name: Ensure containerd.io is installed.
+        package:
+          name: containerd.io
+          state: present
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Start Server
