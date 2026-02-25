@@ -57,7 +57,6 @@ HOME_EXTS=(
   *.sh
   *.py
   *.js
-  *.pl
   *.md
   *.csv
   *.png
@@ -66,6 +65,25 @@ HOME_EXTS=(
   *.zip
   *.7z
 )
+
+FILES_FIND=()
+HOME_EXTS_FIND=()
+
+for i in "${!FILES[@]}"; do
+  if (( i == 0 )); then
+    FILES_FIND+=(-iname "${FILES[$i]}")
+  else
+    FILES_FIND+=(-o -iname "${FILES[$i]}")
+  fi
+done
+
+for i in "${!HOME_EXTS[@]}"; do
+  if (( i == 0 )); then
+    HOME_EXTS_FIND+=(-iname "${HOME_EXTS[$i]}")
+  else
+    HOME_EXTS_FIND+=(-o -iname "${HOME_EXTS[$i]}")
+  fi
+done
 
 BACKUP_DIR="{{ backup_dir }}"
 
@@ -76,27 +94,40 @@ touch "$BACKUP_DIR/important_files/log.txt"
 backup_file() {
   local file="$1"
   echo "Backing up: $file" >> "$BACKUP_DIR/important_files/log.txt"
-  cp --parents -a "$file" "$BACKUP_DIR" 2>/dev/null || true
+  cp --parents -a "$file" "$BACKUP_DIR/important_files" 2>/dev/null || true
 }
 
-for name in "${HOME_EXTS[@]}"; do
-  find / \
-    -path /proc -prune -o \
-    -path /sys -prune -o \
-    -path /dev -prune -o \
-    -path /run -prune -o \
-    -path /tmp -prune -o \
-    -path /var/cache -prune -o \
-    -type f -iname "$name" -print |
-    while read -r file; do
-        backup_file "$file"
-    done
-done
+if [ -d "/var/www" ]; then
+  zip -r "$BACKUP_DIR/important_files/varwww.zip" /var/www
+fi
 
-for name in "${FILES[@]}"; do
-  find /home \
-    -type f -iname "$name" -print |
-    while read -r file; do
-        backup_file "$file"
-    done
-done
+if [ -d "/srv/www" ]; then
+  zip -r "$BACKUP_DIR/important_files/srvwww.zip" /srv/www
+fi
+
+if [ -d "/opt" ]; then
+  zip -r "$BACKUP_DIR/important_files/opt.zip" /opt
+fi
+
+find / -xdev \
+  -path /proc -prune -o \
+  -path /sys -prune -o \
+  -path /dev -prune -o \
+  -path /run -prune -o \
+  -path /tmp -prune -o \
+  -path /var/cache -prune -o \
+  -path /usr/src -prune -o \
+  -path /var/www -prune -o \
+  -path /srv/www -prune -o \
+  -path /opt -prune -o \
+  -path "$BACKUP_DIR" -prune -o \
+  -type f \( "${FILES_FIND[@]}" \) -print0 |
+  while IFS= read -r -d '' file; do
+      backup_file "$file"
+  done
+
+find /home -xdev \
+  -type f \( "${HOME_EXTS_FIND[@]}" \) -print0 |
+  while IFS= read -r -d '' file; do
+      backup_file "$file"
+  done
