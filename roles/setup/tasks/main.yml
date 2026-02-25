@@ -209,6 +209,12 @@
     line: 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"'
     create: yes
 
+- name: Get installed Yara version
+  ansible.builtin.shell: yara -v
+  register: yara_version
+
+
+
 - name: Delete yararules directory if present
   ansible.builtin.file:
     path: /opt/yararules

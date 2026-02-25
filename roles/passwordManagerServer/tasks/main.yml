@@ -86,7 +86,7 @@
           state: present
       - name: Add Docker repository.
         get_url:
-          url: "https://download.docker.com/linux/{{ 'fedora' if ansible_facts.distribution == 'Fedora' else 'rhel' if ansible_facts.distribution == 'RedHat' else 'centos' }}/docker-{{ docker_edition }}.repo"
+          url: "https://download.docker.com/linux/{{ 'fedora' if ansible_facts.distribution == 'Fedora' else 'rhel' if ansible_facts.distribution == 'RedHat' else 'centos' }}/docker-ce.repo"
           dest: "/etc/yum.repos.d/docker-ce.repo"
           owner: root
           group: root
