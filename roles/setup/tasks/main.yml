@@ -245,6 +245,10 @@
   - name: Move compiled Yara binary to dir in PATH
     ansible.builtin.command:
       cmd: mv /var/tmp/yara-4.5.4/yara /usr/local/bin/yara
+
+  - name: Move compiled yarac binary to dir in PATH
+    ansible.builtin.command:
+      cmd: mv /var/tmp/yara-4.5.4/yarac /usr/local/bin/yarac
       
   when: yara_version.stdout is version('4.5.4','<')
 
