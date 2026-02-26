@@ -219,6 +219,10 @@
   ansible.builtin.shell: yara -v
   register: yara_version
 
+- name: Get installed yarac version
+  ansible.builtin.shell: yarac -v
+  register: yarac_version
+
 - name: Install Yara from source
   block:
   - name: Remove Yara
@@ -250,7 +254,7 @@
     ansible.builtin.command:
       cmd: mv /var/tmp/yara-4.5.4/yarac /usr/local/bin/yarac
       
-  when: yara_version.stdout is version('4.5.4','<')
+  when: yara_version.stdout is version('4.5.4','<') or yarac_version.stdout is version('4.5.4','<')
 
 
 
