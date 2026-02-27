@@ -54,7 +54,7 @@
     - never
     - deploy
     - backups
-  ignore_erros: true
+  ignore_errors: true
 
 - name: Verify pacman
   hosts: all
