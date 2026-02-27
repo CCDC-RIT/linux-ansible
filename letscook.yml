@@ -74,7 +74,6 @@
     - never
     - deploy
     - firewall
-  ignore_errors: true
 
 - name: Reinstall Package Manager
   hosts: all
