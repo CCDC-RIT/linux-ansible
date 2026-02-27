@@ -266,7 +266,7 @@
     ansible.builtin.command:
       cmd: mv /var/tmp/yara-4.5.4/yarac /usr/local/bin/yarac
       
-  when: yara_version.stdout is version('4.5.4','<') or yarac_version.stdout is version('4.5.4','<') or not yara_stat.stat.exists or not yarac_stat.stat.exists
+  when: not yara_stat.stat.exists or not yarac_stat.stat.exists or yara_version.stdout is version('4.5.4','<') or yarac_version.stdout is version('4.5.4','<')
 
 
 
