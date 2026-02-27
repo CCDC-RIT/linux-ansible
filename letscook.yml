@@ -54,6 +54,7 @@
     - never
     - deploy
     - backups
+  ignore_errors: true
 
 - name: Verify pacman
   hosts: all
@@ -73,6 +74,7 @@
     - never
     - deploy
     - firewall
+  ignore_errors: true
 
 - name: Reinstall Package Manager
   hosts: all
@@ -82,6 +84,7 @@
   tags:
     - never
     - reinstall-pacman
+  ignore_errors: true
 
 - name: Setup Password Manager
   hosts: all
@@ -92,6 +95,7 @@
     - never
     - deploy
     - password-manager
+  ignore_errors: true
 
 - name: Setup Password Manager Client
   hosts: all
@@ -102,6 +106,7 @@
     - never
     - deploy
     - password-manager
+  ignore_errors: true
 
 - name: Audit System
   hosts: all
@@ -112,6 +117,7 @@
     - never
     - deploy
     - audit
+  ignore_errors: true
 
 - name: Harden OS
   hosts: all
@@ -122,6 +128,7 @@
     - never
     - deploy
     - harden
+  ignore_errors: true
 
 - name: Harden WordPress
   hosts: wordpress_server
