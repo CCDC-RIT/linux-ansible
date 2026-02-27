@@ -215,9 +215,25 @@
     line: 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"'
     create: yes
 
+- name: Check if Yara exists
+  ansible.builtin.stat:
+    path: /usr/bin/yara
+  register: yara_stat
+
+- name: Check if yarac exists
+  ansible.builtin.stat:
+    path: /usr/bin/yarac
+  register: yarac_stat
+
 - name: Get installed Yara version
   ansible.builtin.shell: yara -v
   register: yara_version
+  when: yara_stat.stat.exists
+
+- name: Get installed yarac version
+  ansible.builtin.shell: yarac -v
+  register: yarac_version
+  when: yarac_stat.stat.exists
 
 - name: Install Yara from source
   block:
@@ -245,8 +261,12 @@
   - name: Move compiled Yara binary to dir in PATH
     ansible.builtin.command:
       cmd: mv /var/tmp/yara-4.5.4/yara /usr/local/bin/yara
+
+  - name: Move compiled yarac binary to dir in PATH
+    ansible.builtin.command:
+      cmd: mv /var/tmp/yara-4.5.4/yarac /usr/local/bin/yarac
       
-  when: yara_version.stdout is version('4.5.4','<')
+  when: yara_version.stdout is version('4.5.4','<') or yarac_version.stdout is version('4.5.4','<') or not yara_stat.stat.exists or not yarac_stat.stat.exists
 
 
 
@@ -259,26 +279,26 @@
   ansible.builtin.file:
     path: /opt/yararules
     state: directory
-  ignore_errors: true
+  
 
-- name: Download Yara Forge rules (zip file)
-  ansible.builtin.get_url:
-    url: https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip
-    dest: /var/tmp/forge.zip
-    mode: '0440'
-  ignore_errors: true
+# - name: Download Yara Forge rules (zip file)
+#   ansible.builtin.get_url:
+#     url: https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip
+#     dest: /var/tmp/forge.zip
+#     mode: '0440'
+#   ignore_errors: true
 
-- name: Unzip forge.zip
-  ansible.builtin.unarchive:
-    src: /var/tmp/forge.zip
-    dest: /opt/yararules
-    remote_src: yes
-  ignore_errors: true
+# - name: Unzip forge.zip
+#   ansible.builtin.unarchive:
+#     src: /var/tmp/forge.zip
+#     dest: /opt/yararules
+#     remote_src: yes
+#   ignore_errors: true
 
 - name: Download RIT CCDC Yara rules
   ansible.builtin.shell: git clone https://github.com/CCDC-RIT/YaraRules /opt/yararules/YaraRules
   ignore_errors: true
 
 - name: Compile YARA rules
-  shell: yarac /opt/yararules/YaraRules/Linux/* /opt/yararules/YaraRules/Multi/* /opt/yararules/packages/full/yara-rules-full.yar /opt/yararules/compiled.linux
+  shell: yarac /opt/yararules/YaraRules/Linux/* /opt/yararules/YaraRules/Multi/* /opt/yararules/compiled.linux
   ignore_errors: true
