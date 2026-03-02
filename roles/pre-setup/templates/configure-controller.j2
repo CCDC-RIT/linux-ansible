@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+  echo "RUN AS ROOT"
+fi
+
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+else
+    echo "Error: /etc/os-release not found. Cannot determine OS."
+    exit 1
+fi
+
+# add blueteam user on localhost with blueteam password
+useradd -m -s /bin/bash blueteam
+echo "blueteam:{{ blueteam_password }}" | chpasswd
+
+DISTRO_ID=${ID_LIKE:-$ID}
+case "$DISTRO_ID" in
+    debian*|ubuntu*|mint*|raspbian*)
+        if ! getent group sudo >/dev/null; then
+            groupadd "sudo"
+        fi
+        usermod -aG sudo blueteam
+        usermod -aG adm blueteam
+        usermod -aG blueteam blueteam
+        ;;
+    rhel*|centos*|fedora*|rocky*|alma*)
+        if ! getent group wheel >/dev/null; then
+            groupadd "wheel"
+        fi
+        usermod -aG wheel blueteam
+        usermod -aG adm blueteam
+        usermod -aG blueteam blueteam 
+        ;;
+    *)
+        echo "Unknown or unsupported distribution: $ID"
+        exit 1
+        ;;
+esac
+
+if [[ ! -f "{{ ansible_env.HOME }}/.ssh/id_ed25519" ]]; then
+    ssh-keygen -t ed25519 -f "{{ ansible_env.HOME }}/.ssh/id_ed25519" -N \"\" -q
+fi
+
+mkdir -p /opt/passwordmanager
+git clone https://github.com/CCDC-RIT/Password-Manager.git /opt/passwordmanager/Password-Manager
+curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o /opt/passwordmanager/ccdc-password-manager-client
+curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o /opt/passwordmanager/ccdc-password-manager-client.service
+
+chmod 0554 /opt/passwordmanager/ccdc-password-manager-client
+chmod 0664 /opt/passwordmanager/ccdc-password-manager-client.service
