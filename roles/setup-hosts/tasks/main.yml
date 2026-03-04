@@ -1,8 +1,6 @@
 ---
-
 - name: Gather facts for localhost
   ansible.builtin.setup:
-#  delegate_to: localhost :C
 
 - name: Gather package facts
   ansible.builtin.package_facts:
@@ -89,13 +87,6 @@
     group: blueteam
     state: directory
     mode: 0755
-    
-# - name: Create hosts list
-#   set_fact:
-#     build_hosts: |
-#       {% for host in groups['all'] %}
-#       {{ hostvars[host]['inventory_hostname'] }} {{ hostvars[host]['ansible_hostname'] }}
-#       {% endfor %}
 
 - name: Append to /etc/hosts our new hosts
   lineinfile:
@@ -188,7 +179,6 @@
     name: "{{ item }}"
     state: present
   with_items:
-    - "yara"
     - "lsof"
     - "vim"
     - "curl"
@@ -214,6 +204,29 @@
     path: /etc/environment
     line: 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"'
     create: yes
+
+- name: Copy Yara zip file
+  ansible.builtin.copy:
+    src: /opt/yara.zip
+    dest: /tmp/yara.zip
+    owner: blueteam
+    group: blueteam
+    mode: 0644
+
+- name: copy Yara setup script
+  ansible.builtin.copy:
+    src: setup-yara.sh
+    dest: /tmp/setup-yara.sh
+    owner: blueteam
+    group: blueteam
+    mode: 0744
+
+- name: Run Yara setup script
+  ansible.builtin.shell: /tmp/setup-yara.sh
+
+#### Below is old yara code
+
+
 
 - name: Check if Yara exists
   ansible.builtin.stat:

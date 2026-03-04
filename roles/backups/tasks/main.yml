@@ -1,18 +1,4 @@
 ---
-- name: Search for important service-specific files to back up
-  find:
-    paths: /
-    patterns: "{{ important_files_for_backup }}"
-  register: found_important_files
-  ignore_errors: yes
-
-- name: Back up important service-specific files
-  archive:
-    path: "{{ item.path }}"
-    dest: "/opt/backups/system_backups/{{ inventory_hostname }}_ansiblebackup_{{ ansible_date_time.date }}.tar.gz"
-  when: found_important_files.matched > 0
-  loop: "{{ found_important_files.files }}"
-
 - name: Deploy backup potentially important files script
   ansible.builtin.template:
     src: backup_important_files.j2
@@ -26,62 +12,33 @@
   args:
     creates: "{{ backup_dir }}/important_files/log.txt"
 
-- name: Create /var/www directory
-  file:
-    path: /var/www
-    state: directory
-    mode: '0755'
-  ignore_errors: yes
-
 - name: Create backup directory on worker nodes
-  file:
-    path: "/opt/backups/system_backups"
+  ansible.builtin.file:
+    path: "{{ backups_dir }}/system_backups"
     state: directory
     mode: '0755'
-  ignore_errors: yes
 
 - name: Archive important directories on worker nodes
-  command: >
-    tar czf /opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /bin /usr/lib/systemd
-  ignore_errors: yes
+  ansible.builtin.file: |
+    tar -cpzf /opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /bin /usr/lib/systemd
+  ignore_errors: true
 
 - name: Fetch the backup archive to the manager node
-  fetch:
+  ansible.builtin.fetch:
     src: "/opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
-    dest: "backups/"
+    dest: "/opt/backups"
     flat: yes
-  ignore_errors: yes
-
-- name: Ensure local backup directory exists on manager node
-  delegate_to: localhost
-  run_once: true
-  file:
-    path: "backups"
-    state: directory
-    mode: '0755'
-  become: false
-  ignore_errors: yes
-
-- name: Move backups to a well-structured directory on manager node
-  delegate_to: localhost
-  shell: |
-    mv backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz \
-    /opt/backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz
-  args:
-    creates: "backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
-  become: false
-  ignore_errors: yes
+  ignore_errors: true
 
 # - name: Zip all backups into one file
 #   delegate_to: localhost
-#   become: false
-#   ansible.builtin.shell: zip -r backups/linux_backups.zip backups/
+#   ansible.builtin.shell: zip -r linux_backups.zip /opt/backups
 #   ignore_errors: yes
 
 # do NOT send that file everywhere unless you wanna stay on this step for 30 minutes
 # - name: Send that file everywhere
 #   ansible.builtin.copy:
-#     src: backups/linux_backups.zip
+#     src: linux_backups.zip
 #     dest: "{{ backup_dir }}/linux_backups.zip"
 #     owner: root
 #     group: root

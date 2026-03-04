@@ -1,0 +1,16 @@
+---
+- name: LOCAL SETUP | Gather facts for localhost
+  ansible.builtin.setup:
+
+- name: LOCAL SETUP | Setup Configure Ansible Controller Script
+  ansible.builtin.template:
+    src: configure-controller.j2
+    dest: /tmp/configure-controller.sh
+    owner: root
+    group: root
+    mode: 0744
+  
+- name: LOCAL SETUP | Run Configure Controller script
+  ansible.builtin.shell: /tmp/configure-controller.sh
+  args:
+    creates: "/opt/passwordmanager"

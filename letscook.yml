@@ -11,29 +11,25 @@
     - deploy
     - setup
 
-- name: Generate SSH key combination
+# Creates blueteam user as admin on localhost, creates SSH keypair
+# Clones all scripts that need to be copied over
+- name: Setup Ansible Controller
   hosts: localhost
-  # become: false
+  become: yes
   roles:
-    - pre-setup
+    - setup-controller
   tags:
     - never
     - presetup
     - setup
-  vars_prompt:
-  # TODO: Make this into a handler/function to prevent double prompt
-  - name: blueteam_password
-    prompt: Enter blueteam user password 
-    private: true
-    confirm: true
-    # unsafe: true # If using special characters such as { or %, uncomment this line.
-    salt_size: 7
 
-- name: Initial Run
+# create blue user, adds key to user
+# creates backup directory, installs common packages
+- name: Setup Hosts
   hosts: all
   become: yes
   roles: 
-    - setup # create blue user, adds key to user, creates backup directory, installs common packages
+    - setup 
   tags:
     - never
     - setup
