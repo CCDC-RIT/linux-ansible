@@ -14,3 +14,4 @@
   ansible.builtin.shell: /tmp/configure-controller.sh
   args:
     creates: "/opt/passwordmanager"
+    creates: "/opt/yara.zip"

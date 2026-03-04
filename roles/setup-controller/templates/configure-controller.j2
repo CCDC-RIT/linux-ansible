@@ -14,7 +14,9 @@ else
 fi
 
 # add blueteam user on localhost with blueteam password
-useradd -m -s /bin/bash blueteam
+if ! id -u blueteam >/dev/null 2>&1; then
+    useradd -m -s /bin/bash blueteam
+fi
 echo "blueteam:blueteam" | chpasswd
 
 DISTRO_ID=${ID_LIKE:-$ID}
@@ -46,20 +48,28 @@ curl -L https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz -o /o
 curl -L https://github.com/CCDC-RIT/YaraRules/raw/refs/heads/main/Linux.zip -o /opt/yara/Linux.zip
 curl -L https://github.com/CCDC-RIT/YaraRules/raw/refs/heads/main/Multi.zip -o /opt/yara/Multi.zip
 curl -L https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip -o /opt/yara/yara-forge-rules-full.zip
-zip -r /opt/yara.zip /opt/yara
+zip -j /opt/yara.zip /opt/yara/*
 
-if [[ ! -f "{{ ansible_env.HOME }}/.ssh/id_ed25519" ]]; then
+if [[ ! -d /"{{ ansible_env.HOME }}/.ssh" ]]; then
+    mkdir -p /"{{ ansible_env.HOME }}/.ssh"
+    chown "{{ ansible_env.USER}}:{{ ansible_env.USER }}" /"{{ ansible_env.HOME }}/.ssh"
+    chmod 700 /"{{ ansible_env.HOME }}/.ssh"
+fi
+
+if [[ ! -f "/{{ ansible_env.HOME }}/.ssh/id_ed25519" ]]; then
     ssh-keygen -t ed25519 -f "{{ ansible_env.HOME }}/.ssh/id_ed25519" -N \"\" -q
-    chown {{ ansible_user }}:{{ ansible_user }} {{ ansible_env.HOME }}/.ssh/id_ed25519
-    chmod 640 {{ ansible_env.HOME }}/.ssh/id_ed25519
+    chown "{{ ansible_env.USER}}:{{ ansible_env.USER }}" /"{{ ansible_env.HOME }}/.ssh/id_ed25519"
+    chmod 640 /"{{ ansible_env.HOME }}/.ssh/id_ed25519"
 fi
 
 mkdir -p /opt/backups
 
-mkdir -p /opt/passwordmanager
-git clone https://github.com/CCDC-RIT/Password-Manager.git /opt/passwordmanager/Password-Manager
-curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o /opt/passwordmanager/ccdc-password-manager-client
-curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o /opt/passwordmanager/ccdc-password-manager-client.service
+if [[ ! -d /opt/passwordmanager ]]; then
+    mkdir -p /opt/passwordmanager
+    git clone https://github.com/CCDC-RIT/Password-Manager.git /opt/passwordmanager/Password-Manager
+    curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o /opt/passwordmanager/ccdc-password-manager-client
+    curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o /opt/passwordmanager/ccdc-password-manager-client.service
+fi
 
 chmod 0554 /opt/passwordmanager/ccdc-password-manager-client
 chmod 0664 /opt/passwordmanager/ccdc-password-manager-client.service

@@ -1,3 +1,5 @@
 /.vscode
 /backups
 .DS_Store
+ansible.log
+/retry

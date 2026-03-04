@@ -183,6 +183,7 @@
     - "vim"
     - "curl"
     - "openssl"
+    - "libssl-dev"
     - "iptables"
     - "snoopy"
     - "lynis"
@@ -208,110 +209,110 @@
 - name: Copy Yara zip file
   ansible.builtin.copy:
     src: /opt/yara.zip
-    dest: /tmp/yara.zip
+    dest: /opt/yara.zip
     owner: blueteam
     group: blueteam
     mode: 0644
 
-- name: copy Yara setup script
+- name: Copy Yara setup script
   ansible.builtin.copy:
-    src: setup-yara.sh
-    dest: /tmp/setup-yara.sh
+    src: yara-setup.sh
+    dest: /opt/yara-setup.sh
     owner: blueteam
     group: blueteam
     mode: 0744
 
 - name: Run Yara setup script
-  ansible.builtin.shell: /tmp/setup-yara.sh
+  ansible.builtin.shell: /opt/yara-setup.sh
 
 #### Below is old yara code
 
 
 
-- name: Check if Yara exists
-  ansible.builtin.stat:
-    path: /usr/bin/yara
-  register: yara_stat
+# - name: Check if Yara exists
+#   ansible.builtin.stat:
+#     path: /usr/bin/yara
+#   register: yara_stat
 
-- name: Check if yarac exists
-  ansible.builtin.stat:
-    path: /usr/bin/yarac
-  register: yarac_stat
+# - name: Check if yarac exists
+#   ansible.builtin.stat:
+#     path: /usr/bin/yarac
+#   register: yarac_stat
 
-- name: Get installed Yara version
-  ansible.builtin.shell: yara -v
-  register: yara_version
-  when: yara_stat.stat.exists
+# - name: Get installed Yara version
+#   ansible.builtin.shell: yara -v
+#   register: yara_version
+#   when: yara_stat.stat.exists
 
-- name: Get installed yarac version
-  ansible.builtin.shell: yarac -v
-  register: yarac_version
-  when: yarac_stat.stat.exists
+# - name: Get installed yarac version
+#   ansible.builtin.shell: yarac -v
+#   register: yarac_version
+#   when: yarac_stat.stat.exists
 
-- name: Install Yara from source
-  block:
-  - name: Remove Yara
-    package: 
-      name: yara
-      state: absent
+# - name: Install Yara from source
+#   block:
+#   - name: Remove Yara
+#     package: 
+#       name: yara
+#       state: absent
       
-  - name: Get Yara source code
-    ansible.builtin.get_url:
-      url: https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz
-      dest: /var/tmp/yarasrc.tar.gz
-      mode: '0755'
+#   - name: Get Yara source code
+#     ansible.builtin.get_url:
+#       url: https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz
+#       dest: /var/tmp/yarasrc.tar.gz
+#       mode: '0755'
 
-  - name: Unzip Yara source code
-    ansible.builtin.command:
-      cmd: tar -xzvf /var/tmp/yarasrc.tar.gz
-      chdir: /var/tmp
+#   - name: Unzip Yara source code
+#     ansible.builtin.command:
+#       cmd: tar -xzvf /var/tmp/yarasrc.tar.gz
+#       chdir: /var/tmp
 
-  - name: Run build script
-    ansible.builtin.command:
-      cmd: ./build.sh
-      chdir: /var/tmp/yara-4.5.4
+#   - name: Run build script
+#     ansible.builtin.command:
+#       cmd: ./build.sh
+#       chdir: /var/tmp/yara-4.5.4
 
-  - name: Move compiled Yara binary to dir in PATH
-    ansible.builtin.command:
-      cmd: mv /var/tmp/yara-4.5.4/yara /usr/local/bin/yara
+#   - name: Move compiled Yara binary to dir in PATH
+#     ansible.builtin.command:
+#       cmd: mv /var/tmp/yara-4.5.4/yara /usr/local/bin/yara
 
-  - name: Move compiled yarac binary to dir in PATH
-    ansible.builtin.command:
-      cmd: mv /var/tmp/yara-4.5.4/yarac /usr/local/bin/yarac
+#   - name: Move compiled yarac binary to dir in PATH
+#     ansible.builtin.command:
+#       cmd: mv /var/tmp/yara-4.5.4/yarac /usr/local/bin/yarac
       
-  when: not yara_stat.stat.exists or not yarac_stat.stat.exists or yara_version.stdout is version('4.5.4','<') or yarac_version.stdout is version('4.5.4','<')
+#   when: not yara_stat.stat.exists or not yarac_stat.stat.exists or yara_version.stdout is version('4.5.4','<') or yarac_version.stdout is version('4.5.4','<')
 
 
 
-- name: Delete yararules directory if present
-  ansible.builtin.file:
-    path: /opt/yararules
-    state: absent
+# - name: Delete yararules directory if present
+#   ansible.builtin.file:
+#     path: /opt/yararules
+#     state: absent
 
-- name: Creates yararules directory
-  ansible.builtin.file:
-    path: /opt/yararules
-    state: directory
+# - name: Creates yararules directory
+#   ansible.builtin.file:
+#     path: /opt/yararules
+#     state: directory
   
 
-# - name: Download Yara Forge rules (zip file)
-#   ansible.builtin.get_url:
-#     url: https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip
-#     dest: /var/tmp/forge.zip
-#     mode: '0440'
+# # - name: Download Yara Forge rules (zip file)
+# #   ansible.builtin.get_url:
+# #     url: https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip
+# #     dest: /var/tmp/forge.zip
+# #     mode: '0440'
+# #   ignore_errors: true
+
+# # - name: Unzip forge.zip
+# #   ansible.builtin.unarchive:
+# #     src: /var/tmp/forge.zip
+# #     dest: /opt/yararules
+# #     remote_src: yes
+# #   ignore_errors: true
+
+# - name: Download RIT CCDC Yara rules
+#   ansible.builtin.shell: git clone https://github.com/CCDC-RIT/YaraRules /opt/yararules/YaraRules
 #   ignore_errors: true
 
-# - name: Unzip forge.zip
-#   ansible.builtin.unarchive:
-#     src: /var/tmp/forge.zip
-#     dest: /opt/yararules
-#     remote_src: yes
+# - name: Compile YARA rules
+#   shell: yarac /opt/yararules/YaraRules/Linux/* /opt/yararules/YaraRules/Multi/* /opt/yararules/compiled.linux
 #   ignore_errors: true
-
-- name: Download RIT CCDC Yara rules
-  ansible.builtin.shell: git clone https://github.com/CCDC-RIT/YaraRules /opt/yararules/YaraRules
-  ignore_errors: true
-
-- name: Compile YARA rules
-  shell: yarac /opt/yararules/YaraRules/Linux/* /opt/yararules/YaraRules/Multi/* /opt/yararules/compiled.linux
-  ignore_errors: true
