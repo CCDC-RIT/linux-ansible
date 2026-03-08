@@ -12,6 +12,3 @@
   
 - name: LOCAL SETUP | Run Configure Controller script
   ansible.builtin.shell: /tmp/configure-controller.sh
-  args:
-    creates: "/opt/passwordmanager"
-    creates: "/opt/yara.zip"
