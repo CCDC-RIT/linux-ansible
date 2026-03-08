@@ -198,9 +198,6 @@
     - "make"
     - "gcc"
     - "pkg-config"
-    - "docker-compose-v2"
-    - "docker-compose-plugin"
-    - "container-selinux"
   ignore_errors: yes
 
 - name: Set PATH in /etc/environment
