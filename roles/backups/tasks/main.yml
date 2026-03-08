@@ -14,7 +14,7 @@
 
 - name: Create backup directory on worker nodes
   ansible.builtin.file:
-    path: "{{ backups_dir }}/system_backups"
+    path: "{{ backup_dir }}/system_backups"
     state: directory
     mode: '0755'
 
