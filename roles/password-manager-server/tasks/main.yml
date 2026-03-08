@@ -40,3 +40,15 @@
       args:
         chdir: /opt/ccdc-password-manager
   when: not manager_exists.stat.exists and ansible_default_ipv4.address == password_manager_ip
+
+- name: Get starting credentials
+  block:
+    - name: Read starting clients file
+      ansible.builtin.slurp:
+        src: /opt/ccdc-password-manager/default_credentials.txt
+      register: default_creds
+
+    - name: Decode and print starting credentials
+      ansible.builtin.debug:
+        msg: "Starting credentials for Password Manager: {{ default_creds.content | b64decode }}"
+  when: ansible_default_ipv4.address == password_manager_ip
