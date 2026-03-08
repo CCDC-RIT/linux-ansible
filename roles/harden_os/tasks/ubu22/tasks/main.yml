@@ -274,36 +274,36 @@
     mode: 0644
     backup: yes
 
-- name: "HARDEN_OS UBUNTU | PAM settings"
-  block:
-    - name: "Drop in common-* files"
-      ansible.builtin.copy:
-        src: "ubu/pam.d/{{ item }}"
-        dest: /etc/pam.d/{{ item }}
-        owner: root
-        group: root
-        mode: 0644
-        backup: yes
-      with_items:
-        - common-auth
-        - common-account
-        - common-password
-        - common-session
-        - common-session-noninteractive
+# - name: "HARDEN_OS UBUNTU | PAM settings"
+#   block:
+#     - name: "Drop in common-* files"
+#       ansible.builtin.copy:
+#         src: "ubu/pam.d/{{ item }}"
+#         dest: /etc/pam.d/{{ item }}
+#         owner: root
+#         group: root
+#         mode: 0644
+#         backup: yes
+#       with_items:
+#         - common-auth
+#         - common-account
+#         - common-password
+#         - common-session
+#         - common-session-noninteractive
 
-    - name: "Drop in module configuration files"
-      ansible.builtin.copy:
-        src: "ubu/security/{{ item }}"
-        dest: "/etc/security/{{ item }}"
-        owner: root
-        group: root
-        mode: 0644
-        backup: yes
-      with_items:
-        - pwquality.conf
-        - access.conf
-        - pwhistory.conf
-        - faillock.conf
+#     - name: "Drop in module configuration files"
+#       ansible.builtin.copy:
+#         src: "ubu/security/{{ item }}"
+#         dest: "/etc/security/{{ item }}"
+#         owner: root
+#         group: root
+#         mode: 0644
+#         backup: yes
+#       with_items:
+#         - pwquality.conf
+#         - access.conf
+#         - pwhistory.conf
+#         - faillock.conf
 
 # TODO: move to audit?
 - name: "HARDEN_OS UBUNTU | Check to see if root has a password"
