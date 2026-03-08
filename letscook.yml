@@ -84,7 +84,7 @@
   hosts: all
   become: yes
   roles:
-    - passwordManagerServer
+    - password-manager-server
   tags:
     - never
     - deploy
@@ -95,7 +95,7 @@
   hosts: all
   become: yes
   roles:
-    - passwordManagerClient
+    - password-manager-client
   tags:
     - never
     - deploy

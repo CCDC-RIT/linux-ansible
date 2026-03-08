@@ -66,7 +66,13 @@ mkdir -p /opt/backups
 
 if [[ ! -d /opt/passwordmanager ]]; then
     mkdir -p /opt/passwordmanager
-    git clone https://github.com/CCDC-RIT/Password-Manager.git /opt/passwordmanager/Password-Manager
+
+    docker pull ghcr.io/ccdc-rit/password-manager:latest
+    docker save ghcr.io/ccdc-rit/password-manager:latest > password-manager-latest.tar
+    gzip password-manager-latest.tar
+
+    curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/docker-compose.yml -o /opt/passwordmanager/docker-compose.yml
+
     curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o /opt/passwordmanager/ccdc-password-manager-client
     curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o /opt/passwordmanager/ccdc-password-manager-client.service
 fi
