@@ -1,11 +1,17 @@
 #!/bin/bash
 
-apt-get update -y
-apt-get install gcc python3-setuptools python3-dev python3-pip virtualenv -y
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+else
+    echo "Error: /etc/os-release not found. Cannot determine OS."
+    exit 1
+fi
 
 DISTRO_ID=${ID_LIKE:-$ID}
 case "$DISTRO_ID" in
     ubuntu*)
+        apt-get install gcc python3-setuptools python3-dev python3-pip virtualenv -y
+
         install -m 0755 -d /etc/apt/keyrings
         curl -o /etc/apt/keyrings/docker.asc https://download.docker.com/linux/ubuntu/gpg
         chmod 0644 /etc/apt/keyrings/docker.asc

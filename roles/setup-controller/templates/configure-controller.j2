@@ -66,17 +66,26 @@ mkdir -p /opt/backups
 
 if [[ ! -d /opt/passwordmanager ]]; then
     mkdir -p /opt/passwordmanager
-
-    docker pull ghcr.io/ccdc-rit/password-manager:latest
-    docker save ghcr.io/ccdc-rit/password-manager:latest > password-manager-latest.tar
-    gzip password-manager-latest.tar
-
-    curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/docker-compose.yml -o /opt/passwordmanager/docker-compose.yml
-
-    curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o /opt/passwordmanager/ccdc-password-manager-client
-    curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o /opt/passwordmanager/ccdc-password-manager-client.service
 fi
 
+
+install -m 0755 -d /etc/apt/keyrings
+curl -o /etc/apt/keyrings/docker.asc https://download.docker.com/linux/ubuntu/gpg
+chmod 0644 /etc/apt/keyrings/docker.asc
+
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" | \
+sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt install docker-ce docker-compose-plugin -y
+
+docker pull ghcr.io/ccdc-rit/password-manager:latest
+docker save ghcr.io/ccdc-rit/password-manager:latest > /opt/passwordmanager/password-manager-latest.tar
+gzip /opt/passwordmanager/password-manager-latest.tar --force
+
+curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/docker-compose.yml -o /opt/passwordmanager/docker-compose.yml
+
+curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o /opt/passwordmanager/ccdc-password-manager-client
+curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o /opt/passwordmanager/ccdc-password-manager-client.service
 
 chmod 0554 /opt/passwordmanager/ccdc-password-manager-client
 chmod 0664 /opt/passwordmanager/ccdc-password-manager-client.service

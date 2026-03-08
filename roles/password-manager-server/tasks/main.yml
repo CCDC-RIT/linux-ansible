@@ -26,12 +26,12 @@
     - name: Copy starting clients
       ansible.builtin.copy:
         src: /opt/passwordmanager/starting_clients.txt
-        dest: /opt/ccdc-password-manager/Password-Manager/starting_clients.txt
+        dest: /opt/ccdc-password-manager/starting_clients.txt
         mode: '0644'
 
     - name: Copy setup script
       ansible.builtin.copy:
-        src: /opt/passwordmanager/setup-password-manager-server.sh
+        src: setup-password-manager-server.sh
         dest: /opt/ccdc-password-manager/setup-password-manager-server.sh
         mode: '0744'
 
