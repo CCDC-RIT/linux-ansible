@@ -21,17 +21,19 @@
   tags:
     - never
     - deploy
+    - setup
 
 # create blue user, adds key to user
-# creates backup directory, installs common packages
+# creates backup directory, installs common core packages for firewall and backups
 - name: Setup Hosts
   hosts: all
   become: yes
   roles: 
-    - setup-hosts
+    - setup-hosts-core
   tags:
     - never
     - deploy
+    - setup
   vars_prompt:
   - name: blueteam_password
     prompt: Enter blueteam user password 
@@ -69,6 +71,17 @@
     - never
     - deploy
     - firewall
+
+# installs userful packages and yara
+- name: Setup Hosts
+  hosts: all
+  become: yes
+  roles: 
+    - setup-hosts-other
+  tags:
+    - never
+    - deploy
+    - setup
 
 - name: Reinstall Package Manager
   hosts: all

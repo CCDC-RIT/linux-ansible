@@ -77,3 +77,25 @@
   ansible.builtin.copy:
     src: 20auto-upgrades
     dest: /etc/apt/apt.conf.d/20auto-upgrades
+
+# The following tasks basically run apt upgrade -y. They were orignally in setup-hosts, but mostly commented out, moving them here cause this is a more realistic place
+# - name: Apt update (Debian/Ubuntu)
+#   ansible.builtin.apt:
+#     update_cache: true # Equivalent of "apt-get update"
+#     # name: "*"
+#     # state: latest # Update all packages to their latest version
+#   when: ansible_facts['os_family'] == 'Debian'
+
+# - name: Upgrade all packages (RHEL/CentOS)
+#   ansible.builtin.dnf:
+#     update_cache: true
+#     # name: "*"
+#     # state: latest
+#   when: ansible_facts['os_family'] == 'RedHat'
+
+# - name: Upgrade all packages (SUSE)
+#   community.general.zypper:
+#     update_cache: true
+#     # name: "*"
+#     # state: latest
+#   when: ansible_facts['os_family'] == 'Suse'

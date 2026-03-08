@@ -19,7 +19,7 @@
     mode: '0755'
 
 - name: Archive important directories on worker nodes
-  ansible.builtin.file: |
+  ansible.builtin.shell: |
     tar -cpzf /opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /bin /usr/lib/systemd
   ignore_errors: true
 

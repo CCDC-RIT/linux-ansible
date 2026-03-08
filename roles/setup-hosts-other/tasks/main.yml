@@ -1,0 +1,44 @@
+---
+- name: Gather facts for localhost
+  ansible.builtin.setup:
+
+- name: Gather package facts
+  ansible.builtin.package_facts:
+
+- name: Install Useful Packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "openssl"
+    - "libssl-dev"
+    - "snoopy"
+    - "lynis"
+    - "jq"
+    - "git"
+    - "whois"
+    - "automake"
+    - "libtool"
+    - "make"
+    - "gcc"
+    - "pkg-config"
+  ignore_errors: yes
+
+- name: Copy Yara zip file
+  ansible.builtin.copy:
+    src: /opt/yara.zip
+    dest: /opt/yara.zip
+    owner: blueteam
+    group: blueteam
+    mode: 0644
+
+- name: Copy Yara setup script
+  ansible.builtin.copy:
+    src: yara-setup.sh
+    dest: /opt/yara-setup.sh
+    owner: blueteam
+    group: blueteam
+    mode: 0744
+
+- name: Run Yara setup script
+  ansible.builtin.shell: /opt/yara-setup.sh

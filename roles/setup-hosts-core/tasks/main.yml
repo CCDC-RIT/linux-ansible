@@ -1,0 +1,169 @@
+---
+- name: Gather facts for localhost
+  ansible.builtin.setup:
+
+- name: Gather package facts
+  ansible.builtin.package_facts:
+
+- name: Add blueteam user
+  ansible.builtin.user: 
+    name: blueteam
+    state: present
+    password: "{{ blueteam_password | password_hash('sha512') }}"
+    shell: /bin/bash
+  when: ansible_facts['os_family'] != 'Alpine'
+
+- name: Add blueteam user (Alpine)
+  ansible.builtin.user:
+    name: blueteam
+    state: present
+    password: "{{ blueteam_password | password_hash('sha512') }}"
+    shell: /bin/sh
+  when: ansible_facts['os_family'] == 'Alpine'
+
+- name: Make blueteam group
+  ansible.builtin.group:
+    name: blueteam
+    state: present
+
+- name: Create wheel group if doesn't exist on RedHat
+  ansible.builtin.shell: groupadd -f wheel
+  when: ansible_facts['os_family'] == 'RedHat'
+ 
+- name: Add blueteam user to admin groups (RedHat)
+  ansible.builtin.user:
+    name: blueteam
+    groups: '{{ item }}'
+    append: yes
+  with_items:
+    - "wheel"
+    - "adm"
+    - "blueteam"
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Add blueteam user to admin groups (Debian)
+  ansible.builtin.user:
+    name: blueteam
+    groups: '{{ item }}'
+    append: yes
+  with_items:
+    - "sudo"
+    - "adm"
+    - "blueteam"
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Add key to blueteam user
+  ansible.posix.authorized_key:
+    user: blueteam
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_ed25519.pub') }}"
+
+- name: Create backup directory
+  ansible.builtin.file:
+    path: "{{ backup_dir }}"
+    owner: blueteam
+    group: blueteam
+    state: directory
+
+- name: Create quarantine directory
+  ansible.builtin.file:
+    path: "{{ quarantine }}"
+    owner: blueteam
+    group: blueteam
+    state: directory
+
+- name: Create inventory directory
+  ansible.builtin.file:
+    path: "/opt/inventory"
+    owner: blueteam
+    group: blueteam
+    state: directory
+    mode: 0755
+
+- name: Create audit directory
+  ansible.builtin.file:
+    path: "{{ audit_dir }}"
+    owner: blueteam
+    group: blueteam
+    state: directory
+    mode: 0755
+
+# - name: Compare sources.list (Debian/Ubuntu)
+#   shell: diff /etc/apt/sources.list files/sources.list
+#   register: diff
+#   ignore_errors: yes
+#   changed_when: diff.rc == 1
+#   when: ansible_facts['os_family'] == 'Debian'
+
+# in Debian, all repos are in /etc/apt/sources.list
+- name: Copy sources.list (Debian/Ubuntu)
+  ansible.builtin.copy:
+    src: ubuntu_22_04_sources.list
+    dest: /etc/apt/sources.list
+    owner: root
+    group: root
+    mode: 0644
+    backup: true
+  when: ansible_facts['os_family'] == 'Debian' and ansible_distribution_version == '22.04'
+
+# in RHEL, each repo is its own file in /etc/yum.repos.d/
+# - name: Copy over repo files (RHEL/CentOS)
+#   ansible.builtin.copy:
+#     src: "files/{{ item }}"
+#     dest: "/etc/yum.repos.d/{{ item }}"
+#     owner: root
+#     group: root
+#     mode: 0644
+#   with_items:
+#     - "rhel.repo"
+#     - "epel.repo"
+#   when: ansible_facts['os_family'] == 'RedHat'
+# TODO: find good repos because they vary by version, hard to be dynamic
+
+# in SUSE, each repo is its own file in /etc/zypp/repos.d/
+# - name: Copy over repo files (SUSE)
+#   ansible.builtin.copy:
+#     src: "files/{{ item }}"
+#     dest: "/etc/zypp/repos.d/{{ item }}"
+#     owner: root
+#     group: root
+#     mode: 0644
+#   with_items:
+#     - "suse.repo"
+#   when: ansible_facts['os_family'] == 'Suse'
+# TODO: same thing with this, need to find file maybe from clean install bc bad sources online
+
+- name: Apt update (Debian/Ubuntu)
+  ansible.builtin.apt:
+    update_cache: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Dnf update (RHEL/CentOS)
+  ansible.builtin.dnf:
+    update_cache: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Zypper update (SUSE)
+  community.general.zypper:
+    update_cache: true
+  when: ansible_facts['os_family'] == 'Suse'
+
+- name: Install Packages for backups and firewall
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+     - "lsof"
+     - "vim"
+     - "curl"
+     - "iptables"
+     - "iptables-persistent"
+     - "unzip"
+     - "zip"
+  ignore_errors: yes
+
+- name: Set PATH in /etc/environment
+  lineinfile:
+    path: /etc/environment
+    line: 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"'
+    create: yes

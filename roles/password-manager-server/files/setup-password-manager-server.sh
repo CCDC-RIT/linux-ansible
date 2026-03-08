@@ -53,6 +53,10 @@ esac
 touch password_manager.db
 touch default_credentials.txt
 
+if [ ! -f "starting_clients.txt" ]; then
+    touch starting_clients.txt
+fi
+
 gunzip password-manager-latest.tar.gz
 docker load < password-manager-latest.tar
 docker compose up -d
