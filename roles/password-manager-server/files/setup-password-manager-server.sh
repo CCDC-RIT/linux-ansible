@@ -9,7 +9,7 @@ fi
 
 DISTRO_ID=${ID_LIKE:-$ID}
 case "$DISTRO_ID" in
-    ubuntu*)
+    ubuntu*|debian*)
         apt-get install gcc python3-setuptools python3-dev python3-pip virtualenv -y
 
         install -m 0755 -d /etc/apt/keyrings
@@ -19,9 +19,10 @@ case "$DISTRO_ID" in
         echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" | \
         sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+        apt update
         apt install docker-ce docker-compose-plugin -y
         ;;
-    rhel*|rocky*)
+    rhel*|rocky*|alma*|centos*|fedora*)
         rpm --import "https://download.docker.com/linux/rhel/gpg"
         curl -o /etc/yum.repos.d/docker-ce.repo "https://download.docker.com/linux/rhel/docker-ce.repo"
         sed -i '/^\[docker-ce-nightly\]/,/^\[/ { /^\[docker-ce-nightly\]/d; /^\[/!d }' /etc/yum.repos.d/docker-ce.repo
