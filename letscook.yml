@@ -4,7 +4,7 @@
   tasks:
     - name: Assert Variables
       fail:
-        msg: "You must define ansible_control_ip in group_vars/main.yaml"
+        msg: "You must define ansible_control_ip in inventory.ini"
       when: ansible_control_ip is not defined
   tags:
     - never
@@ -23,7 +23,7 @@
     - deploy
     - setup
 
-# create blue user, adds key to user
+# create blueteam user on Ansible-managed hosts, adds key to user
 # creates backup directory, installs common core packages for firewall and backups
 - name: Setup Hosts
   hosts: all
@@ -36,7 +36,7 @@
     - setup
   vars_prompt:
   - name: blueteam_password
-    prompt: Enter blueteam user password 
+    prompt: Set blueteam user's password
     private: true
     confirm: true
     # unsafe: true # If using special characters such as { or %, uncomment this line.
@@ -72,7 +72,7 @@
     - deploy
     - firewall
 
-# installs userful packages and yara
+# Install useful packages and runs yara setup script
 - name: Setup Hosts
   hosts: all
   become: yes
@@ -93,7 +93,7 @@
     - reinstall-pacman
   ignore_errors: true
 
-- name: Setup Password Manager
+- name: Set Up Password Manager Server
   hosts: all
   become: yes
   roles:
@@ -167,7 +167,7 @@
 #     - kube
 #     - deploy
 
-- name: Finishing tasks
+- name: Finishing tasks (keep talking)
   hosts: all
   become: yes
   roles:

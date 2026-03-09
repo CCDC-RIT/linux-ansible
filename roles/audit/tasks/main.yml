@@ -298,7 +298,7 @@
   ansible.builtin.shell: |
     cp /home/{{ item }}/.ssh/authorized_keys {{ quarantine }}/authorized_keys_{{ item }}
   loop: "{{ users.stdout_lines }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Run YARA scan in background
   ansible.builtin.shell: |

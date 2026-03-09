@@ -22,7 +22,7 @@
     - "make"
     - "gcc"
     - "pkg-config"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Copy Yara zip file
   ansible.builtin.copy:
