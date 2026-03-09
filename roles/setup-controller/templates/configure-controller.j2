@@ -79,13 +79,13 @@ sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt install docker-ce docker-compose-plugin -y
 
 docker pull ghcr.io/ccdc-rit/password-manager:latest
-docker save ghcr.io/ccdc-rit/password-manager:latest > /opt/passwordmanager/password-manager-latest.tar
-gzip /opt/passwordmanager/password-manager-latest.tar --force
+docker save ghcr.io/ccdc-rit/password-manager:latest > "{{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/password-manager-latest.tar"
+gzip "{{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/password-manager-latest.tar" --force
 
-curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/docker-compose.yml -o /opt/passwordmanager/docker-compose.yml
+curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/docker-compose.yml -o {{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/docker-compose.yml
 
-curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o /opt/passwordmanager/ccdc-password-manager-client
-curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o /opt/passwordmanager/ccdc-password-manager-client.service
+curl -L https://github.com/CCDC-RIT/Password-Manager/raw/refs/heads/main/client/linux -o {{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/ccdc-password-manager-client
+curl -L https://raw.githubusercontent.com/CCDC-RIT/Password-Manager/refs/heads/main/client/linux.service  -o {{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/ccdc-password-manager-client.service
 
-chmod 0554 /opt/passwordmanager/ccdc-password-manager-client
-chmod 0664 /opt/passwordmanager/ccdc-password-manager-client.service
+chmod 0554 {{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/ccdc-password-manager-client
+chmod 0664 {{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/ccdc-password-manager-client.service

@@ -15,17 +15,17 @@
 
     - name: Copy Image
       ansible.builtin.copy:
-        src: /opt/passwordmanager/password-manager-latest.tar.gz
+        src: password-manager-latest.tar.gz
         dest: /opt/ccdc-password-manager/password-manager-latest.tar.gz
 
     - name: Copy Compose File
       ansible.builtin.copy:
-        src: /opt/passwordmanager/docker-compose.yml
+        src: docker-compose.yml
         dest: /opt/ccdc-password-manager/docker-compose.yml
 
     - name: Copy starting clients
       ansible.builtin.copy:
-        src: /opt/passwordmanager/starting_clients.txt
+        src: starting_clients.txt
         dest: /opt/ccdc-password-manager/starting_clients.txt
         mode: '0644'
 
