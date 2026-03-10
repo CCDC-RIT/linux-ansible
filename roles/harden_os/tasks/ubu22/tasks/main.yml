@@ -1,4 +1,27 @@
 ---
+- name: "HARDEN_OS UBUNTU | Set DNS to DC"
+  block:
+    - name: HARDEN_OS UBUNTU | Set resolv.conf to DC
+      ansible.builtin.template:
+        src: ubu/resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: 0644
+    
+    - name: HARDEN_OS UBUNTU | Set resolved.conf to DC
+      ansible.builtin.template:
+        src: ubu/resolved.conf.j2
+        dest: /etc/systemd/resolved.conf
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Restart systemd-resolved
+      ansible.builtin.systemd:
+        name: systemd-resolved.service
+        state: restarted
+
 - name: "HARDEN_OS UBUNTU | Secure IPv4 and IPv6 and restrict core dumps"
   block:
       # TODO: Create exclusion for kube

@@ -1,4 +1,17 @@
 ---
+- name: "HARDEN_OS RHEL | Set DNS to DC"
+  block:
+    - name: HARDEN_OS RHEL | Deploy configure dns script
+      ansible.builtin.template:
+        src: rhel/configure-dns.sh.j2
+        dest: /tmp/configure-dns.sh
+        owner: root
+        group: root
+        mode: 0744
+
+    - name: HARDEN_OS RHEL | Execute configure dns script
+      ansible.builtin.shell: /tmp/configure-dns.sh
+
 - name: HARDEN_OS RHEL | Ensure /etc/shadow password fields are not empty
   block:
     - name: HARDEN_OS RHEL | Find users with no password

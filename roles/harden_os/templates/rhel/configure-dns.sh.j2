@@ -1,0 +1,9 @@
+#!/bin/bash
+
+while IFS= read -r conn_name; do
+    sudo nmcli connection modify "$conn_name" ipv4.dns "{{ domain_controller_ip }}"
+    sudo nmcli connection modify "$conn_name" ipv4.ignore-auto-dns yes
+    sudo nmcli connection modify "$conn_name" ipv4.dns-search "{{ domain_controller_domain }}"
+done < <(sudo nmcli -t -f NAME connection show)
+
+sudo service NetworkManager restart
