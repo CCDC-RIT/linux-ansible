@@ -23,10 +23,10 @@ fi
 
 
 
-curl -L https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/yara.tar.gz"
-curl -L https://github.com/CCDC-RIT/YaraRules/raw/refs/heads/main/Linux.zip -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/Linux.zip"
-curl -L https://github.com/CCDC-RIT/YaraRules/raw/refs/heads/main/Multi.zip -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/Multi.zip"
-curl -L https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/yara-forge-rules-full.zip"
+curl -L https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.4.tar.gz -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/files/yara.tar.gz"
+curl -L https://github.com/CCDC-RIT/YaraRules/raw/refs/heads/main/Linux.zip -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/files/Linux.zip"
+curl -L https://github.com/CCDC-RIT/YaraRules/raw/refs/heads/main/Multi.zip -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/files/Multi.zip"
+curl -L https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-full.zip -o "{{ ansible_env.HOME }}/linux-ansible/roles/setup-hosts-other/files/yara-forge-rules-full.zip"
 
 docker pull ghcr.io/ccdc-rit/password-manager:latest
 docker save ghcr.io/ccdc-rit/password-manager:latest > "{{ ansible_env.HOME }}/linux-ansible/roles/password-manager-server/files/password-manager-latest.tar"

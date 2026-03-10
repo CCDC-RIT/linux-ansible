@@ -1,54 +1,74 @@
 #!/bin/bash
 
+if [ "$EUID" -ne 0 ]; then 
+  echo "Please run as root (sudo)"
+  exit 1
+fi
+
 if [ -f /etc/os-release ]; then
     . /etc/os-release
 else
-    echo "Error: /etc/os-release not found. Cannot determine OS."
+    echo "Error: /etc/os-release not found."
     exit 1
 fi
 
-DISTRO_ID=${ID_LIKE:-$ID}
-case "$DISTRO_ID" in
-    ubuntu*|debian*)
-        apt-get install gcc python3-setuptools python3-dev python3-pip virtualenv -y
-
+case "$ID" in
+    ubuntu)
+        echo "Configuring for Ubuntu..."
+        apt-get update
+        apt-get install -y ca-certificates curl gnupg gcc python3-setuptools python3-dev python3-pip virtualenv
         install -m 0755 -d /etc/apt/keyrings
-        curl -o /etc/apt/keyrings/docker.asc https://download.docker.com/linux/ubuntu/gpg
-        chmod 0644 /etc/apt/keyrings/docker.asc
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
 
-        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" | \
-        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $VERSION_CODENAME stable" | \
+        tee /etc/apt/sources.list.d/docker.list > /dev/null
+        apt-get update
+        apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        ;;
 
-        apt update
-        apt install docker-ce docker-compose-plugin -y
+    debian)
+        echo "Configuring for Debian..."
+        apt-get update
+        apt-get install -y ca-certificates curl gnupg gcc python3-setuptools python3-dev python3-pip virtualenv
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
+
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $VERSION_CODENAME stable" | \
+        tee /etc/apt/sources.list.d/docker.list > /dev/null
+        apt-get update
+        apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         ;;
-    rhel*|rocky*|alma*|centos*|fedora*)
-        rpm --import "https://download.docker.com/linux/rhel/gpg"
-        curl -o /etc/yum.repos.d/docker-ce.repo "https://download.docker.com/linux/rhel/docker-ce.repo"
-        sed -i '/^\[docker-ce-nightly\]/,/^\[/ { /^\[docker-ce-nightly\]/d; /^\[/!d }' /etc/yum.repos.d/docker-ce.repo
-        sed -i '/^\[docker-ce-test\]/,/^\[/ s/^enabled=.*/enabled=0/' "/etc/yum.repos.d/docker-ce.repo"
-        dnf install docker-ce docker-ce-cli containerd.io -y
-        if [ "$DISTRO_ID" == *"8"* ]; then
-            dnf remove runc -y
-            dnf install container-selinux -y
-        fi
+
+    rocky|almalinux|rhel)
+        echo "Configuring for RHEL-based system: $ID $VERSION_ID"
+        dnf install -y dnf-plugins-core
+        dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+        
+        # Address potential conflicts with buildah/podman
+        dnf remove -y runc
+        
+        dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         systemctl enable --now docker
-        systemctl start docker
         ;;
-    fedora*)
-        rpm --import "https://download.docker.com/linux/fedora/gpg"
-        curl -o /etc/yum.repos.d/docker-ce.repo "https://download.docker.com/linux/fedora/docker-ce.repo"
-        sed -i '/^\[docker-ce-nightly\]/,/^\[/ { /^\[docker-ce-nightly\]/d; /^\[/!d }' /etc/yum.repos.d/docker-ce.repo
-        sed -i '/^\[docker-ce-test\]/,/^\[/ s/^enabled=.*/enabled=0/' "/etc/yum.repos.d/docker-ce.repo"
-        dnf install docker-ce docker-ce-cli containerd.io -y
+
+    fedora)
+        echo "Configuring for Fedora..."
+        dnf install -y dnf-plugins-core
+        dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+        dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         systemctl enable --now docker
-        systemctl start docker
         ;;
+
     *)
-        echo "Unknown or unsupported distribution: $ID"
+        echo "Unsupported distribution: $ID"
         exit 1
         ;;
 esac
+
+
+
 
 touch password_manager.db
 touch default_credentials.txt
@@ -57,6 +77,9 @@ if [ ! -f "starting_clients.txt" ]; then
     touch starting_clients.txt
 fi
 
-gunzip password-manager-latest.tar.gz
+if [ -f "password-manager-latest.tar.gz" ]; then
+    gunzip password-manager-latest.tar.gz
+fi
+
 docker load < password-manager-latest.tar
 docker compose up -d

@@ -43,7 +43,11 @@
 
 - name: Get starting credentials
   block:
-    - name: Read starting clients file
+    - name: sleep 2 seconds to wait for creds to populate
+      ansible.builtin.pause:
+        seconds: 2
+
+    - name: Read starting creds file
       ansible.builtin.slurp:
         src: /opt/ccdc-password-manager/default_credentials.txt
       register: default_creds

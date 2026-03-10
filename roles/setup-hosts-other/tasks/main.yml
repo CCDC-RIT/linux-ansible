@@ -42,3 +42,4 @@
 
 - name: Run Yara setup script
   ansible.builtin.shell: /opt/yara-setup.sh
+  ignore_errors: true

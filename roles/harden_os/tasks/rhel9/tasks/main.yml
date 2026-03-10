@@ -314,19 +314,10 @@
     name: sudo
     state: present
 
-- name: Restart sshd
-  ansible.builtin.systemd:
-    name: sshd
-    state: restarted
-
-- name: Systemd daemon reload
-  ansible.builtin.systemd:
-    daemon-reload: true
-
-- name: Authselect NO MORE AUTHSELECT
-  ansible.builtin.file:
-    path: /etc/authselect
-    state: absent
+# - name: Authselect NO MORE AUTHSELECT
+#   ansible.builtin.file:
+#     path: /etc/authselect
+#     state: absent
   
 - name: Restart journald
   ansible.builtin.systemd:
@@ -791,33 +782,33 @@
     mode: 0644
     backup: yes
 
-- name: "HARDEN_OS RHEL | PAM settings"
-  block:
-    - name: "Drop in common-* files"
-      ansible.builtin.copy:
-        src: "rhel/pam.d/{{ item }}"
-        dest: /etc/pam.d/{{ item }}
-        owner: root
-        group: root
-        mode: 0644
-        backup: yes
-      with_items:
-        - system-auth
-        - password-auth
+# - name: "HARDEN_OS RHEL | PAM settings"
+#   block:
+#     - name: "Drop in common-* files"
+#       ansible.builtin.copy:
+#         src: "rhel/pam.d/{{ item }}"
+#         dest: /etc/pam.d/{{ item }}
+#         owner: root
+#         group: root
+#         mode: 0644
+#         backup: yes
+#       with_items:
+#         - system-auth
+#         - password-auth
 
-    - name: "Drop in module configuration files"
-      ansible.builtin.copy:
-        src: "rhel/security/{{ item }}"
-        dest: "/etc/security/{{ item }}"
-        owner: root
-        group: root
-        mode: 0644
-        backup: yes
-      with_items:
-        - pwquality.conf
-        - access.conf
-        - pwhistory.conf
-        - faillock.conf
+#     - name: "Drop in module configuration files"
+#       ansible.builtin.copy:
+#         src: "rhel/security/{{ item }}"
+#         dest: "/etc/security/{{ item }}"
+#         owner: root
+#         group: root
+#         mode: 0644
+#         backup: yes
+#       with_items:
+#         - pwquality.conf
+#         - access.conf
+#         - pwhistory.conf
+#         - faillock.conf
 
 - name: HARDEN_OS RHEL | Make journald backup dir in /var/fonts
   file:
@@ -938,3 +929,12 @@
           item == "/var/log/utmp" or
           item == "/var/log/wtmp" or
           item == "/var/log/lastlog"
+
+- name: Systemd daemon reload
+  ansible.builtin.systemd:
+    daemon-reload: true
+
+- name: Restart sshd
+  ansible.builtin.systemd:
+    name: sshd
+    state: restarted
