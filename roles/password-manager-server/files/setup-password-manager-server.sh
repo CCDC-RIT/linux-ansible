@@ -16,6 +16,7 @@ case "$ID" in
     ubuntu)
         echo "Configuring for Ubuntu..."
         apt-get update
+        apt remove docker-compose-v2 -y
         apt-get install -y ca-certificates curl gnupg gcc python3-setuptools python3-dev python3-pip virtualenv
         install -m 0755 -d /etc/apt/keyrings
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -30,6 +31,7 @@ case "$ID" in
     debian)
         echo "Configuring for Debian..."
         apt-get update
+        apt remove docker-compose-v2 -y
         apt-get install -y ca-certificates curl gnupg gcc python3-setuptools python3-dev python3-pip virtualenv
         install -m 0755 -d /etc/apt/keyrings
         curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg

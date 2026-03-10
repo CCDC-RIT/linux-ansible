@@ -2,23 +2,5 @@
 - name: LOCAL SETUP | Gather facts for localhost
   ansible.builtin.setup:
 
-- name: LOCAL SETUP | Set perms on Root Configure Controller script
-  ansible.builtin.file: 
-    path: "{{ ansible_env.HOME }}/linux-ansible/roles/setup-controller/files/configure-controller-root.sh"
-    mode: 0744
-  become: true
-
-- name: LOCAL SETUP | Run Root Configure Controller script
-  ansible.builtin.shell: "{{ ansible_env.HOME }}/linux-ansible/roles/setup-controller/files/configure-controller-root.sh"
-  become: true
-
-- name: LOCAL SETUP | Setup Configure Ansible Controller Script
-  ansible.builtin.template:
-    src: configure-controller.j2
-    dest: "{{ ansible_env.HOME }}/linux-ansible/configure-controller.sh"
-    owner: "{{ ansible_env.USER }}"
-    group: "{{ ansible_env.USER }}"
-    mode: 0744
-
 - name: LOCAL SETUP | Run Configure Controller script
-  ansible.builtin.shell: "{{ ansible_env.HOME }}/linux-ansible/configure-controller.sh"
+  ansible.builtin.script: configure-controller.sh
