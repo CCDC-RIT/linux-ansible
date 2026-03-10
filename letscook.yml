@@ -15,7 +15,7 @@
 # Clones all scripts that need to be copied over
 - name: Setup Ansible Controller
   hosts: localhost
-  become: yes
+  become: no
   roles:
     - setup-controller
   tags:

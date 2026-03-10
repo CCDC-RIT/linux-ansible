@@ -3,3 +3,9 @@
 .DS_Store
 ansible.log
 /retry
+roles/password-manager-server/files/*
+!roles/password-manager-server/files/setup-password-manager-server.sh
+configure-controller.sh
+roles/password-manager-client/files/
+roles/setup-hosts-other/files/*
+!roles/setup-hosts-other/files/yara-setup.sh

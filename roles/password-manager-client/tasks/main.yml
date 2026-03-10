@@ -6,15 +6,15 @@
     state: directory
     mode: 0755
 
-- name: Download Password Manager Client
+- name: Copy Password Manager Client
   ansible.builtin.copy:
-    src: /opt/passwordmanager/ccdc-password-manager-client
+    src: ccdc-password-manager-client
     dest: /opt/ccdc-password-manager-client/ccdc-password-manager-client
     mode: '0554'
 
-- name: Download Password Manager Service File
+- name: Copy Password Manager Service File
   ansible.builtin.copy:
-    src: /opt/passwordmanager/ccdc-password-manager-client.service
+    src: ccdc-password-manager-client.service
     dest: /etc/systemd/system/pwclient.service
     mode: '0644'
 
