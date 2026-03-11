@@ -19,18 +19,6 @@
     - "pkg-config"
   ignore_errors: true
 
-  - name: Install Useful Packages
-  package:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - "snoopy"
-    - "lynis"
-    - "jq"
-    - "git"
-    - "whois"
-  ignore_errors: true
-
 - name: Copy Yara zip file
   ansible.builtin.copy:
     src: /opt/yara.zip
