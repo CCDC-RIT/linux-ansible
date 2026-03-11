@@ -29,7 +29,7 @@ fi
 if [[ ! -f "/home/$home_user/.ssh/id_ed25519" ]]; then
     ssh-keygen -t ed25519 -f "/home/$home_user/.ssh/id_ed25519" -N "" -q
     chown "$home_user:$home_user" /"home/$home_user/.ssh/id_ed25519"
-    chmod 640 /"home/$home_user/.ssh/id_ed25519"
+    chmod 600 /"home/$home_user/.ssh/id_ed25519"
 fi
 
 # create backups directory
@@ -61,7 +61,7 @@ systemctl restart docker
 docker pull ghcr.io/ccdc-rit/password-manager:latest
 docker save ghcr.io/ccdc-rit/password-manager:latest > "/home/$home_user/linux-ansible/roles/password-manager-server/files/password-manager-latest.tar"
 
-# ?
+# Compress Password Manger Image
 gzip "/home/$home_user/linux-ansible/roles/password-manager-server/files/password-manager-latest.tar" --force
 
 # Download password manager docker compose file from repo
