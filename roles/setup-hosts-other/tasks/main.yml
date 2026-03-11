@@ -43,3 +43,30 @@
 - name: Run Yara setup script
   ansible.builtin.shell: /opt/yara-setup.sh
   ignore_errors: true
+
+- name: Copy Falco setup script
+  ansible.builtin.copy:
+    src: falco-setup.sh
+    dest: /opt/falco-setup.sh
+    owner: blueteam
+    group: blueteam
+    mode: 0744
+
+- name: Run Falco setup script
+  ansible.builtin.shell: /opt/falco-setup.sh
+  
+- name: Copy over Falco incubating rules
+  ansible.builtin.copy:
+    src: falco-incubating_rules.yaml
+    dest: /etc/falco/rules.d/falco-incubating_rules.yaml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy over Falco sandbox rules
+  ansible.builtin.copy:
+    src: falco-sandbox_rules.yaml
+    dest: /etc/falco/rules.d/falco-sandbox_rules.yaml
+    owner: root
+    group: root
+    mode: 0644

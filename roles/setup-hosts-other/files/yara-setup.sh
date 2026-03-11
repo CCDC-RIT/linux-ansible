@@ -2,6 +2,7 @@
 
 if [[ $EUID -ne 0 ]]; then
   echo "RUN AS ROOT"
+  exit 1
 fi
 
 unzip -o /opt/yara.zip -d /opt/yara/
