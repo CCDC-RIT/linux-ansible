@@ -24,10 +24,10 @@
   ignore_errors: true
 
 - name: Fetch the backup archive to the manager node
-  ansible.builtin.fetch:
+  ansible.builtin.synchronize:
+    mode: pull
     src: "{{ backup_dir }}/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
     dest: "/opt/backups"
-    flat: yes
   timeout: 45
   ignore_errors: true
 
