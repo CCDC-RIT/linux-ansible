@@ -27,7 +27,17 @@
     DEBIAN_FRONTEND: noninteractive
     UCF_FORCE_CONFOLD: "true"
   async: 300
-  poll: 5
+  poll: 0
+  register: install_packages
+
+- name: Wait for package installation to complete
+  ansible.builtin.async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 30
+  delay: 10
+  with_items: "{{ install_packages.results }}"
 
 - name: Create Yara directory
   ansible.builtin.file:
