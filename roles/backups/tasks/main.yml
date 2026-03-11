@@ -28,6 +28,7 @@
     mode: pull
     src: "{{ backup_dir }}/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
     dest: "/opt/backups"
+  delegate_to: localhost
   timeout: 45
   ignore_errors: true
 
