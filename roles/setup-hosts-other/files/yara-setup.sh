@@ -26,6 +26,3 @@ unzip -o yara-forge-rules-full.zip
 # compile rules
 yarac /opt/yara/Linux/* /opt/yara/Multi/* /opt/yara/ccdc_only_compiled_rules.yarac
 yarac /opt/yara/Linux/* /opt/yara/Multi/* /opt/yara/packages/full/yara-rules-full.yar /opt/yara/full_compiled_rules.yarac
-
-rm /opt/yara-setup.sh
-rm /opt/yara.zip
