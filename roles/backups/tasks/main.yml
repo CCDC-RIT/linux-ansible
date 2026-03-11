@@ -20,12 +20,12 @@
 
 - name: Archive important directories on worker nodes
   ansible.builtin.shell: |
-    tar -cpzf /opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /bin /usr/lib/systemd
+    tar -cpzf {{ backup_dir }}/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /usr/bin /usr/lib/systemd
   ignore_errors: true
 
 - name: Fetch the backup archive to the manager node
   ansible.builtin.fetch:
-    src: "/opt/backups/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+    src: "{{ backup_dir }}/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
     dest: "/opt/backups"
     flat: yes
   ignore_errors: true
