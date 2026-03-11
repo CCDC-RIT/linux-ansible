@@ -18,17 +18,27 @@
     state: directory
     mode: '0755'
 
+- name: Set backup file path
+  ansible.builtin.set_fact:
+    backup_path: "{{ backup_dir }}/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+
 - name: Archive important directories on worker nodes
   ansible.builtin.shell: |
-    tar -cpzf {{ backup_dir }}/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz /etc /usr/bin /usr/lib/systemd
+    tar -cpzf {{ backup_path }} /etc /usr/bin /usr/lib/systemd
   ignore_errors: true
+
+- name: Make backup readable
+  ansible.builtin.file:
+    path: "{{ backup_path }}"
+    mode: "0644"
 
 - name: Fetch the backup archive to the manager node
   ansible.posix.synchronize:
     mode: pull
-    src: "{{ backup_dir }}/system_backups/{{ inventory_hostname }}_backup_{{ ansible_date_time.date }}.tar.gz"
+    src: "{{ backup_path }}"
     dest: "/opt/backups"
   delegate_to: localhost
+  become: false
   timeout: 45
   ignore_errors: true
 
