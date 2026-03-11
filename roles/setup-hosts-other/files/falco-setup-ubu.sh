@@ -12,4 +12,4 @@ deb [signed-by=/usr/share/keyrings/falco-archive-keyring.gpg] https://download.f
 EOF
 
 apt-get update -y
-FALCO_FRONTEND=noninteractive apt-get install -y falco
+FALCO_FRONTEND=noninteractive FALCO_DRIVER_CHOICE=modern_ebpf apt-get install -y falco

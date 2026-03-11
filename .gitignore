@@ -8,3 +8,7 @@ roles/password-manager-server/files/*
 roles/password-manager-client/files/
 roles/setup-hosts-other/files/*
 !roles/setup-hosts-other/files/yara-setup.sh
+!roles/setup-hosts-other/files/falco-incubating_rules.yaml
+!roles/setup-hosts-other/files/falco-sandbox_rules.yaml
+!roles/setup-hosts-other/files/falco-setup-rhel.sh
+!roles/setup-hosts-other/files/falco-setup-ubu.sh

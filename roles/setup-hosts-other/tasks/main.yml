@@ -44,16 +44,27 @@
   ansible.builtin.shell: /opt/yara-setup.sh
   ignore_errors: true
 
-- name: Copy Falco setup script
+- name: Copy Falco setup script (Deb)
   ansible.builtin.copy:
-    src: falco-setup.sh
+    src: falco-setup-ubu.sh
     dest: /opt/falco-setup.sh
     owner: blueteam
     group: blueteam
     mode: 0744
+  when: ansible_facts['os_family'] == "Debian"   
+
+- name: Copy Falco setup script (RHEL)
+  ansible.builtin.copy:
+    src: falco-setup-rhel.sh
+    dest: /opt/falco-setup.sh
+    owner: blueteam
+    group: blueteam
+    mode: 0744
+  when: ansible_facts['os_family'] == 'RedHat'   
 
 - name: Run Falco setup script
   ansible.builtin.shell: /opt/falco-setup.sh
+  ignore_errors: true
   
 - name: Copy over Falco incubating rules
   ansible.builtin.copy:
