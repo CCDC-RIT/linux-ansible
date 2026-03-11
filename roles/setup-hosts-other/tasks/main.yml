@@ -76,3 +76,8 @@
     owner: root
     group: root
     mode: 0644
+
+- name: Restart falco service
+  ansible.builtin.service:
+    name: falco-modern-bpf
+    state: restarted
