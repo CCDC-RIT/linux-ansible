@@ -29,13 +29,26 @@
   async: 300
   poll: 5
 
-- name: Copy Yara zip file
-  ansible.builtin.copy:
-    src: /opt/yara.zip
-    dest: /opt/yara.zip
+- name: Create Yara directory
+  ansible.builtin.file:
+    path: /opt/yara
+    state: directory
     owner: blueteam
     group: blueteam
-    mode: 0644
+    mode: 0755
+
+- name: Copy yara files needed
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/opt/yara/{{ item }}"
+    owner: blueteam
+    group: blueteam
+    mode: 0664
+  with_items:
+    - "Linux.zip"
+    - "Multi.zip"
+    - "yara-forge-rules-full.zip"
+    - "yara.tar.gz"
 
 - name: Copy Yara setup script
   ansible.builtin.copy:

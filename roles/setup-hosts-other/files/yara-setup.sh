@@ -5,8 +5,6 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-unzip -o /opt/yara.zip -d /opt/yara/
-
 # unzip yara
 tar -xzf /opt/yara/yara.tar.gz -C /opt/yara/
 cd /opt/yara/yara-4.5.4/
