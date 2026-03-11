@@ -17,6 +17,11 @@
     - "make"
     - "gcc"
     - "pkg-config"
+    - "snoopy"
+    - "lynis"
+    - "jq"
+    - "git"
+    - "whois"
   ignore_errors: true
   environment:
     DEBIAN_FRONTEND: noninteractive

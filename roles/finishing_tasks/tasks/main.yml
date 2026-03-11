@@ -7,18 +7,6 @@
     - "INPUT"
     - "OUTPUT"
 
-- name: Install Useful Packages
-  package:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - "snoopy"
-    - "lynis"
-    - "jq"
-    - "git"
-    - "whois"
-  ignore_errors: true
-
 - name: Update the package cache and all packages (Debian/Ubuntu)
   ansible.builtin.apt:
     update_cache: true # Equivalent of "apt-get update"
