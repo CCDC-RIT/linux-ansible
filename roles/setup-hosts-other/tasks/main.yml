@@ -81,3 +81,4 @@
   ansible.builtin.service:
     name: falco-modern-bpf
     state: restarted
+  ignore_errors: true
