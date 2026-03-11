@@ -18,6 +18,11 @@
     - "gcc"
     - "pkg-config"
   ignore_errors: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    UCF_FORCE_CONFOLD: "true"
+  async: 300
+  poll: 5
 
 - name: Copy Yara zip file
   ansible.builtin.copy:
