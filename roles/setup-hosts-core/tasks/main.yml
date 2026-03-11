@@ -137,16 +137,19 @@
   ansible.builtin.apt:
     update_cache: true
   when: ansible_facts['os_family'] == 'Debian'
+  ignore_errors: true
 
 - name: Dnf update (RHEL/CentOS)
   ansible.builtin.dnf:
     update_cache: true
   when: ansible_facts['os_family'] == 'RedHat'
+  ignore_errors: true
 
 - name: Zypper update (SUSE)
   community.general.zypper:
     update_cache: true
   when: ansible_facts['os_family'] == 'Suse'
+  ignore_errors: true
 
 - name: Install Packages for backups and firewall
   package:
