@@ -1,1 +1,74 @@
-wp_harden_root: "/var/www/html/wordpress"
+wp_path: "/var/www/html/wordpress"
+report_file: "{{ wp_report_path }}/wp_audit_{{ inventory_hostname }}_{{ ansible_date_time.date }}.txt"
+# wp_uploads_dir: # OPTIONAL - only set if different than default of wp-content/uploads
+wp_report_path: "/home/blueteam/wordpress_ansible"
+db_check: false # Run database checks (default: false)
+
+# Important WP files
+wp_core_files:
+  - "wp-login.php"
+  - "wp-config.php"
+  - "wp-cron.php"
+  - "xmlrpc.php"
+  - "wp-includes/functions.php"
+  - "wp-admin/admin.php"
+
+# common malicious PHP function patterns
+malicious_php_patterns:
+  - "eval\\s*("
+  - "base64_decode\\s*("
+  - "gzinflate\\s*("
+  - "str_rot13\\s*("
+  - "gzuncompress\\s*("
+  - "str_replace\\s*.*\\\\x"
+  - "preg_replace.*\\/e"
+  - "assert\\s*("
+  - "passthru\\s*("
+  - "shell_exec\\s*("
+  - "system\\s*("
+  - "popen\\s*("
+  - "proc_open\\s*("
+  - "exec\\s*("
+  - "file_get_contents\\s*.*http"
+  - "file_put_contents\\s*("
+  - "move_uploaded_file\\s*("
+  - "\\$_REQUEST\\[.*\\].*eval"
+  - "\\$_GET\\[.*\\].*eval"
+  - "\\$_POST\\[.*\\].*eval"
+  - "\\$_COOKIE\\[.*\\].*eval"
+  - "create_function\\s*("
+  - "call_user_func.*\\$"
+  - "chr\\s*([0-9].*)\\.chr"
+  - "fsockopen\\s*("
+  - "stream_socket_client\\s*("
+  - "curl_exec\\s*("
+
+# Backdoor filename patterns
+backdoor_filenames:
+  - "c99"
+  - "r57"
+  - "shell"
+  - "wso"
+  - "b374k"
+  - "indoxploit"
+  - "FilesMan"
+  - "alfa"
+  - "priv8"
+  - "tmp\\.php"
+  - "upload\\.php"
+  - "cmd\\.php"
+  - "bypass"
+  - "rootkit"
+
+# Files that should not exist in WordPress root or core dirs
+suspicious_extensions:
+  - "*.php.bak"
+  - "*.php.old"
+  - "*.php~"
+  - "*.php.save"
+  - "*.phtml"
+  - "*.php5"
+  - "*.php7"
+  - "*.shtml"
+  - "*.cgi"
+  - "*.pl"
