@@ -12,16 +12,23 @@
   with_items:
     - "openssl"
     - "libssl-dev"
-    - "snoopy"
-    - "lynis"
-    - "jq"
-    - "git"
-    - "whois"
     - "automake"
     - "libtool"
     - "make"
     - "gcc"
     - "pkg-config"
+  ignore_errors: true
+
+  - name: Install Useful Packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "snoopy"
+    - "lynis"
+    - "jq"
+    - "git"
+    - "whois"
   ignore_errors: true
 
 - name: Copy Yara zip file
