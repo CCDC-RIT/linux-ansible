@@ -327,13 +327,14 @@
 - name: HARDEN_OS RHEL | Secure SSHd
   block:
     - name: "Replace sshd_config with our version"
-      ansible.builtin.copy:
-        src: rhel/sshd_config
+      ansible.builtin.template:
+        src: sshd_config.j2
         dest: /etc/ssh/sshd_config
         owner: root
         group: root
         mode: 0644
         backup: yes
+        validate: /usr/sbin/sshd -t -f %s
 
     - name: "Restart sshd"
       ansible.builtin.systemd:

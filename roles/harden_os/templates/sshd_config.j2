@@ -17,3 +17,7 @@ TCPKeepAlive yes
 Protocol 2
 Banner /etc/issue.net
 #AllowUsers blueteam
+
+Match User {{ ansible_user }}
+    PasswordAuthentication yes
+Match All
