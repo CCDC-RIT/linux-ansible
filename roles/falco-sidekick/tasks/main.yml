@@ -1,0 +1,45 @@
+- name: Copy over Falco sidekick setup script
+  ansible.builtin.copy:
+    src: falcosidekick-setup.sh
+    dest: /opt/falcosidekick-setup.sh
+    owner: blueteam
+    group: blueteam
+    mode: 0744
+
+- name: Run Falco sidekick setup script
+  ansible.builtin.shell: /opt/falcosidekick-setup.sh
+  ignore_errors: true
+
+- name: Move Falco Sidekick service file over
+  ansible.builtin.copy:
+    src: falcosidekick.service
+    dest: /etc/systemd/system/falcosidekick.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create Falcosidekick configuration directory
+  ansible.builtin.file:
+    path: /etc/falcosidekick
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Move over Falco sidekick config file
+  ansible.builtin.copy:
+    src: falcosidekick_config.yaml
+    dest: /etc/falcosidekick/config.yaml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Daemon Reload
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable Falcosidekick Service
+  ansible.builtin.systemd:
+    name: falcosidekick.service
+    enabled: yes
+    state: restarted

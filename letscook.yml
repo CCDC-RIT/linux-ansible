@@ -178,3 +178,13 @@
     - never
     - deploy
     - finish
+
+#NOT PART OF DEPLOY - falco sidekick config must be set up in config file first, run standalone
+- name: Deploy Falco Sidekick
+  hosts: all
+  become: yes
+  roles:
+    - falco-sidekick
+  tags:
+    - never
+    - falcosidekick
