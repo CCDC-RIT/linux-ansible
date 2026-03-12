@@ -117,4 +117,4 @@ if ! shopt -oq posix; then
 fi
 
 #Alias to read Falco journalctl logs
-journalctl _COMM=falco
+alias falcologs="sudo journalctl _COMM=falco"

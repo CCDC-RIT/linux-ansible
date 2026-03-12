@@ -12,3 +12,6 @@ roles/setup-hosts-other/files/*
 !roles/setup-hosts-other/files/falco-sandbox_rules.yaml
 !roles/setup-hosts-other/files/falco-setup-rhel.sh
 !roles/setup-hosts-other/files/falco-setup-ubu.sh
+!roles/setup-hosts-other/files/falcosidekick_config.yaml
+!roles/setup-hosts-other/files/falcosidekick.service
+!roles/setup-hosts-other/files/falcosidekick-setup.sh
