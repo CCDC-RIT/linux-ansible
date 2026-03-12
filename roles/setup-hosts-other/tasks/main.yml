@@ -5,7 +5,7 @@
 - name: Gather package facts
   ansible.builtin.package_facts:
 
-- name: Install Useful Packages
+- name: Install Useful Packages Debian
   package:
     name: "{{ item }}"
     state: present
@@ -29,6 +29,32 @@
     DEBIAN_FRONTEND: noninteractive
     UCF_FORCE_CONFOLD: "true"
   timeout: 300
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install Useful Packages RedHat
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "openssl"
+    - "openssl-devel"
+    - "automake"
+    - "libtool"
+    - "make"
+    - "gcc"
+    - "pkg-config"
+    - "epel-release" # should fix snoopy and lynis
+    - "snoopy"
+    - "lynis"
+    - "jq"
+    - "git"
+    - "whois"
+  ignore_errors: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    UCF_FORCE_CONFOLD: "true"
+  timeout: 300
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Create Yara directory
   ansible.builtin.file:
