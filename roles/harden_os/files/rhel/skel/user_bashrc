@@ -27,4 +27,4 @@ fi
 unset rc
 
 #Alias to read Falco journalctl logs
-journalctl _COMM=falco
+alias falcologs="journalctl _COMM=falco"
