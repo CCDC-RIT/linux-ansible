@@ -23,7 +23,6 @@
     - "git"
     - "whois"
     - "gnupg"
-    - "gnupg2"
   ignore_errors: true
   environment:
     DEBIAN_FRONTEND: noninteractive
@@ -49,6 +48,7 @@
     - "jq"
     - "git"
     - "whois"
+    - "gnupg2"
   ignore_errors: true
   environment:
     DEBIAN_FRONTEND: noninteractive
