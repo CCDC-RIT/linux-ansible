@@ -1,8 +1,8 @@
 ---
-# Agent Config Options (you probably need to change these for each deployed instance)
+#####
+# Critical vars - change these
+#####
 stabvest_agent_name: "apache2"    # Agent name. Must be unique per agent per host. For example, if this protects apache2, name it 'apache2'
-stabvest_auth_token: "testtoken"  # Initial token to use for registration, found in agent_auth_tokens from main server deploy or from /web/management page
-stabvest_server_url: "https://127.0.0.1:8000/"  # Server IP to connect to - must be in format https://{ip}:{port}/
 stabvest_disarm: false            # TRUE to operate in DISARM mode (reporting only, no autofix)
 stabvest_debug_print: true      
 stabvest_iptables_path: "iptables" # (Linux only) path to iptables binary. Note: iptables-save should be colocated with this binary at {{ stabvest_iptables_path }}-save
@@ -35,6 +35,14 @@ stabvest_protected_folders: # List of folders or files to protect. For example, 
   - "/lib/systemd/system/apache2.service"
 #stabvest_protected_folders: ["/var/www","/usr/sbin/httpd","/etc/httpd/conf","/etc/httpd/conf.d","/etc/httpd/conf.modules.d","/etc/httpd/modules","/usr/lib/systemd/system/httpd.service"]
 #stabvest_protected_folders: ['C:\\inetpub\\wwwroot']
+
+
+#####
+# Critical vars that should be automated safely - just confirm that they're still good
+#####
+
+stabvest_auth_token: "{{ birdsnest_token }}"  # Initial token to use for registration, found in agent_auth_tokens from main server deploy or from /web/management page
+stabvest_server_url: "https://{{ birdsnest_host }}/"  # Server IP to connect to - must be in format https://{ip}:{port}/
 
 
 ##########

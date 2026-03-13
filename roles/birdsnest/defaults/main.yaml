@@ -1,29 +1,34 @@
 ---
+#####
+# Critical vars - change these
+#####
+
+webgui_users:             # Users that can log into the website frontend
+  adminuser:              # username
+    password: "adminpwd"  # password
+    role: "admin"         # role - admin, analyst, or guest
+webhook_url: ""           # Discord webhook url (empty string if none). This can be changed after deploy by modifying config.json and restarting the docker containers.
 stabvest_allow_ips_web:   # IPs that the Nginx proxy will allow to webserver web (frontend) endpoints. Set to your jumpboxes' IPs/range.
   - 127.0.0.1
   - 172.16.0.0/12
 stabvest_allow_ips_agent: # IPs that the Nginx proxy will allow to webserver agent (backend) endpoints. Set to the inscope IPs/ranges.
   - 127.0.0.1
   - 10.0.0.0/8
-stabvest_host: "{{ ansible_default_ipv4.address }}" # Public URL of server used for linking and certs. note: is NOT used for starting the server listener (that is always 0.0.0.0)
-stabvest_port: 8000       # External port to listen on
-webhook_url: "https://discord.com/api/webhooks/1445146908808188065/1xkiXfsL7ie8i04rGxdMu6nnnzJsVtj188VbHtZT5oBNJIoOYV5VP8lpI-mJhzeNYuYD" # Discord webhook url (empty string if none)
-agent_auth_tokens:        # Registration tokens that agents use for the initial connection - must be copied to the agent deploy ansible!
-  testtoken:              # token value
-    added_by: "default"   # leave as is
-webgui_users:             # Users that can log into the website frontend
-  admin:                  # username
-    password: "admin"     # password
-    role: "admin"         # role - admin, analyst, or guest
-  analyst:
-    password: "analyst"
-    role: "analyst"
-  guest:
-    password: "guest"
-    role: "guest"
+
 
 #####
-# Variables below this line are not critical and can likely be ignored
+# Critical vars that should be automated safely - just confirm that they're still good
+#####
+
+stabvest_host: "{{ birdsnest_host.split(':')[:-1] | join(':') | regex_replace('^\\[|\\]$', '') }}" # Public URL of server used for linking and certs. note: is NOT used for starting the server listener (that is always 0.0.0.0)
+stabvest_port: "{{ birdsnest_host.split(':') | last }}" # External port to listen on
+agent_auth_tokens:        # Registration tokens that agents use for the initial connection - must be copied to the agent deploy ansible!
+  "{{ birdsnest_token }}": # token value
+    added_by: "ansible"   # leave as is
+
+
+#####
+# Variables below this line are not critical and can almost certainly be left on their defaults
 #####
 
 # Deploy vars
