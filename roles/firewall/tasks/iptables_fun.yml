@@ -16,11 +16,20 @@
     jump: ACCEPT
   when: ansible_default_ipv4.address == password_manager_ip
 
-- name: Allow output to the Stabvest server
+- name: Allow output to the Birdsnest server
   ansible.builtin.iptables:
     chain: OUTPUT
     protocol: tcp
-    destination_port: "443"
+    destination_port: "{{ birdsnest_host.split(':') | last }}"
     destination: "{{ birdsnest_host_ip }}"
     jump: ACCEPT
   when: birdsnest_host_ip | length > 0
+
+- name: Allow inbound if this is the Birdsnest server
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ birdsnest_host.split(':') | last }}"
+    destination: "{{ birdsnest_host_ip }}"
+    jump: ACCEPT
+  when: ansible_default_ipv4.address == birdsnest_host_ip
