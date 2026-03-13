@@ -2,34 +2,34 @@
 #####
 # Critical vars - change these
 #####
-stabvest_agent_name: "apache2"    # Agent name. Must be unique per agent per host. For example, if this protects apache2, name it 'apache2'
-stabvest_disarm: false            # TRUE to operate in DISARM mode (reporting only, no autofix)
-stabvest_iptables_path: "iptables" # (Linux only) path to iptables binary
-stabvest_ports:     # List of ports to protect. If none, set to stabvest_ports: []
+magpie_agent_name: "apache2"    # Agent name. Must be unique per agent per host. For example, if this protects apache2, name it 'apache2'
+magpie_disarm: false            # TRUE to operate in DISARM mode (reporting only, no autofix)
+magpie_iptables_path: "iptables" # (Linux only) path to iptables binary
+magpie_ports:     # List of ports to protect. If none, set to magpie_ports: []
   - 80
-stabvest_services:  # List of service names to protect. If none, set to stabvest_services: []
+magpie_services:  # List of service names to protect. If none, set to magpie_services: []
   - "apache2"
 #  - "httpd"
 #  - "W3SVC"
-stabvest_packages:  # List of packages to protect. If none, set to stabvest_packages: []
+magpie_packages:  # List of packages to protect. If none, set to magpie_packages: []
   - "apache2"
 #  - "httpd"
 #  - "IIS-WebServerRole"
-stabvest_protected_folders: # List of folders or files to protect. For example, service content, service config, service executable, service systemd file. If none, set to stabvest_protected_folders: []
+magpie_protected_folders: # List of folders or files to protect. For example, service content, service config, service executable, service systemd file. If none, set to magpie_protected_folders: []
   - "/var/www"
   - "/usr/sbin/apache2"
   - "/etc/apache2"
   - "/lib/systemd/system/apache2.service"
-#stabvest_protected_folders: ["/var/www","/usr/sbin/httpd","/etc/httpd/conf","/etc/httpd/conf.d","/etc/httpd/conf.modules.d","/etc/httpd/modules","/usr/lib/systemd/system/httpd.service"]
-#stabvest_protected_folders: ['C:\\inetpub\\wwwroot']
+#magpie_protected_folders: ["/var/www","/usr/sbin/httpd","/etc/httpd/conf","/etc/httpd/conf.d","/etc/httpd/conf.modules.d","/etc/httpd/modules","/usr/lib/systemd/system/httpd.service"]
+#magpie_protected_folders: ['C:\\inetpub\\wwwroot']
 
 
 #####
 # Critical vars that should be automated safely - just confirm that they're still good
 #####
 
-stabvest_auth_token: "{{ birdsnest_token }}"  # Initial token to use for registration, found in agent_auth_tokens from main server deploy or from /web/management page
-stabvest_server_url: "https://{{ birdsnest_host }}/"  # Server IP to connect to - must be in format https://{ip}:{port}/
+magpie_auth_token: "{{ birdsnest_token }}"  # Initial token to use for registration, found in agent_auth_tokens from main server deploy or from /web/management page
+magpie_server_url: "https://{{ birdsnest_host }}/"  # Server IP to connect to - must be in format https://{ip}:{port}/
 
 
 ##########
@@ -38,24 +38,24 @@ stabvest_server_url: "https://{{ birdsnest_host }}/"  # Server IP to connect to 
 
 
 # Ansible Deployment Vars
-stabvest_agent_executable: "agent.py" 
-stabvest_tester_executable: "agent_tester.py"
-stabvest_include_tester: true
-stabvest_service_start: true
-stabvest_deploy_dir: "{{ [ (ansible_os_family == 'Windows') | ternary('C:\\stabvest', '/stabvest'), stabvest_agent_name, '' ] | path_join }}"
-#stabvest_task_create: false
-#stabvest_task_name: "stabvest"
-#stabvest_task_interval: 300 #seconds. cron needs this to be an even minutes value (so divisible by 60)
+magpie_agent_executable: "agent.py" 
+magpie_tester_executable: "agent_tester.py"
+magpie_include_tester: true
+magpie_service_start: true
+magpie_deploy_dir: "{{ [ (ansible_os_family == 'Windows') | ternary('C:\\magpie', '/magpie'), magpie_agent_name, '' ] | path_join }}"
+#magpie_task_create: false
+#magpie_task_name: "magpie"
+#magpie_task_interval: 300 #seconds. cron needs this to be an even minutes value (so divisible by 60)
 
 # More Agent Config Options
-stabvest_debug_print: true
-stabvest_server_timeout: 5
-stabvest_sleeptime: 60
-stabvest_logfile: "log.txt"
-stabvest_statusfile: "status.txt"
-stabvest_mtu_min: 1200
-stabvest_mtu_default: 1300
-stabvest_mtu_max: 1514
-stabvest_linux_default_ttl: 64
-stabvest_agent_type: "stabvest"
-stabvest_backupdir: "" # unused, just perma defaults to same dir as the agent executable
+magpie_debug_print: true
+magpie_server_timeout: 5
+magpie_sleeptime: 60
+magpie_logfile: "log.txt"
+magpie_statusfile: "status.txt"
+magpie_mtu_min: 1200
+magpie_mtu_default: 1300
+magpie_mtu_max: 1514
+magpie_linux_default_ttl: 64
+magpie_agent_type: "magpie"
+magpie_backupdir: "" # unused, just perma defaults to same dir as the agent executable

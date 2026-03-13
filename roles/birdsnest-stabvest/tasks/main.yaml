@@ -16,8 +16,8 @@
 
 - name: Start Services
   ansible.builtin.include_tasks: service_start.yaml
-  when: stabvest_service_start
+  when: magpie_service_start
   
 #- name: Start scheduled task
 #  ansible.builtin.include_tasks: scheduled_task.yaml
-#  when: stabvest_task_create
+#  when: magpie_task_create

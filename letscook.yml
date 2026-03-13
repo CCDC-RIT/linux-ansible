@@ -139,15 +139,15 @@
     - owlet
   #ignore_errors: true
 
-- name: Setup Birdsnest Stabvest Client
+- name: Setup Birdsnest Magpie Client
   hosts: all
   become: yes
   roles:
-    - birdsnest-stabvest
+    - birdsnest-magpie
   tags:
     - never
     - deploy
-    - stabvest
+    - magpie
   #ignore_errors: true
 
 - name: Audit System

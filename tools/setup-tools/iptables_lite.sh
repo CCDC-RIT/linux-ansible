@@ -5,7 +5,7 @@ set -euo pipefail
 
 ANSIBLE_CONTROLLER=192.168.1.62 # best way to do this? env var?
 PASSWORD_MANAGER=192.168.1.63
-STABVEST_CONTROLLER=192.168.1.64
+MAGPIE_CONTROLLER=192.168.1.64
 CONTROLLER_IN_SCOPE_IP=""
 
 tcp_ports=
@@ -131,8 +131,8 @@ else
     write-line "${RED}No match found; continuing"
 fi
 
-write-line "${BLUE}Allow output to stabvest server"
-iptables -A OUTPUT -p tcp -d $STABVEST_CONTROLLER --dport 443 -j ACCEPT
+write-line "${BLUE}Allow output to magpie server"
+iptables -A OUTPUT -p tcp -d $MAGPIE_CONTROLLER --dport 443 -j ACCEPT
 
 write-line "${ORANGE}Block everything else"
 iptables -P INPUT DROP

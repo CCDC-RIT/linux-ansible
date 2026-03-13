@@ -26,16 +26,16 @@
     enabled: yes
     state: started
   when: ansible_os_family == "RedHat"
-  
+
 - name: Ensure destination directory exists
   ansible.windows.win_file:
-    path: "{{ stabvest_deploy_dir }}"
+    path: "{{ magpie_deploy_dir }}"
     state: directory
   when: ansible_facts.os_family == "Windows" 
 
 - name: Ensure destination directory exists
   ansible.builtin.file:
-    path: "{{ stabvest_deploy_dir }}"
+    path: "{{ magpie_deploy_dir }}"
     state: directory
     owner: root
     group: root
@@ -44,31 +44,31 @@
 
 - name: Copy agent executable to target
   win_copy:
-    src: "files/{{ stabvest_agent_executable }}"
-    dest: "{{ stabvest_deploy_dir }}\\{{ stabvest_agent_executable }}"
+    src: "files/{{ magpie_agent_executable }}"
+    dest: "{{ magpie_deploy_dir }}\\{{ magpie_agent_executable }}"
   when: ansible_facts.os_family == "Windows" 
 
 - name: Copy tester executable to target
   win_copy:
-    src: "files/{{ stabvest_tester_executable }}"
-    dest: "{{ stabvest_deploy_dir }}\\{{ stabvest_tester_executable }}"
-  when: ansible_facts.os_family == "Windows" and stabvest_include_tester
+    src: "files/{{ magpie_tester_executable }}"
+    dest: "{{ magpie_deploy_dir }}\\{{ magpie_tester_executable }}"
+  when: ansible_facts.os_family == "Windows" and magpie_include_tester
 
 - name: Render config.json from template
   template:
     src: "config.json.j2"
-    dest: "{{ [stabvest_deploy_dir, 'config.json'] | path_join }}"
+    dest: "{{ [magpie_deploy_dir, 'config.json'] | path_join }}"
 
 - name: Copy requirements to target
   win_copy:
     src: "files/requirements.txt"
-    dest: "{{ stabvest_deploy_dir }}\\requirements.txt"
+    dest: "{{ magpie_deploy_dir }}\\requirements.txt"
   when: ansible_facts.os_family == "Windows" 
 
 - name: Copy requirements to target
   copy:
     src: "files/requirements.txt"
-    dest: "{{ stabvest_deploy_dir }}/requirements.txt"
+    dest: "{{ magpie_deploy_dir }}/requirements.txt"
     owner: root
     group: root
     mode: '0755'
@@ -81,8 +81,8 @@
 
 - name: Create venv and install requirements
   ansible.builtin.pip:
-    requirements: "{{ [stabvest_deploy_dir, 'requirements.txt'] | path_join }}"
-    virtualenv: "{{ [stabvest_deploy_dir, 'venv'] | path_join }}"
+    requirements: "{{ [magpie_deploy_dir, 'requirements.txt'] | path_join }}"
+    virtualenv: "{{ [magpie_deploy_dir, 'venv'] | path_join }}"
     virtualenv_command: "{{ (ansible_os_family == 'Windows') | ternary('python -m venv', 'python3 -m venv') }}"
     state: present
   vars:
@@ -91,8 +91,8 @@
 
 - name: Copy agent executable to target
   copy:
-    src: "files/{{ stabvest_agent_executable }}"
-    dest: "{{ stabvest_deploy_dir }}/{{ stabvest_agent_executable }}"
+    src: "files/{{ magpie_agent_executable }}"
+    dest: "{{ magpie_deploy_dir }}/{{ magpie_agent_executable }}"
     owner: root
     group: root
     mode: '0755'
@@ -100,15 +100,15 @@
 
 - name: Copy tester executable to target
   copy:
-    src: "files/{{ stabvest_tester_executable }}"
-    dest: "{{ stabvest_deploy_dir }}/{{ stabvest_tester_executable }}"
+    src: "files/{{ magpie_tester_executable }}"
+    dest: "{{ magpie_deploy_dir }}/{{ magpie_tester_executable }}"
     owner: root
     group: root
     mode: '0755'
-  when: ansible_facts.os_family != "Windows" and stabvest_include_tester
+  when: ansible_facts.os_family != "Windows" and magpie_include_tester
 
 - name: Copy NSSM executable to target
   win_copy:
     src: "files/nssm-2.24_win64.exe"
-    dest: "{{ stabvest_deploy_dir }}\\nssm.exe"
+    dest: "{{ magpie_deploy_dir }}\\nssm.exe"
   when: ansible_facts.os_family == "Windows"
