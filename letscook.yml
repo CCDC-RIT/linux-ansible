@@ -117,6 +117,39 @@
     - password-manager
   ignore_errors: true
 
+- name: Setup Birdsnest Server
+  hosts: all
+  become: yes
+  roles:
+    - birdsnest
+  tags:
+    - never
+    - deploy
+    - birdsnest
+  #ignore_errors: true
+
+- name: Setup Birdsnest Owlet Client
+  hosts: all
+  become: yes
+  roles:
+    - birdsnest-owlet
+  tags:
+    - never
+    - deploy
+    - owlet
+  #ignore_errors: true
+
+- name: Setup Birdsnest Stabvest Client
+  hosts: all
+  become: yes
+  roles:
+    - birdsnest-stabvest
+  tags:
+    - never
+    - deploy
+    - stabvest
+  #ignore_errors: true
+
 - name: Audit System
   hosts: all
   become: yes
