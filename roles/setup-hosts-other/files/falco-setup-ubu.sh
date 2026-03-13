@@ -5,6 +5,7 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+rm /usr/share/keyrings/falco-archive-keyring.gpg
 curl -fsSL https://falco.org/repo/falcosecurity-packages.asc | gpg --dearmor -o /usr/share/keyrings/falco-archive-keyring.gpg
 
 cat << EOF > /etc/apt/sources.list.d/falcosecurity.list
