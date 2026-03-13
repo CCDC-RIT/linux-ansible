@@ -16,7 +16,7 @@
         "DisplayName": "{{ stabvest_service_backups.DisplayName }}",
         "StartType": "{{ stabvest_service_backups.StartType }}"
     },
-    "PROTECTED_FOLDERS": "{{ stabvest_protected_folders }}",
+    "PROTECTED_FOLDERS": "{{ stabvest_protected_folders | to_json }}",
     "DEBUG_PRINT": {{ stabvest_debug_print | lower }},
     "BACKUPDIR": "{{ stabvest_backupdir }}",
     "LOGFILE": "{{ stabvest_logfile }}",

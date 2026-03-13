@@ -20,17 +20,6 @@
     dest: "{{ owlet_deploy_dir }}\\{{ owlet_agent_executable }}"
   when: ansible_facts.os_family == "Windows" 
 
-- name: Insert Windows Event Log imports at top of file
-  ansible.windows.win_lineinfile:
-    path: "{{ [owlet_deploy_dir, owlet_agent_executable] | path_join }}"
-    line: "{{ item }}"
-    insertbefore: BOF
-    state: present
-  loop:
-    - "import win32evtlogutil"
-    - "import win32evtlog"
-  when: ansible_os_family == "Windows"
-
 - name: Render config.json from template
   template:
     src: "config.json.j2"
@@ -38,13 +27,13 @@
 
 - name: Copy requirements to target
   win_copy:
-    src: "files/requirements_windows.txt"
+    src: "files/requirements.txt"
     dest: "{{ owlet_deploy_dir }}\\requirements.txt"
   when: ansible_facts.os_family == "Windows" 
 
 - name: Copy requirements to target
   copy:
-    src: "files/requirements_unix.txt"
+    src: "files/requirements.txt"
     dest: "{{ owlet_deploy_dir }}/requirements.txt"
     owner: root
     group: root

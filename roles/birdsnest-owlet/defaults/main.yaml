@@ -1,22 +1,29 @@
 ---
-# Ansible Deployment Vars
+# Agent Config Vars - You probably need to change these for each deployment.
+owlet_agent_name: "auth"      # Agent name. Must be unique per agent per host. For example, if this is a generic auth log monitor, name it 'auth'
+owlet_auth_token: "testtoken" # Initial token to use for registration, found in agent_auth_tokens from main server deploy or from /web/management page
+owlet_server_url: "https://127.0.0.1:8000/" # Server IP to connect to - must be in format https://{ip}:{port}/
+
+
+##########
+# Variables below this line are not critical and can likely be left on the default values
+##########
+
+
+# More Agent Config Vars
+owlet_debug_print: false       # TRUE to print log messages to stdout in addition to the logfile
+owlet_sleeptime: 60
+owlet_server_timeout: 5
+owlet_auth_log_path: ""
+owlet_auth_parser: ""
+
+# Ansible Deployment Vars - You probably shouldn't be changing these
 #owlet_task_create: false
 #owlet_task_name: "owlet"
 #owlet_task_interval: 300 #seconds. cron needs this to be an even minutes value (so divisible by 60)
 owlet_agent_executable: "agent.py"
 owlet_service_start: true
-owlet_deploy_dir: "/owlet/{{ owlet_agent_name }}/"
-#owlet_deploy_dir: "C:\\owlet{{ owlet_agent_name }}\\"
-
-# Agent Config Vars. You probably need to change these for each deployment.
-owlet_agent_name: "ssh"
-owlet_auth_token: "testtoken"
-owlet_auth_log_path: ""
-owlet_auth_parser: ""
-owlet_sleeptime: 60
-owlet_server_url: "https://127.0.0.1:8000/"
-owlet_server_timeout: 5
-owlet_debug_print: true
+owlet_deploy_dir: "{{ [ (ansible_os_family == 'Windows') | ternary('C:\\owlet', '/owlet'), owlet_agent_name, '' ] | path_join }}"
 
 # More Agent Config Options - You probably shouldn't be changing these
 owlet_agent_type: "owlet"

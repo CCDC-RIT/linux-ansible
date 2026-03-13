@@ -49,17 +49,27 @@
       run_rc_command "$1"
   when: ansible_os_family == "FreeBSD"
 
-- name: Deploy Owlet Service (NSSM)
-  win_shell: |
-    $BaseDir = "{{ owlet_deploy_dir }}"
-    $NssmPath = "$BaseDir\nssm.exe"
-    $ServiceName = "owlet-{{ owlet_agent_name }}"
-    $PythonPath = "$BaseDir\venv\Scripts\python.exe"
-    $ScriptPath = "$BaseDir\agent.py"
+#- name: Deploy Owlet Service (NSSM)
+#  win_shell: |
+#    $BaseDir = "{{ owlet_deploy_dir }}"
+#    $NssmPath = "$BaseDir\nssm.exe"
+#    $ServiceName = "owlet-{{ owlet_agent_name }}"
+#    $PythonPath = "$BaseDir\venv\Scripts\python.exe"
+#    $ScriptPath = "$BaseDir\agent.py"
+#
+#    if (!(Get-Service $ServiceName -ErrorAction SilentlyContinue)) {
+#        & $NssmPath install $ServiceName $PythonPath $ScriptPath
+#        & $NssmPath set $ServiceName AppDirectory "$BaseDir"
+#        & $NssmPath set $ServiceName Start SERVICE_DEMAND_START
+#    }
+#  when: ansible_os_family == "Windows"
 
-    if (!(Get-Service $ServiceName -ErrorAction SilentlyContinue)) {
-        & $NssmPath install $ServiceName $PythonPath $ScriptPath
-        & $NssmPath set $ServiceName AppDirectory "$BaseDir"
-        & $NssmPath set $ServiceName Start SERVICE_DEMAND_START
-    }
+- name: Install Owlet Agent as a Windows Service
+  community.windows.win_nssm:
+    name: "owlet-{{ owlet_agent_name }}"
+    executable: "{{ owlet_deploy_dir | path_join('nssm.exe') }}"
+    application: "{{ owlet_deploy_dir | path_join('agent.py') }}"
+    app_directory: "{{ owlet_deploy_dir }}"
+    username: "LocalSystem"
+    state: present
   when: ansible_os_family == "Windows"
