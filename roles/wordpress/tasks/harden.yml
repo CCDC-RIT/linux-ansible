@@ -1,5 +1,5 @@
 ---
-- name: Disable file editing
+- name: WORDPRESS HARDEN | Disable file editing
   blockinfile:
     dest:  "{{ wp_path }}/wp-config.php"
     create: no
@@ -10,11 +10,10 @@
       define('DISALLOW_FILE_EDIT', true);
       define('FS_METHOD', 'direct');
 
-- name: Block wp-config.php
+- name: WORDPRESS HARDEN | Block wp-config.php
   blockinfile:
     dest:  "{{ wp_path }}/.htaccess"
-    create: no
-    backup: yes
+    create: false
     insertbefore: "# BEGIN WordPress"
     state: present
     content: |
@@ -23,7 +22,7 @@
         deny from all
       </Files>
 
-- name: Block dot files and xmlrpc
+- name: WORDPRESS HARDEN | Block dot files and xmlrpc
   blockinfile:
     dest:  "{{ wp_path }}/.htaccess"
     create: no
@@ -41,7 +40,7 @@
         deny from all
       </Files>
 
-- name: Block access to wp-includes
+- name: WORDPRESS HARDEN | Block access to wp-includes
   blockinfile:
     dest:  "{{ wp_path }}/.htaccess"
     create: no
@@ -59,7 +58,7 @@
         RewriteRule ^wp-includes/theme-compat/ - [F,L]
       </IfModule>
 
-- name: Prevent username enumeration and script injection
+- name: WORDPRESS HARDEN | Prevent username enumeration and script injection
   blockinfile:
     dest:  "{{ wp_path }}/.htaccess"
     create: no
@@ -77,7 +76,7 @@
       RewriteCond %{QUERY_STRING} _REQUEST(=|[|%[0-9A-Z]{0,2})
       RewriteRule ^(.*)$ index.php [F,L]
   
-- name: Disable PHP execution in uploads directory.
+- name: WORDPRESS HARDEN | Disable PHP execution in uploads directory.
   blockinfile:
     dest:  "{{ wp_path }}/{{ wp_uploads_dir | default('wp-content/uploads') }}/.htaccess"
     create: yes
@@ -90,17 +89,38 @@
          deny from all
       </Files>
 
-- name: Update Wordpress file ownership
+- name: WORDPRESS HARDEN | Update Wordpress file ownership
   file:
     path: "{{ wp_path }}"
     recurse: yes
     owner: www-data
     group: www-data
 
-- name: Update Wordpress file and directory permissions
+- name: WORDPRESS HARDEN | Update Wordpress file and directory permissions
   shell: "{{ item }}"
   with_items:
     - "find {{ wp_path }} -type d -exec chmod
       755 {} \\;"
     - "find {{ wp_path }} -type f -exec chmod 
       644 {} \\;"
+
+- name: WORDPRESS HARDEN | Check for WP-CLI
+  command: which wp
+  register: wp_cli_path
+  changed_when: false
+  ignore_errors: true
+
+- name: WORDPRESS HARDEN | Verify WordPress core file integrity (WP-CLI)
+  shell: >
+    wp --allow-root --path={{ wp_path }} core verify-checksums 2>&1
+  register: core_checksum
+  when: wp_cli_path.rc == 0
+  changed_when: false
+  ignore_errors: true
+
+- name: "WORDPRESS HARDEN | Report core checksum results (WP-CLI)"
+  debug:
+    msg: "{{ core_checksum.stdout_lines }}"
+  when:
+    - wp_cli_path.rc == 0
+    - core_checksum is not skipped

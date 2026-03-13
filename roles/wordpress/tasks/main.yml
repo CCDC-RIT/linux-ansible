@@ -1,6 +1,23 @@
 ---
-- name: Run Wordpress Harden
+- name: WORDPRESS | Backup wp-config.php before changes
+  copy:
+    src: "{{ wp_path }}/wp-config.php"
+    dest: "{{ wp_path }}/wp-config.php{{ backup_suffix }}"
+    remote_src: true
+    owner: root
+    mode: "0600"
+
+- name: WORDPRESS | Backup .htaccess before changes
+  copy:
+    src: "{{ wp_path }}/.htaccess"
+    dest: "{{ wp_path }}/.htaccess{{ backup_suffix }}"
+    remote_src: true
+    owner: root
+    mode: "0600"
+  ignore_errors: true
+
+- name: WORDPRESS | Run Wordpress Harden
   import_tasks: harden.yml
 
-- name: Run Wordpress Audit
+- name: WORDPRESS | Run Wordpress Audit
   import_tasks: audit.yml
