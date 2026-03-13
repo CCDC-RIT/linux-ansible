@@ -53,9 +53,9 @@ services:
     image: {{ stabvest_database_image }}
     restart: always
     environment:
-      POSTGRES_USER: {{ stabvest_database_user }}
-      POSTGRES_PASSWORD: {{ stabvest_database_password }}
-      POSTGRES_DB: {{ stabvest_database_db }}
+      POSTGRES_USER: {{ database_creds |  split(':') | first }}
+      POSTGRES_PASSWORD: {{ database_creds |  split(':') | last }}
+      POSTGRES_DB: {{ database_db }}
     ports:
       - "5432:5432"
     volumes:
