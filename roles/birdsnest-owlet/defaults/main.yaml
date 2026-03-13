@@ -1,12 +1,16 @@
 ---
+#####
+# Critical vars that should be automated safely - just confirm that they're good 
+#####
+
 # Agent Config Vars - You probably need to change these for each deployment.
 owlet_agent_name: "auth"      # Agent name. Must be unique per agent per host. For example, if this is a generic auth log monitor, name it 'auth'
-owlet_auth_token: "testtoken" # Initial token to use for registration, found in agent_auth_tokens from main server deploy or from /web/management page
-owlet_server_url: "https://127.0.0.1:8000/" # Server IP to connect to - must be in format https://{ip}:{port}/
+owlet_auth_token: "{{ birdsnest_token }}" # Initial token to use for registration, found in agent_auth_tokens from main server deploy or from /web/management page
+owlet_server_url: "https://{{ birdsnest_host }}/" # Server IP to connect to - must be in format https://{ip}:{port}/
 
 
 ##########
-# Variables below this line are not critical and can likely be left on the default values
+# Variables below this line are not critical and can almost certainly be left on the default values
 ##########
 
 
