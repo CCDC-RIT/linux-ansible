@@ -8,10 +8,10 @@ webgui_users:             # Users that can log into the website frontend
     password: "adminpwd"  # password
     role: "admin"         # role - admin, analyst, or guest
 webhook_url: ""           # Discord webhook url (empty string if none). This can be changed after deploy by modifying config.json and restarting the docker containers.
-stabvest_allow_ips_web:   # IPs that the Nginx proxy will allow to webserver web (frontend) endpoints. Set to your jumpboxes' IPs/range.
+birdsnest_allow_ips_web:   # IPs that the Nginx proxy will allow to webserver web (frontend) endpoints. Set to your jumpboxes' IPs/range.
   - 127.0.0.1
   - 172.16.0.0/12
-stabvest_allow_ips_agent: # IPs that the Nginx proxy will allow to webserver agent (backend) endpoints. Set to the inscope IPs/ranges.
+birdsnest_allow_ips_agent: # IPs that the Nginx proxy will allow to webserver agent (backend) endpoints. Set to the inscope IPs/ranges.
   - 127.0.0.1
   - 10.0.0.0/8
 
@@ -20,8 +20,8 @@ stabvest_allow_ips_agent: # IPs that the Nginx proxy will allow to webserver age
 # Critical vars that should be automated safely - just confirm that they're still good
 #####
 
-stabvest_host: "{{ birdsnest_host.split(':')[:-1] | join(':') | regex_replace('^\\[|\\]$', '') }}" # Public URL of server used for linking and certs. note: is NOT used for starting the server listener (that is always 0.0.0.0)
-stabvest_port: "{{ birdsnest_host.split(':') | last }}" # External port to listen on
+birdsnest_host_local: "{{ birdsnest_host.split(':')[:-1] | join(':') | regex_replace('^\\[|\\]$', '') }}" # Public URL of server used for linking and certs. note: is NOT used for starting the server listener (that is always 0.0.0.0)
+birdsnest_port_local: "{{ birdsnest_host.split(':') | last }}" # External port to listen on
 agent_auth_tokens:        # Registration tokens that agents use for the initial connection - must be copied to the agent deploy ansible!
   "{{ birdsnest_token }}": # token value
     added_by: "ansible"   # leave as is
@@ -32,15 +32,15 @@ agent_auth_tokens:        # Registration tokens that agents use for the initial 
 #####
 
 # Deploy vars
-stabvest_deploy_dir: "/stabvest_server"
-stabvest_gunicorn_workers: 1 # per replica
-stabvest_webserver_replicas: 3
-stabvest_proxy_container: "nginx:1.28.2"
-stabvest_database_image: "postgres:18.3"
-stabvest_python_container: "alpine:3.19"
+birdsnest_deploy_dir: "/birdsnest_server"
+birdsnest_gunicorn_workers: 1 # per replica
+birdsnest_webserver_replicas: 3
+birdsnest_proxy_container: "nginx:1.28.2"
+birdsnest_database_image: "postgres:18.3"
+birdsnest_python_container: "alpine:3.19"
 
 # Derived values can still be overridden if needed
-public_url: "https://{{ stabvest_host }}:{{ stabvest_port }}"
+public_url: "https://{{ birdsnest_host }}"
 logfile: "log.txt"
 
 # server config.json values

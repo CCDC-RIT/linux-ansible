@@ -1,26 +1,26 @@
 ---
 - name: Ensure deployment directory exists
   file:
-    path: "{{ stabvest_deploy_dir }}"
+    path: "{{ birdsnest_deploy_dir }}"
     state: directory
     mode: '0755'
 
 - name: Ensure log.txt exists (preventing docker directory mapping error)
   file:
-    path: "{{ stabvest_deploy_dir }}/log.txt"
+    path: "{{ birdsnest_deploy_dir }}/log.txt"
     state: touch
     mode: '0755'
 
 - name: Ensure repos/ exists (preventing docker directory mapping error)
   file:
-    path: "{{ stabvest_deploy_dir }}/repos/"
+    path: "{{ birdsnest_deploy_dir }}/repos/"
     state: directory
     mode: '0755'
 
 - name: Copy files
   copy:
     src: "{{ item }}"
-    dest: "{{ stabvest_deploy_dir }}/"
+    dest: "{{ birdsnest_deploy_dir }}/"
   with_items:
     - models.py
     #- requirements.txt
@@ -36,17 +36,17 @@
 - name: Deploy Nginx config file
   template:
     src: nginx.conf.j2
-    dest: "{{ stabvest_deploy_dir }}/nginx.conf"
+    dest: "{{ birdsnest_deploy_dir }}/nginx.conf"
 
 - name: Deploy Docker Compose config file
   template:
     src: docker-compose.yaml.j2
-    dest: "{{ stabvest_deploy_dir }}/docker-compose.yaml"
+    dest: "{{ birdsnest_deploy_dir }}/docker-compose.yaml"
 
 - name: Deploy webserver config file
   template:
     src: config.json.j2
-    dest: "{{ stabvest_deploy_dir }}/config.json.yaml"
+    dest: "{{ birdsnest_deploy_dir }}/config.json.yaml"
 
 - name: Ensure OpenSSL is installed
   package:
@@ -56,16 +56,16 @@
 - name: Generate self-signed SSL Certificate
   command: >
     openssl req -x509 -newkey rsa:4096 -nodes
-    -keyout {{ stabvest_deploy_dir }}/key.pem
-    -out {{ stabvest_deploy_dir }}/cert.pem
+    -keyout {{ birdsnest_deploy_dir }}/key.pem
+    -out {{ birdsnest_deploy_dir }}/cert.pem
     -days 365
-    -subj "/CN={{ stabvest_host }}"
+    -subj "/CN={{ birdsnest_host_local }}"
   #openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365 -subj "//CN=127.0.0.1" # WINDOWS
   args:
-    creates: "{{ stabvest_deploy_dir }}/cert.pem"
+    creates: "{{ birdsnest_deploy_dir }}/cert.pem"
 
 - name: Pull and Build Docker Images
   community.docker.docker_compose_v2:
-    project_src: "{{ stabvest_deploy_dir }}"
+    project_src: "{{ birdsnest_deploy_dir }}"
     build: policy
     state: present

@@ -2,6 +2,7 @@
 #####
 # Critical vars - change these
 #####
+
 stabvest_agent_name: "apache2"    # Agent name. Must be unique per agent per host. For example, if this protects apache2, name it 'apache2'
 stabvest_disarm: false            # TRUE to operate in DISARM mode (reporting only, no autofix)
 stabvest_debug_print: true      
