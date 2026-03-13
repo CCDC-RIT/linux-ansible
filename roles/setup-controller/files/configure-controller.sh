@@ -83,7 +83,6 @@ chmod 0774 "/home/$home_user/linux-ansible/roles/password-manager-client/files/c
 chmod 0664 "/home/$home_user/linux-ansible/roles/password-manager-client/files/ccdc-password-manager-client.service"
 
 # Birdsnest
-mkdir -p /opt/birdsnest
 git clone https://github.com/CCDC-RIT/birdsnest "/home/$home_user/linux-ansible/roles/birdsnest/files/"
 mv "/home/$home_user/linux-ansible/roles/birdsnest/files/birdsnest" "/home/$home_user/linux-ansible/roles/birdsnest/files/"
 chown -R "$home_user:$home_user" "/home/$home_user/linux-ansible/roles/birdsnest/files/"
