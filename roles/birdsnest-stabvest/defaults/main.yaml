@@ -2,34 +2,20 @@
 #####
 # Critical vars - change these
 #####
-
 stabvest_agent_name: "apache2"    # Agent name. Must be unique per agent per host. For example, if this protects apache2, name it 'apache2'
 stabvest_disarm: false            # TRUE to operate in DISARM mode (reporting only, no autofix)
-stabvest_debug_print: true      
-stabvest_iptables_path: "iptables" # (Linux only) path to iptables binary. Note: iptables-save should be colocated with this binary at {{ stabvest_iptables_path }}-save
-stabvest_ports:     # List of ports to protect
+stabvest_iptables_path: "iptables" # (Linux only) path to iptables binary
+stabvest_ports:     # List of ports to protect. If none, set to stabvest_ports: []
   - 80
-stabvest_services:  # List of service names to protect
+stabvest_services:  # List of service names to protect. If none, set to stabvest_services: []
   - "apache2"
 #  - "httpd"
 #  - "W3SVC"
-stabvest_packages:  # List of packages to protect
+stabvest_packages:  # List of packages to protect. If none, set to stabvest_packages: []
   - "apache2"
 #  - "httpd"
 #  - "IIS-WebServerRole"
-stabvest_service_backups: # TODO REPLACE WITH AUTO
-  PathName: "C:\\\\Windows\\\\system32\\\\svchost.exe -k iissvcs"
-  StartName: "localSystem"
-  Dependencies: "['WAS','HTTP']"
-  DisplayName: "World Wide Web Publishing Service"
-  StartType: "Auto"
-#stabvest_service_backups:
-#  PathName: "C:\\Windows\\system32\\svchost.exe -k AxInstSVGroup"
-#  StartName: "LocalSystem"
-#  Dependencies: null
-#  DisplayName: "ActiveX Installer (AxInstSV)"
-#  StartType: "Manual"
-stabvest_protected_folders: # List of folders or files to protect. For example, service content, service config, service executable, service systemd file
+stabvest_protected_folders: # List of folders or files to protect. For example, service content, service config, service executable, service systemd file. If none, set to stabvest_protected_folders: []
   - "/var/www"
   - "/usr/sbin/apache2"
   - "/etc/apache2"
@@ -62,6 +48,7 @@ stabvest_deploy_dir: "{{ [ (ansible_os_family == 'Windows') | ternary('C:\\stabv
 #stabvest_task_interval: 300 #seconds. cron needs this to be an even minutes value (so divisible by 60)
 
 # More Agent Config Options
+stabvest_debug_print: true
 stabvest_server_timeout: 5
 stabvest_sleeptime: 60
 stabvest_logfile: "log.txt"

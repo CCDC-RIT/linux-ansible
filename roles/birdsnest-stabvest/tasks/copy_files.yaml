@@ -1,4 +1,32 @@
 ---
+- name: Ensure base packages are present
+  ansible.builtin.package:
+    name:
+      - git
+      - python3
+      - bash
+    state: present
+
+- name: Install Debian-specific persistence tools
+  ansible.builtin.apt:
+    name: iptables-persistent
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install RHEL-specific persistence tools
+  ansible.builtin.dnf:
+    name: iptables-services
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure iptables service is enabled (RHEL)
+  ansible.builtin.systemd:
+    name: iptables
+    enabled: yes
+    state: started
+  when: ansible_os_family == "RedHat"
+  
 - name: Ensure destination directory exists
   ansible.windows.win_file:
     path: "{{ stabvest_deploy_dir }}"
