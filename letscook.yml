@@ -140,7 +140,7 @@
   #ignore_errors: true
 
 - name: Setup Birdsnest Magpie Client
-  hosts: all
+  hosts: you_need_to_change_the_vars_for_this_one_before_deploy_sorry
   become: yes
   roles:
     - birdsnest-magpie
