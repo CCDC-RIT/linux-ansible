@@ -85,7 +85,6 @@ chmod 0664 "/home/$home_user/linux-ansible/roles/password-manager-client/files/c
 # Birdsnest
 rm -rf "/home/$home_user/linux-ansible/roles/birdsnest/files/"
 git clone https://github.com/CCDC-RIT/birdsnest "/home/$home_user/linux-ansible/roles/birdsnest/files/"
-mv "/home/$home_user/linux-ansible/roles/birdsnest/files/birdsnest" "/home/$home_user/linux-ansible/roles/birdsnest/files/"
 chown -R "$home_user:$home_user" "/home/$home_user/linux-ansible/roles/birdsnest/files/"
 chmod -R 0774 "/home/$home_user/linux-ansible/roles/birdsnest/files/"
 cp -pr "/home/$home_user/linux-ansible/roles/birdsnest/files/agents/owlet" "/home/$home_user/linux-ansible/roles/birdsnest-owlet/files/"
