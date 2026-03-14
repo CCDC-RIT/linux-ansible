@@ -1,4 +1,15 @@
 ---
+- name: Ensure Docker is installed and running
+  ansible.builtin.package:
+    name: docker.io  # Use 'docker-ce' if using the official Docker repos
+    state: present
+
+- name: Start and enable Docker service
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: yes
+    
 - name: Ensure deployment directory exists
   file:
     path: "{{ birdsnest_deploy_dir }}"
