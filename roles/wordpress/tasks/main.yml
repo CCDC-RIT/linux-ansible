@@ -2,7 +2,7 @@
 - name: WORDPRESS | Backup wp-config.php before changes
   copy:
     src: "{{ wp_path }}/wp-config.php"
-    dest: "{{ wp_path }}/wp-config.php{{ backup_suffix }}"
+    dest: "{{ wp_path }}/wp-config.php.bak"
     remote_src: true
     owner: root
     mode: "0600"
@@ -10,7 +10,7 @@
 - name: WORDPRESS | Backup .htaccess before changes
   copy:
     src: "{{ wp_path }}/.htaccess"
-    dest: "{{ wp_path }}/.htaccess{{ backup_suffix }}"
+    dest: "{{ wp_path }}/.htaccess.bak"
     remote_src: true
     owner: root
     mode: "0600"
