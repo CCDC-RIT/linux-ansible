@@ -2,8 +2,8 @@
   ansible.builtin.copy:
     src: docker-setup-ubuntu.sh
     dest: /opt/docker-setup.sh
-    owner: blueteam
-    group: blueteam
+    owner: root
+    group: root
     mode: '0744'
   when: ansible_distribution == "Ubuntu"
 
@@ -11,8 +11,8 @@
   ansible.builtin.copy:
     src: docker-setup-debian.sh
     dest: /opt/docker-setup.sh
-    owner: blueteam
-    group: blueteam
+    owner: root
+    group: root
     mode: '0744'
   when: ansible_distribution == "Debian"
 
@@ -20,8 +20,8 @@
   ansible.builtin.copy:
     src: docker-setup-rhel.sh
     dest: /opt/docker-setup.sh
-    owner: blueteam
-    group: blueteam
+    owner: root
+    group: root
     mode: '0744'
   when: ansible_os_family == "RedHat"
 
