@@ -157,7 +157,7 @@
 
           ---Critical File Permissions---
           {% for item in critical_file_stats.results %}
-          {{ item.item | ljust(40) }}: {{ '%04o' | format(item.stat.mode | int(base=8)) if item.stat.exists else 'NOT FOUND' }}
+          {{ "%-40s" | format(item.item) }}: {{ '%04o' | format(item.stat.mode | int(base=8)) if item.stat.exists else 'NOT FOUND' }}
           {% endfor %}
 
           ---World-Writable Files in Core Dirs---
