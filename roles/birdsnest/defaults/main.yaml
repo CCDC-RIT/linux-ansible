@@ -22,10 +22,6 @@ birdsnest_allow_ips_agent: # IPs that the Nginx proxy will allow to webserver ag
 
 birdsnest_host_local: "{{ birdsnest_host.split(':')[:-1] | join(':') | regex_replace('^\\[|\\]$', '') }}" # Public URL of server used for linking and certs. note: is NOT used for starting the server listener (that is always 0.0.0.0)
 birdsnest_port_local: "{{ birdsnest_host.split(':') | last }}" # External port to listen on
-agent_auth_tokens:        # Registration tokens that agents use for the initial connection - must be copied to the agent deploy ansible!
-  "{{ birdsnest_token }}": # token value
-    added_by: "ansible"   # leave as is
-
 
 #####
 # Variables below this line are not critical and can almost certainly be left on their defaults
@@ -56,3 +52,5 @@ authconfig_strict_ip: false
 authconfig_strict_user: false
 authconfig_create_incident: false
 authconfig_log_attempt_successful: true
+birdsnest_token_metadata:
+  added_by: "default"
