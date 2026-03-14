@@ -14,38 +14,44 @@
         WORDPRESS SECURITY AUDIT REPORT FOR HOST {{ inventory_hostname }}
       ----------------------------------------------------------------
 
-- name: WORDPRESS AUDIT | Read WordPress version
-  slurp:
-    src: "{{ wp_path }}/wp-includes/version.php"
-  register: wp_version_file
-  ignore_errors: true
+- name: WORDPRESS AUDIT | Detect WordPress version
+  block:
+    - name: WORDPRESS AUDIT | Check wp-config.php exists
+      stat:
+        path: "{{ wp_path }}/wp-config.php"
+      register: wp_config_stat
 
-- name: WORDPRESS AUDIT | Parse WordPress version
-  set_fact:
-    wp_version: >-
-      {{
-        (wp_version_file.content | b64decode)
-        | regex_search("wp_version = '([^']+)'", "\\1")
-        | first | default('Unknown')
-      }}
-  when: wp_version_file is not failed
+    - name: WORDPRESS AUDIT | Read WordPress version
+      slurp:
+        src: "{{ wp_path }}/wp-includes/version.php"
+      register: wp_version_file
 
-- name: WORDPRESS AUDIT | Append version info to report
-  lineinfile:
-    path: "{{ report_file }}"
-    line: |
-      WordPress Root      : {{ wp_path }}
-      wp-config.php found : {{ wp_config_stat.stat.exists }}
-      WordPress Version   : {{ wp_version | default('Could not determine') }}
+    - name: WORDPRESS AUDIT | Parse WordPress version
+      set_fact:
+        wp_version: >-
+          {{
+            (wp_version_file.content | b64decode)
+            | regex_search("wp_version = '([^']+)'", "\\1")
+            | first | default('Unknown')
+          }}
+
+    - name: WORDPRESS AUDIT | Append version info to report
+      lineinfile:
+        path: "{{ report_file }}"
+        line: |
+          WordPress Root      : {{ wp_path }}
+          wp-config.php found : {{ wp_config_stat.stat.exists }}
+          WordPress Version   : {{ wp_version | default('Could not determine') }}
+
   rescue:
-  - name: Log detection failure
-    lineinfile:
-      path: "{{ report_file }}"
-      line: "[!] ERROR: Could not fully detect WordPress installation at {{ wp_path }}"
+    - name: WORDPRESS AUDIT | Log detection failure
+      lineinfile:
+        path: "{{ report_file }}"
+        line: "[!] ERROR: Could not fully detect WordPress installation at {{ wp_path }}"
 
 - name: WORDPRESS AUDIT | Check wp-config.php
   block:
-    - name: Read wp-config.php
+    - name: WORDPRESS AUDIT | Read wp-config.php
       slurp:
         src: "{{ wp_path }}/wp-config.php"
       register: wp_config_content
@@ -70,7 +76,9 @@
         cfg_disallow_file_mods: "{{ 'DISALLOW_FILE_MODS' in cfg_raw }}"
         cfg_force_ssl_admin: "{{ 'FORCE_SSL_ADMIN' in cfg_raw }}"
         cfg_fs_method_direct: "{{ \"FS_METHOD', 'direct'\" in cfg_raw }}"
-
+        cfg_db_name: "{{ cfg_raw | regex_search(\"DB_NAME.*'([^']+)'\", '\\\\1') | first | default('not found') }}"
+        cfg_db_user: "{{ cfg_raw | regex_search(\"DB_USER.*'([^']+)'\", '\\\\1') | first | default('not found') }}"
+        cfg_db_host: "{{ cfg_raw | regex_search(\"DB_HOST.*'([^']+)'\", '\\\\1') | first | default('not found') }}"
 
     - name: WORDPRESS AUDIT | Append config audit to report
       lineinfile:
@@ -104,456 +112,450 @@
           FORCE_SSL_ADMIN: {{ cfg_force_ssl_admin }}  {% if not cfg_force_ssl_admin %} NEED TO ADD: define('FORCE_SSL_ADMIN', true);{% endif %}
 
           FS_METHOD = 'direct': {{ cfg_fs_method_direct }} {% if cfg_fs_method_direct %} FS_METHOD ALLOWS DIRECT FILE WRITES {% endif %}
-      rescue:
-      - name: WORDPRESS AUDIT | Log config read failure
-        lineinfile:
-          path: "{{ report_file }}"
-          line: "[!] ERROR: Could not read wp-config.php - file missing or unreadable"
-
-
-
-    - name: WORDPRESS AUDIT | Check important file perms
-      block:
-        - name: Stat critical files
-          stat:
-            path: "{{ wp_path }}/{{ item }}"
-          register: critical_file_stats
-          loop: "{{ wp_core_files }}"
-
-        - name: WORDPRESS AUDIT | Find world-writable files in wp-admin and wp-includes
-          shell: >
-            find {{ wp_path }}/wp-admin {{ wp_path }}/wp-includes
-            -type f -perm -o+w 2>/dev/null | head -50
-          register: world_writable_core
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Find world-writable files in wp-content
-          shell: >
-            find {{ wp_path }}/wp-content
-            -type f -perm -o+w 2>/dev/null | head -50
-          register: world_writable_content
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Find SUID/SGID files under wp root
-          shell: >
-            find {{ wp_path }} -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null
-          register: suid_files
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Append permission findings to report
-          lineinfile:
-            path: "{{ report_file }}"
-            line: |
-
-              --------------------------------
-               FILE PERMISSIONS
-              --------------------------------
-
-              ---Critical File Permissions---
-              {% for item in critical_file_stats.results %}
-              {{ item.item | ljust(40) }}: {{ '%04o' | format(item.stat.mode | int(base=8)) if item.stat.exists else 'NOT FOUND' }}
-              {% endfor %}
-
-              ---World-Writable Files in Core Dirs---
-              {{ world_writable_core.stdout if world_writable_core.stdout else '  None found  ' }}
-              {% if world_writable_core.stdout %}
-              chmod o-w <file> for each listed file to remediate
-              {% endif %}
-
-              ---World-Writable Files in wp-content---
-              {{ world_writable_content.stdout if world_writable_content.stdout else '  None found  ' }}
-
-              ---SUID/SGID Files---
-              {{ suid_files.stdout if suid_files.stdout else '  None found  ' }}
-              {% if suid_files.stdout %}
-              Found SUID/SGID files in web root!!!!
-              {% endif %}
-
-
-    - name: WORDPRESS AUDIT | Scan for malicious PHP patterns
-      block:
-        - name: Scan for malicious PHP patterns in PHP files # lowkey need to test this one more
-          shell: >
-            grep -rlP "{{ item }}" {{ wp_path }}
-            --include="*.php" --include="*.js" --include="*.html"
-            2>/dev/null | head -20
-          register: malicious_pattern_results
-          loop: "{{ malicious_php_patterns }}"
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Scan for suspicious backdoor filenames
-          shell: >
-            find {{ wp_path }} -type f -iname "*{{ item }}*" 2>/dev/null
-          register: backdoor_filename_results
-          loop: "{{ backdoor_filenames }}"
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Find suspicious file extensions
-          shell: >
-            find {{ wp_path }} -type f -name "{{ item }}" 2>/dev/null
-          register: suspicious_ext_results
-          loop: "{{ suspicious_extensions }}"
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Find PHP files in uploads directory (major red flag)
-          shell: >
-            find {{ wp_path }}/wp-content/uploads -type f
-            \( -name "*.php" -o -name "*.php5" -o -name "*.phtml" \)
-            2>/dev/null
-          register: php_in_uploads
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Find recently modified PHP files (last 7 days)
-          shell: >
-            find {{ wp_path }} -type f -name "*.php"
-            -newer {{ wp_path }}/wp-config.php
-            -mtime -7 2>/dev/null | grep -v "wp-content/cache" | head -40
-          register: recently_modified
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Find hidden files and directories
-          shell: >
-            find {{ wp_path }} -name ".*" -not -name ".htaccess"
-            -not -path "{{ wp_path }}/.git/*" 2>/dev/null | head -30
-          register: hidden_files
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Append malware scan to report
-          lineinfile:
-            path: "{{ report_file }}"
-            line: |
-
-              --------------------------------
-               BACKDOOR & MALWARE SCAN
-              --------------------------------
-
-              ---Dangerous PHP Function Usage---
-              {% set found_any = [] %}
-              {% for result in malicious_pattern_results.results %}
-              {% if result.stdout %}
-              Pattern [{{ malicious_php_patterns[loop.index0] }}]:
-              {{ result.stdout | indent(4) }}
-              {% set _ = found_any.append(1) %}
-              {% endif %}
-              {% endfor %}
-              {% if not found_any %}
-                Nothing weird found
-              {% else %}
-                Review flagged files - may be backdoors
-              {% endif %}
-
-              ---Known Backdoor Filename Patterns---
-              {% set found_bd = [] %}
-              {% for result in backdoor_filename_results.results %}
-              {% if result.stdout %}
-              Name pattern [{{ backdoor_filenames[loop.index0] }}]: {{ result.stdout }}
-              {% set _ = found_bd.append(1) %}
-              {% endif %}
-              {% endfor %}
-              {% if not found_bd %}
-                No known backdoors found
-              {% endif %}
-
-              ---Suspicious File Extensions---
-              {% set found_ext = [] %}
-              {% for result in suspicious_ext_results.results %}
-              {% if result.stdout %}
-              Extension [{{ suspicious_extensions[loop.index0] }}]: {{ result.stdout }}
-              {% set _ = found_ext.append(1) %}
-              {% endif %}
-              {% endfor %}
-              {% if not found_ext %}
-                No suspicious file extensions found
-              {% endif %}
-
-              --- PHP Files in Uploads Directory (CRITICAL) ---
-              {{ php_in_uploads.stdout if php_in_uploads.stdout else '  None found' }}
-              {% if php_in_uploads.stdout %}
-              IMPORTANT FINDING - PHP files in uploads are almost always backdoors. To remediate, remove files AND add .htaccess to block PHP execution in upload, see following line
-                   <Files *.php>
-                     deny from all
-                   </Files>
-              {% endif %}
-
-              --- Recently Modified PHP Files (last 7 days) ---
-              {{ recently_modified.stdout if recently_modified.stdout else '  None found' }}
-              {% if recently_modified.stdout %}
-               Review these files - attackers often modify existing files to insert backdoors
-              {% endif %}
-
-              ---Hidden Files/Directories---
-              {{ hidden_files.stdout if hidden_files.stdout else '  None found' }}
-
-    - name: WORDPRESS AUDIT | Audit WordPress user accounts
-      block:
-        - name: Check if WP-CLI is available
-          command: which wp
-          register: wp_cli_check
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | List WordPress users via WP-CLI
-          shell: >
-            wp --allow-root --path={{ wp_path }}
-            user list --fields=ID,user_login,user_email,roles,user_registered
-            --format=table 2>/dev/null
-          register: wp_users
-          when: wp_cli_check.rc == 0
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Extract user info from DB directly (if WP-CLI unavailable)
-          shell: |
-            DB_NAME=$(grep "DB_NAME" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_USER=$(grep "DB_USER" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_PASS=$(grep "DB_PASSWORD" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_HOST=$(grep "DB_HOST" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            PREFIX=$(grep "table_prefix" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" "$DB_NAME" \
-              -e "SELECT ID, user_login, user_email, user_registered FROM ${PREFIX}users;" 2>/dev/null
-          register: wp_users_db
-          when: wp_cli_check.rc != 0
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Check for admin username 'admin' (default/weak)
-          shell: |
-            DB_NAME=$(grep "DB_NAME" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_USER=$(grep "DB_USER" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_PASS=$(grep "DB_PASSWORD" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_HOST=$(grep "DB_HOST" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            PREFIX=$(grep "table_prefix" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" "$DB_NAME" \
-              -e "SELECT user_login FROM ${PREFIX}users WHERE user_login IN ('admin','administrator','root','test','wordpress');" 2>/dev/null
-          register: weak_usernames
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Check for unauthorized admin accounts via DB
-          shell: |
-            DB_NAME=$(grep "DB_NAME" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_USER=$(grep "DB_USER" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_PASS=$(grep "DB_PASSWORD" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            DB_HOST=$(grep "DB_HOST" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            PREFIX=$(grep "table_prefix" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
-            mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" "$DB_NAME" \
-              -e "SELECT u.user_login, u.user_email FROM ${PREFIX}users u JOIN ${PREFIX}usermeta m ON u.ID=m.user_id WHERE m.meta_key='${PREFIX}capabilities' AND m.meta_value LIKE '%administrator%';" 2>/dev/null
-          register: admin_accounts
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Append user audit to report
-          lineinfile:
-            path: "{{ report_file }}"
-            line: |
-              --------------------------------
-              USER ACCOUNT AUDIT
-              --------------------------------
-              WP-CLI available: {{ wp_cli_check.rc == 0 }}
-
-              ---All WordPress Users---
-              {% if wp_cli_check.rc == 0 and wp_users is not failed %}
-              {{ wp_users.stdout | default('Could not retrieve') }}
-              {% else %}
-              {{ wp_users_db.stdout | default('Could not retrieve - check DB credentials') }}
-              {% endif %}
-
-              ---Administrator Accounts---
-              {{ admin_accounts.stdout | default('Could not retrieve') }}
-               Verify every administrator account is legitimate and known
-
-              ---Weak/Default Usernames Found---
-              {{ weak_usernames.stdout | default('None detected  ') }}
-              {% if weak_usernames.stdout | length > 5 %}
-              Weak usernames detected
-              {% endif %}
-
-
-    - name: WORDPRESS AUDIT | Audit plugins and themes
-      block:
-        - name: List installed plugins
-          shell: >
-            find {{ wp_path }}/wp-content/plugins -maxdepth 1
-            -mindepth 1 -type d -printf "%f\n" 2>/dev/null | sort
-          register: installed_plugins
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | List installed themes
-          shell: >
-            find {{ wp_path }}/wp-content/themes -maxdepth 1
-            -mindepth 1 -type d -printf "%f\n" 2>/dev/null | sort
-          register: installed_themes
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | List active plugin via WP-CLI
-          shell: >
-            wp --allow-root --path={{ wp_path }}
-            plugin list --format=table 2>/dev/null
-          register: active_plugins
-          when: wp_cli_check.rc == 0
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Check for known vulnerable/suspicious plugins
-          shell: |
-            VULN_PLUGINS=("revslider" "gravity-forms" "wp-file-manager" "wp-super-cache"
-              "duplicator" "contact-form-7" "yoast-seo" "elementor" "woocommerce"
-              "wordfence" "really-simple-ssl" "loginizer" "newsletter" "mailchimp"
-              "all-in-one-wp-migration" "wpforms-lite" "wp-fastest-cache"
-              "wp-statistics" "download-manager")
-            for plugin in "${VULN_PLUGINS[@]}"; do
-              if [ -d "{{ wp_path }}/wp-content/plugins/$plugin" ]; then
-                echo "[INSTALLED] $plugin"
-              fi
-            done
-          register: notable_plugins
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Check for PHP files directly in plugin/theme dirs (not in subdirs)
-          shell: >
-            find {{ wp_path }}/wp-content/plugins
-            {{ wp_path }}/wp-content/themes
-            -maxdepth 1 -name "*.php" 2>/dev/null
-          register: stray_php_files
-          changed_when: false
-
-        - name: Append plugin/theme audit to report
-          lineinfile:
-            path: "{{ report_file }}"
-            line: |
-              --------------------------------
-              PLUGIN & THEME AUDIT
-              --------------------------------
-
-              ---Installed Plugins---
-              {{ installed_plugins.stdout | default('None found') }}
-
-              ---Installed Themes---
-              {{ installed_themes.stdout | default('None found') }}
-
-              ---Plugin Status (WP-CLI)---
-              {{ active_plugins.stdout | default('WP-CLI unavailable') }}
-
-              ---Notable/High-Risk Plugins Present---
-              {{ notable_plugins.stdout | default('None of the checked plugins found') }}
-
-              ---Stray PHP Files in Plugin/Theme Root (Suspicious)---
-              {{ stray_php_files.stdout if stray_php_files.stdout else '  None found  ' }}
-
-
-    - name: WORDPRESS AUDIT | Audit .htaccess and webserver config
-      block:
-        - name: WORDPRESS AUDIT | Find all .htaccess files
-          shell: >
-            find {{ wp_path }} -name ".htaccess" 2>/dev/null
-          register: htaccess_files
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Read root .htaccess content
-          slurp:
-            src: "{{ wp_path }}/.htaccess"
-          register: htaccess_content
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Check .htaccess for injected redirects or malicious rules
-          shell: |
-            grep -Pn "(RewriteCond|RewriteRule|SetHandler|AddHandler|auto_prepend_file|auto_append_file|php_value)" \
-              {{ wp_path }}/.htaccess 2>/dev/null
-          register: htaccess_directives
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Check for suspicious PHP wrappers in .htaccess
-          shell: |
-            grep -Pni "(php_value\s+auto_prepend_file|php_value\s+auto_append_file|SetHandler\s+application/x-httpd-php|AddType\s+application/x-httpd-php)" \
-              {{ wp_path }}/.htaccess 2>/dev/null
-          register: htaccess_php_wrappers
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Append htaccess findings to report
-          lineinfile:
-            path: "{{ report_file }}"
-            line: |
-
-             ----------------------------------------
-              .HTACCESS & WEBSERVER AUDIT
-              ----------------------------------------
-
-              --- .htaccess Files Found ---
-              {{ htaccess_files.stdout | default('None') }}
-              Review if .htaccess is in unexpected locations (uploads, plugins)
-
-              ---Root .htaccess Content---
-              {{ htaccess_content.content | b64decode | default('Could not read') }}
-
-              ---Rewrite/Handler Directives---
-              {{ htaccess_directives.stdout | default('None found') }}
-
-              ---Suspicious PHP Wrappers in .htaccess---
-              {{ htaccess_php_wrappers.stdout if htaccess_php_wrappers.stdout else '  None found  ' }}
-              {% if htaccess_php_wrappers.stdout %}
-              INTERESTING FINDING - auto_prepend/append and SetHandler abuse are common backdoor techniques!!!!!
-              {% endif %}
-
-
-    - name: WORDPRESS AUDIT | Check xmlrpc.php and login exposure
-      block:
-        - name: WORDPRESS AUDIT | Check if xmlrpc.php exists
-          stat:
-            path: "{{ wp_path }}/xmlrpc.php"
-          register: xmlrpc_stat
-
-        - name: WORDPRESS AUDIT | Check if xmlrpc is blocked in .htaccess
-          shell: |
-            grep -i "xmlrpc" {{ wp_path }}/.htaccess 2>/dev/null || echo "No xmlrpc rules found"
-          register: xmlrpc_blocked
-          changed_when: false
-
-        - name: WORDPRESS AUDIT | Check wp-login.php permissions and size
-          stat:
-            path: "{{ wp_path }}/wp-login.php"
-          register: wplogin_stat
-
-        - name: WORDPRESS AUDIT | Check if login is rate-limited (Wordfence or similar)
-          shell: |
-            grep -rli "login.*limit\|brute.*force\|rate.limit" \
-              {{ wp_path }}/wp-content/plugins/ 2>/dev/null | head -5
-          register: login_protection
-          changed_when: false
-          ignore_errors: true
-
-        - name: WORDPRESS AUDIT | Append xmlrpc/login info to report
-          lineinfile:
-            path: "{{ report_file }}"
-            line: |
-              ----------------------------------------
-              XMLRPC & LOGIN EXPOSURE
-              ----------------------------------------
-              xmlrpc.php present        : {{ xmlrpc_stat.stat.exists }}
-              {% if xmlrpc_stat.stat.exists %}
-               xmlrpc.php enables brute-force amplification attacks (one request = 100s of attempts)
-               Block with .htaccess or plugin unless specifically needed
-              {% endif %}
-
-              xmlrpc.htaccess rules     :
-              {{ xmlrpc_blocked.stdout | indent(4) }}
-
-              wp-login.php present      : {{ wplogin_stat.stat.exists }}
-              wp-login.php size (bytes) : {{ wplogin_stat.stat.size | default('N/A') }}
-              {% if wplogin_stat.stat.size is defined and wplogin_stat.stat.size > 12000 %}
-               wp-login.php is larger than expected - may be modified!
-              {% endif %}
-
-              Login protection plugins  :
-              {{ login_protection.stdout | default('  None detected -  consider adding rate limiting') }}
-
-    - name: WORDPRESS AUDIT | Print report location
-      debug:
-        msg: |
-          WordPress audit complete. Report saved to: {{ report_file }}
-          To retrieve: ansible {{ inventory_hostname }} -m fetch -a "src={{ report_file }} dest=./reports/"
+  rescue:
+    - name: WORDPRESS AUDIT | Log config read failure
+      lineinfile:
+        path: "{{ report_file }}"
+        line: "[!] ERROR: Could not read wp-config.php - file missing or unreadable"
+
+- name: WORDPRESS AUDIT | Check important file perms
+  block:
+    - name: WORDPRESS AUDIT | Stat critical files
+      stat:
+        path: "{{ wp_path }}/{{ item }}"
+      register: critical_file_stats
+      loop: "{{ wp_core_files }}"
+
+    - name: WORDPRESS AUDIT | Find world-writable files in wp-admin and wp-includes
+      shell: >
+        find {{ wp_path }}/wp-admin {{ wp_path }}/wp-includes
+        -type f -perm -o+w 2>/dev/null | head -50
+      register: world_writable_core
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Find world-writable files in wp-content
+      shell: >
+        find {{ wp_path }}/wp-content
+        -type f -perm -o+w 2>/dev/null | head -50
+      register: world_writable_content
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Find SUID/SGID files under wp root
+      shell: >
+        find {{ wp_path }} -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null
+      register: suid_files
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Append permission findings to report
+      lineinfile:
+        path: "{{ report_file }}"
+        line: |
+
+          --------------------------------
+           FILE PERMISSIONS
+          --------------------------------
+
+          ---Critical File Permissions---
+          {% for item in critical_file_stats.results %}
+          {{ item.item | ljust(40) }}: {{ '%04o' | format(item.stat.mode | int(base=8)) if item.stat.exists else 'NOT FOUND' }}
+          {% endfor %}
+
+          ---World-Writable Files in Core Dirs---
+          {{ world_writable_core.stdout if world_writable_core.stdout else '  None found  ' }}
+          {% if world_writable_core.stdout %}
+          chmod o-w <file> for each listed file to remediate
+          {% endif %}
+
+          ---World-Writable Files in wp-content---
+          {{ world_writable_content.stdout if world_writable_content.stdout else '  None found  ' }}
+
+          ---SUID/SGID Files---
+          {{ suid_files.stdout if suid_files.stdout else '  None found  ' }}
+          {% if suid_files.stdout %}
+          Found SUID/SGID files in web root!!!!
+          {% endif %}
+
+- name: WORDPRESS AUDIT | Scan for malicious PHP patterns
+  block:
+    - name: WORDPRESS AUDIT | Scan for malicious PHP patterns in PHP files
+      shell: >
+        grep -rlP "{{ item }}" {{ wp_path }}
+        --include="*.php" --include="*.js" --include="*.html"
+        2>/dev/null | head -20
+      register: malicious_pattern_results
+      loop: "{{ malicious_php_patterns }}"
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Scan for suspicious backdoor filenames
+      shell: >
+        find {{ wp_path }} -type f -iname "*{{ item }}*" 2>/dev/null
+      register: backdoor_filename_results
+      loop: "{{ backdoor_filenames }}"
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Find suspicious file extensions
+      shell: >
+        find {{ wp_path }} -type f -name "{{ item }}" 2>/dev/null
+      register: suspicious_ext_results
+      loop: "{{ suspicious_extensions }}"
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Find PHP files in uploads directory (major red flag)
+      shell: >
+        find {{ wp_path }}/wp-content/uploads -type f
+        \( -name "*.php" -o -name "*.php5" -o -name "*.phtml" \)
+        2>/dev/null
+      register: php_in_uploads
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Find recently modified PHP files (last 7 days)
+      shell: >
+        find {{ wp_path }} -type f -name "*.php"
+        -newer {{ wp_path }}/wp-config.php
+        -mtime -7 2>/dev/null | grep -v "wp-content/cache" | head -40
+      register: recently_modified
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Find hidden files and directories
+      shell: >
+        find {{ wp_path }} -name ".*" -not -name ".htaccess"
+        -not -path "{{ wp_path }}/.git/*" 2>/dev/null | head -30
+      register: hidden_files
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Append malware scan to report
+      lineinfile:
+        path: "{{ report_file }}"
+        line: |
+
+          --------------------------------
+           BACKDOOR & MALWARE SCAN
+          --------------------------------
+
+          ---Dangerous PHP Function Usage---
+          {% set found_any = [] %}
+          {% for result in malicious_pattern_results.results %}
+          {% if result.stdout %}
+          Pattern [{{ malicious_php_patterns[loop.index0] }}]:
+          {{ result.stdout | indent(4) }}
+          {% set _ = found_any.append(1) %}
+          {% endif %}
+          {% endfor %}
+          {% if not found_any %}
+            Nothing weird found
+          {% else %}
+            Review flagged files - may be backdoors
+          {% endif %}
+
+          ---Known Backdoor Filename Patterns---
+          {% set found_bd = [] %}
+          {% for result in backdoor_filename_results.results %}
+          {% if result.stdout %}
+          Name pattern [{{ backdoor_filenames[loop.index0] }}]: {{ result.stdout }}
+          {% set _ = found_bd.append(1) %}
+          {% endif %}
+          {% endfor %}
+          {% if not found_bd %}
+            No known backdoors found
+          {% endif %}
+
+          ---Suspicious File Extensions---
+          {% set found_ext = [] %}
+          {% for result in suspicious_ext_results.results %}
+          {% if result.stdout %}
+          Extension [{{ suspicious_extensions[loop.index0] }}]: {{ result.stdout }}
+          {% set _ = found_ext.append(1) %}
+          {% endif %}
+          {% endfor %}
+          {% if not found_ext %}
+            No suspicious file extensions found
+          {% endif %}
+
+          --- PHP Files in Uploads Directory (CRITICAL) ---
+          {{ php_in_uploads.stdout if php_in_uploads.stdout else '  None found' }}
+          {% if php_in_uploads.stdout %}
+          IMPORTANT FINDING - PHP files in uploads are almost always backdoors. To remediate, remove files AND add .htaccess to block PHP execution in upload, see following line
+               <Files *.php>
+                 deny from all
+               </Files>
+          {% endif %}
+
+          --- Recently Modified PHP Files (last 7 days) ---
+          {{ recently_modified.stdout if recently_modified.stdout else '  None found' }}
+          {% if recently_modified.stdout %}
+           Review these files - attackers often modify existing files to insert backdoors
+          {% endif %}
+
+          ---Hidden Files/Directories---
+          {{ hidden_files.stdout if hidden_files.stdout else '  None found' }}
+
+- name: WORDPRESS AUDIT | Audit WordPress user accounts
+  block:
+    - name: WORDPRESS AUDIT | Check if WP-CLI is available
+      command: which wp
+      register: wp_cli_check
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | List WordPress users via WP-CLI
+      shell: >
+        wp --allow-root --path={{ wp_path }}
+        user list --fields=ID,user_login,user_email,roles,user_registered
+        --format=table 2>/dev/null
+      register: wp_users
+      when: wp_cli_check.rc == 0
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Extract user info from DB directly (if WP-CLI unavailable)
+      shell: |
+        DB_NAME=$(grep "DB_NAME" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_USER=$(grep "DB_USER" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_PASS=$(grep "DB_PASSWORD" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_HOST=$(grep "DB_HOST" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        PREFIX=$(grep "table_prefix" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" "$DB_NAME" \
+          -e "SELECT ID, user_login, user_email, user_registered FROM ${PREFIX}users;" 2>/dev/null
+      register: wp_users_db
+      when: wp_cli_check.rc != 0
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Check for admin username 'admin' (default/weak)
+      shell: |
+        DB_NAME=$(grep "DB_NAME" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_USER=$(grep "DB_USER" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_PASS=$(grep "DB_PASSWORD" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_HOST=$(grep "DB_HOST" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        PREFIX=$(grep "table_prefix" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" "$DB_NAME" \
+          -e "SELECT user_login FROM ${PREFIX}users WHERE user_login IN ('admin','administrator','root','test','wordpress');" 2>/dev/null
+      register: weak_usernames
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Check for unauthorized admin accounts via DB
+      shell: |
+        DB_NAME=$(grep "DB_NAME" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_USER=$(grep "DB_USER" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_PASS=$(grep "DB_PASSWORD" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        DB_HOST=$(grep "DB_HOST" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        PREFIX=$(grep "table_prefix" {{ wp_path }}/wp-config.php | grep -oP "(?<=')[^']+(?=')" | head -1)
+        mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" "$DB_NAME" \
+          -e "SELECT u.user_login, u.user_email FROM ${PREFIX}users u JOIN ${PREFIX}usermeta m ON u.ID=m.user_id WHERE m.meta_key='${PREFIX}capabilities' AND m.meta_value LIKE '%administrator%';" 2>/dev/null
+      register: admin_accounts
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Append user audit to report
+      lineinfile:
+        path: "{{ report_file }}"
+        line: |
+          --------------------------------
+          USER ACCOUNT AUDIT
+          --------------------------------
+          WP-CLI available: {{ wp_cli_check.rc == 0 }}
+
+          ---All WordPress Users---
+          {% if wp_cli_check.rc == 0 and wp_users is not failed %}
+          {{ wp_users.stdout | default('Could not retrieve') }}
+          {% else %}
+          {{ wp_users_db.stdout | default('Could not retrieve - check DB credentials') }}
+          {% endif %}
+
+          ---Administrator Accounts---
+          {{ admin_accounts.stdout | default('Could not retrieve') }}
+           Verify every administrator account is legitimate and known
+
+          ---Weak/Default Usernames Found---
+          {{ weak_usernames.stdout | default('None detected  ') }}
+          {% if weak_usernames.stdout | length > 5 %}
+          Weak usernames detected
+          {% endif %}
+
+- name: WORDPRESS AUDIT | Audit plugins and themes
+  block:
+    - name: WORDPRESS AUDIT | List installed plugins
+      shell: >
+        find {{ wp_path }}/wp-content/plugins -maxdepth 1
+        -mindepth 1 -type d -printf "%f\n" 2>/dev/null | sort
+      register: installed_plugins
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | List installed themes
+      shell: >
+        find {{ wp_path }}/wp-content/themes -maxdepth 1
+        -mindepth 1 -type d -printf "%f\n" 2>/dev/null | sort
+      register: installed_themes
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | List active plugin via WP-CLI
+      shell: >
+        wp --allow-root --path={{ wp_path }}
+        plugin list --format=table 2>/dev/null
+      register: active_plugins
+      when: wp_cli_check.rc == 0
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Check for known vulnerable/suspicious plugins
+      shell: |
+        VULN_PLUGINS=("revslider" "gravity-forms" "wp-file-manager" "wp-super-cache"
+          "duplicator" "contact-form-7" "yoast-seo" "elementor" "woocommerce"
+          "wordfence" "really-simple-ssl" "loginizer" "newsletter" "mailchimp"
+          "all-in-one-wp-migration" "wpforms-lite" "wp-fastest-cache"
+          "wp-statistics" "download-manager")
+        for plugin in "${VULN_PLUGINS[@]}"; do
+          if [ -d "{{ wp_path }}/wp-content/plugins/$plugin" ]; then
+            echo "[INSTALLED] $plugin"
+          fi
+        done
+      register: notable_plugins
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Check for PHP files directly in plugin/theme dirs (not in subdirs)
+      shell: >
+        find {{ wp_path }}/wp-content/plugins
+        {{ wp_path }}/wp-content/themes
+        -maxdepth 1 -name "*.php" 2>/dev/null
+      register: stray_php_files
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Append plugin/theme audit to report
+      lineinfile:
+        path: "{{ report_file }}"
+        line: |
+          --------------------------------
+          PLUGIN & THEME AUDIT
+          --------------------------------
+
+          ---Installed Plugins---
+          {{ installed_plugins.stdout | default('None found') }}
+
+          ---Installed Themes---
+          {{ installed_themes.stdout | default('None found') }}
+
+          ---Plugin Status (WP-CLI)---
+          {{ active_plugins.stdout | default('WP-CLI unavailable') }}
+
+          ---Notable/High-Risk Plugins Present---
+          {{ notable_plugins.stdout | default('None of the checked plugins found') }}
+
+          ---Stray PHP Files in Plugin/Theme Root (Suspicious)---
+          {{ stray_php_files.stdout if stray_php_files.stdout else '  None found  ' }}
+
+- name: WORDPRESS AUDIT | Audit .htaccess and webserver config
+  block:
+    - name: WORDPRESS AUDIT | Find all .htaccess files
+      shell: >
+        find {{ wp_path }} -name ".htaccess" 2>/dev/null
+      register: htaccess_files
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Read root .htaccess content
+      slurp:
+        src: "{{ wp_path }}/.htaccess"
+      register: htaccess_content
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Check .htaccess for injected redirects or malicious rules
+      shell: |
+        grep -Pn "(RewriteCond|RewriteRule|SetHandler|AddHandler|auto_prepend_file|auto_append_file|php_value)" \
+          {{ wp_path }}/.htaccess 2>/dev/null
+      register: htaccess_directives
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Check for suspicious PHP wrappers in .htaccess
+      shell: |
+        grep -Pni "(php_value\s+auto_prepend_file|php_value\s+auto_append_file|SetHandler\s+application/x-httpd-php|AddType\s+application/x-httpd-php)" \
+          {{ wp_path }}/.htaccess 2>/dev/null
+      register: htaccess_php_wrappers
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Append htaccess findings to report
+      lineinfile:
+        path: "{{ report_file }}"
+        line: |
+
+         ----------------------------------------
+          .HTACCESS & WEBSERVER AUDIT
+          ----------------------------------------
+
+          --- .htaccess Files Found ---
+          {{ htaccess_files.stdout | default('None') }}
+          Review if .htaccess is in unexpected locations (uploads, plugins)
+
+          ---Root .htaccess Content---
+          {{ htaccess_content.content | b64decode if htaccess_content is not failed else 'Could not read' }}
+
+          ---Rewrite/Handler Directives---
+          {{ htaccess_directives.stdout | default('None found') }}
+
+          ---Suspicious PHP Wrappers in .htaccess---
+          {{ htaccess_php_wrappers.stdout if htaccess_php_wrappers.stdout else '  None found  ' }}
+          {% if htaccess_php_wrappers.stdout %}
+          INTERESTING FINDING - auto_prepend/append and SetHandler abuse are common backdoor techniques!!!!!
+          {% endif %}
+
+- name: WORDPRESS AUDIT | Check xmlrpc.php and login exposure
+  block:
+    - name: WORDPRESS AUDIT | Check if xmlrpc.php exists
+      stat:
+        path: "{{ wp_path }}/xmlrpc.php"
+      register: xmlrpc_stat
+
+    - name: WORDPRESS AUDIT | Check if xmlrpc is blocked in .htaccess
+      shell: |
+        grep -i "xmlrpc" {{ wp_path }}/.htaccess 2>/dev/null || echo "No xmlrpc rules found"
+      register: xmlrpc_blocked
+      changed_when: false
+
+    - name: WORDPRESS AUDIT | Check wp-login.php permissions and size
+      stat:
+        path: "{{ wp_path }}/wp-login.php"
+      register: wplogin_stat
+
+    - name: WORDPRESS AUDIT | Check if login is rate-limited (Wordfence or similar)
+      shell: |
+        grep -rli "login.*limit\|brute.*force\|rate.limit" \
+          {{ wp_path }}/wp-content/plugins/ 2>/dev/null | head -5
+      register: login_protection
+      changed_when: false
+      ignore_errors: true
+
+    - name: WORDPRESS AUDIT | Append xmlrpc/login info to report
+      lineinfile:
+        path: "{{ report_file }}"
+        line: |
+          ----------------------------------------
+          XMLRPC & LOGIN EXPOSURE
+          ----------------------------------------
+          xmlrpc.php present        : {{ xmlrpc_stat.stat.exists }}
+          {% if xmlrpc_stat.stat.exists %}
+           xmlrpc.php enables brute-force amplification attacks (one request = 100s of attempts)
+           Block with .htaccess or plugin unless specifically needed
+          {% endif %}
+
+          xmlrpc.htaccess rules     :
+          {{ xmlrpc_blocked.stdout | indent(4) }}
+
+          wp-login.php present      : {{ wplogin_stat.stat.exists }}
+          wp-login.php size (bytes) : {{ wplogin_stat.stat.size | default('N/A') }}
+          {% if wplogin_stat.stat.size is defined and wplogin_stat.stat.size > 12000 %}
+           wp-login.php is larger than expected - may be modified!
+          {% endif %}
+
+          Login protection plugins  :
+          {{ login_protection.stdout | default('  None detected -  consider adding rate limiting') }}
+
+- name: WORDPRESS AUDIT | Print report location
+  debug:
+    msg: |
+      WordPress audit complete. Report saved to: {{ report_file }}
+      To retrieve: ansible {{ inventory_hostname }} -m fetch -a "src={{ report_file }} dest=./reports/"
