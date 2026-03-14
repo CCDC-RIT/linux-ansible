@@ -99,3 +99,10 @@
     project_src: "{{ birdsnest_deploy_dir }}"
     build: policy
     state: present
+  ignore_errors: true # first time may fail
+
+- name: Pull and Build Docker Images Attempt 2
+  community.docker.docker_compose_v2:
+    project_src: "{{ birdsnest_deploy_dir }}"
+    build: policy
+    state: present

@@ -32,7 +32,7 @@ agent_auth_tokens:        # Registration tokens that agents use for the initial 
 #####
 
 # Deploy vars
-birdsnest_deploy_dir: "/birdsnest_server"
+birdsnest_deploy_dir: "/birdsnest"
 birdsnest_gunicorn_workers: 1 # per replica
 birdsnest_webserver_replicas: 3
 birdsnest_proxy_container: "nginx:1.28.2"
