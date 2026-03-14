@@ -1,4 +1,34 @@
 ---
+- name: Ensure Docker is installed and running
+  ansible.builtin.package:
+    name: docker.io  # Use 'docker-ce' if using the official Docker repos
+    state: present
+
+#- name: Ensure Python dependencies for Docker are present
+#  ansible.builtin.pip:
+#    name: 
+#      - requests
+#      - pyyaml
+#    state: present
+
+- name: Install Docker Compose plugin
+  ansible.builtin.package:
+    name: docker-compose-v2
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install Docker Compose plugin
+  ansible.builtin.dnf:
+    name: docker-compose-plugin
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Start and enable Docker service
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: yes
+
 - name: Ensure deployment directory exists
   file:
     path: "{{ birdsnest_deploy_dir }}"
@@ -46,7 +76,7 @@
 - name: Deploy webserver config file
   template:
     src: config.json.j2
-    dest: "{{ birdsnest_deploy_dir }}/config.json.yaml"
+    dest: "{{ birdsnest_deploy_dir }}/config.json"
 
 - name: Ensure OpenSSL is installed
   package:

@@ -38,12 +38,12 @@ services:
       - PYTHONUNBUFFERED=1
       - APP_CONTEXT=WORKER
     restart: unless-stopped
-    command: CMD ["python3", "worker.py"]
+    command: ["python3", "worker.py"]
     depends_on:
       database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/worker_ready"]
+      test: ["CMD-SHELL", "test", "-f", "/tmp/worker_ready"]
       interval: 2s
       timeout: 1s
       retries: 5
