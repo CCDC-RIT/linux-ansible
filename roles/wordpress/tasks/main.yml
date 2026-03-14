@@ -6,6 +6,7 @@
     remote_src: true
     owner: root
     mode: "0600"
+  ignore_errors: true
 
 - name: WORDPRESS | Backup .htaccess before changes
   copy:
