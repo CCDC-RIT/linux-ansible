@@ -85,7 +85,7 @@
             WP-CONFIG.PHP SECURITY
           --------------------------------
           File permissions: {{ '%04o' | format(wp_config_perms.stat.mode | int(base=8)) }}
-          
+
           --- Flagged Configs ---
           WP_DEBUG enabled: {{ cfg_debug_on }} {% if cfg_debug_on %} WP_DEBUG is enabled {% endif %}
 
@@ -395,7 +395,7 @@
       ignore_errors: true
 
     - name: WORDPRESS AUDIT | Check for known vulnerable/suspicious plugins
-      ansible.builtin.command: |
+      shell: |
         VULN_PLUGINS=("revslider" "gravity-forms" "wp-file-manager" "wp-super-cache"
           "duplicator" "contact-form-7" "yoast-seo" "elementor" "woocommerce"
           "wordfence" "really-simple-ssl" "loginizer" "newsletter" "mailchimp"
@@ -406,6 +406,8 @@
             echo "[INSTALLED] $plugin"
           fi
         done
+      args:
+        executable: /bin/bash
       register: notable_plugins
       changed_when: false
 
