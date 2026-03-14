@@ -66,20 +66,14 @@
 
 - name: Create venv and install requirements (Windows)
   ansible.windows.win_shell: |
-    # Explicitly define variables to avoid Jinja2 splitting issues
-    $deployDir = "{{ owlet_deploy_dir }}"
-    $venvPath = Join-Path $deployDir "venv"
-    $reqPath = Join-Path $deployDir "requirements.txt"
+    $venvPath = Join-Path "{{ owlet_deploy_dir }}" "venv"
+    $reqPath = Join-Path "{{ owlet_deploy_dir }}" "requirements.txt"
     $pythonExe = Join-Path $venvPath "Scripts\python.exe"
-
-    # Create venv if it doesn't exist
     if (-not (Test-Path $venvPath)) {
         python -m venv $venvPath
     }
-
-    # Use Start-Process or quotes to bypass the YAML anchor (&) issue
-    & "$pythonExe" -m pip install -r "$reqPath"
-  when: ansible_facts.os_family == 'Windows'
+    & $pythonExe -m pip install -r $reqPath
+  when: ansible_os_family == 'Windows'
 
 - name: Copy NSSM executable to target
   win_copy:
