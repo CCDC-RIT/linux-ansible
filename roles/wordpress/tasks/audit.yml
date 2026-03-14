@@ -5,6 +5,7 @@
     path: "{{ wp_report_path }}"
     state: directory
     mode: "0700"
+  delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Write report header
   copy:
@@ -13,6 +14,7 @@
       ----------------------------------------------------------------
         WORDPRESS SECURITY AUDIT REPORT FOR HOST {{ inventory_hostname }}
       ----------------------------------------------------------------
+  delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Detect WordPress version
   block:
@@ -42,12 +44,14 @@
           WordPress Root      : {{ wp_path }}
           wp-config.php found : {{ wp_config_stat.stat.exists }}
           WordPress Version   : {{ wp_version | default('Could not determine') }}
+      delegate_to: localhost
 
   rescue:
     - name: WORDPRESS AUDIT | Log detection failure
       lineinfile:
         path: "{{ report_file }}"
         line: "[!] ERROR: Could not fully detect WordPress installation at {{ wp_path }}"
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Check wp-config.php
   block:
@@ -104,11 +108,14 @@
           FORCE_SSL_ADMIN: {{ cfg_force_ssl_admin }}  {% if not cfg_force_ssl_admin %} NEED TO ADD: define('FORCE_SSL_ADMIN', true);{% endif %}
 
           FS_METHOD = 'direct': {{ cfg_fs_method_direct }} {% if cfg_fs_method_direct %} FS_METHOD ALLOWS DIRECT FILE WRITES {% endif %}
+      delegate_to: localhost
+
   rescue:
     - name: WORDPRESS AUDIT | Log config read failure
       lineinfile:
         path: "{{ report_file }}"
         line: "[!] ERROR: Could not read wp-config.php - file missing or unreadable"
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Check important file perms
   block:
@@ -166,6 +173,7 @@
           {% if suid_files.stdout %}
           Found SUID/SGID files in web root!!!!
           {% endif %}
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Scan for malicious PHP patterns
   block:
@@ -284,6 +292,7 @@
 
           ---Hidden Files/Directories---
           {{ hidden_files.stdout if hidden_files.stdout else '  None found' }}
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Audit WordPress user accounts
   block:
@@ -368,6 +377,7 @@
           {% if weak_usernames.stdout | length > 5 %}
           Weak usernames detected
           {% endif %}
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Audit plugins and themes
   block:
@@ -441,6 +451,7 @@
 
           ---Stray PHP Files in Plugin/Theme Root (Suspicious)---
           {{ stray_php_files.stdout if stray_php_files.stdout else '  None found  ' }}
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Audit .htaccess and webserver config
   block:
@@ -496,6 +507,7 @@
           {% if htaccess_php_wrappers.stdout %}
           INTERESTING FINDING - auto_prepend/append and SetHandler abuse are common backdoor techniques!!!!!
           {% endif %}
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Check xmlrpc.php and login exposure
   block:
@@ -547,6 +559,7 @@
 
           Login protection plugins  :
           {{ login_protection.stdout | default('  None detected -  consider adding rate limiting') }}
+      delegate_to: localhost
 
 - name: WORDPRESS AUDIT | Print report location
   debug:
