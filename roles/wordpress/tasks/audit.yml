@@ -76,9 +76,6 @@
         cfg_disallow_file_mods: "{{ 'DISALLOW_FILE_MODS' in cfg_raw }}"
         cfg_force_ssl_admin: "{{ 'FORCE_SSL_ADMIN' in cfg_raw }}"
         cfg_fs_method_direct: "{{ \"FS_METHOD', 'direct'\" in cfg_raw }}"
-        cfg_db_name: "{{ cfg_raw | regex_search(\"DB_NAME.*'([^']+)'\", '\\\\1') | first | default('not found') }}"
-        cfg_db_user: "{{ cfg_raw | regex_search(\"DB_USER.*'([^']+)'\", '\\\\1') | first | default('not found') }}"
-        cfg_db_host: "{{ cfg_raw | regex_search(\"DB_HOST.*'([^']+)'\", '\\\\1') | first | default('not found') }}"
 
     - name: WORDPRESS AUDIT | Append config audit to report
       lineinfile:
@@ -88,12 +85,7 @@
             WP-CONFIG.PHP SECURITY
           --------------------------------
           File permissions: {{ '%04o' | format(wp_config_perms.stat.mode | int(base=8)) }}
-
-          --- Database ---
-          DB_NAME: {{ cfg_db_name }}
-          DB_USER: {{ cfg_db_user }}
-          DB_HOST: {{ cfg_db_host }}
-
+          
           --- Flagged Configs ---
           WP_DEBUG enabled: {{ cfg_debug_on }} {% if cfg_debug_on %} WP_DEBUG is enabled {% endif %}
 
@@ -403,7 +395,7 @@
       ignore_errors: true
 
     - name: WORDPRESS AUDIT | Check for known vulnerable/suspicious plugins
-      shell: |
+      ansible.builtin.command: |
         VULN_PLUGINS=("revslider" "gravity-forms" "wp-file-manager" "wp-super-cache"
           "duplicator" "contact-form-7" "yoast-seo" "elementor" "woocommerce"
           "wordfence" "really-simple-ssl" "loginizer" "newsletter" "mailchimp"
