@@ -9,6 +9,7 @@
     content: |
       define('DISALLOW_FILE_EDIT', true);
       define('FS_METHOD', 'direct');
+  ignore_errors: true
 
 - name: WORDPRESS HARDEN | Block wp-config.php
   blockinfile:
@@ -21,6 +22,7 @@
         order allow,deny
         deny from all
       </Files>
+  ignore_errors: true
 
 - name: WORDPRESS HARDEN | Block dot files and xmlrpc
   blockinfile:
@@ -39,6 +41,7 @@
         order allow,deny
         deny from all
       </Files>
+  ignore_errors: true
 
 - name: WORDPRESS HARDEN | Block access to wp-includes
   blockinfile:
@@ -57,6 +60,7 @@
         RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
         RewriteRule ^wp-includes/theme-compat/ - [F,L]
       </IfModule>
+  ignore_errors: true
 
 - name: WORDPRESS HARDEN | Prevent username enumeration and script injection
   blockinfile:
@@ -75,6 +79,7 @@
       RewriteCond %{QUERY_STRING} GLOBALS(=|[|%[0-9A-Z]{0,2}) [OR]
       RewriteCond %{QUERY_STRING} _REQUEST(=|[|%[0-9A-Z]{0,2})
       RewriteRule ^(.*)$ index.php [F,L]
+  ignore_errors: true
   
 - name: WORDPRESS HARDEN | Disable PHP execution in uploads directory.
   blockinfile:
@@ -88,6 +93,7 @@
       <Files ~ "\.ph(?:p[345]?|t|tml)$">
          deny from all
       </Files>
+  ignore_errors: true
 
 - name: WORDPRESS HARDEN | Update Wordpress file ownership
   file:
