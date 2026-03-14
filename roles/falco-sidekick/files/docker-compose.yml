@@ -1,0 +1,10 @@
+services:
+  falcosidekick:
+    image: falcosecurity/falcosidekick
+    container_name: falcosidekick
+    restart: always
+    ports:
+      - "2801:2801"
+    environment:
+      - LOKI_HOSTPORT=http://192.168.1.175:3100/
+      - LOKI_MINIMUMPRIORITY=debug

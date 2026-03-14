@@ -1,0 +1,51 @@
+- name: Copy Falco setup script (Deb)
+  ansible.builtin.copy:
+    src: falco-setup-deb.sh
+    dest: /opt/falco-setup.sh
+    owner: blueteam
+    group: blueteam
+    mode: 0744
+  when: ansible_facts['os_family'] == "Debian"   
+
+- name: Copy Falco setup script (RHEL)
+  ansible.builtin.copy:
+    src: falco-setup-rhel.sh
+    dest: /opt/falco-setup.sh
+    owner: blueteam
+    group: blueteam
+    mode: 0744
+  when: ansible_facts['os_family'] == 'RedHat'   
+
+- name: Run Falco setup script
+  ansible.builtin.shell: /opt/falco-setup.sh
+  ignore_errors: true
+  
+- name: Copy over Falco incubating rules
+  ansible.builtin.copy:
+    src: falco-incubating_rules.yaml
+    dest: /etc/falco/rules.d/falco-incubating_rules.yaml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy over Falco sandbox rules
+  ansible.builtin.copy:
+    src: falco-sandbox_rules.yaml
+    dest: /etc/falco/rules.d/falco-sandbox_rules.yaml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy over Falco config
+  ansible.builtin.copy:
+    src: falco.yaml
+    dest: /etc/falco/falco.yaml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart falco service
+  ansible.builtin.service:
+    name: falco-modern-bpf
+    state: restarted
+  ignore_errors: true

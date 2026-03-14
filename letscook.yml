@@ -212,7 +212,17 @@
     - deploy
     - finish
 
-#NOT PART OF DEPLOY - falco sidekick config must be set up in config file first, run standalone
+#If not installed, add deploy tag to falco. If not, just modify compose file for sidekick with Grafana IP
+
+- name: Deploy Falco
+  hosts: all
+  become: yes
+  roles:
+    - falco
+  tags:
+    - never
+    - falco
+    
 - name: Deploy Falco Sidekick
   hosts: all
   become: yes
@@ -220,4 +230,6 @@
     - falco-sidekick
   tags:
     - never
+    - deploy
+    - falco
     - falcosidekick
