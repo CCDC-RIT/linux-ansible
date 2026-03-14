@@ -207,15 +207,15 @@
     - harden
   ignore_errors: true
 
-# - name: Harden WordPress
-#   hosts: wordpress_server
-#   become: yes
-#   roles:
-#     - wordpress
-#   tags:
-#     - never
-#     - wordpress
-#     - deploy
+- name: Harden WordPress
+  hosts: wordpress_server
+  become: yes
+  roles:
+    - wordpress
+  tags:
+    - never
+    - wordpress
+    - deploy
 
 # - name: Harden NGINX
 #   hosts: nginx_server
